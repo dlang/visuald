@@ -143,6 +143,14 @@ dbuild17_1:
 dbuild17_2:
 	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_2;Platform=AnyCPU /t:Rebuild
 
+dbuild17_3:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_3;Platform=AnyCPU /t:Rebuild
+
+dbuild17_4:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_4;Platform=AnyCPU /t:Rebuild
+
+dbuild17_all: dbuild17 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4
+
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
@@ -196,7 +204,9 @@ install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago magogc dbuild12
 
 install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 magogc fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
+install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
+
+d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

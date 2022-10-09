@@ -42,12 +42,12 @@ extern (C++) struct Mem
 
 	static void* xrealloc(void* p, size_t size) nothrow pure
 	{
-		return GC.realloc(p, size);
+		return check(GC.realloc(p, size));
 	}
 
 	static void* xrealloc_noscan(void* p, size_t size) nothrow pure
 	{
-		return GC.realloc(p, size, GC.BlkAttr.NO_SCAN);
+		return check(GC.realloc(p, size, GC.BlkAttr.NO_SCAN));
 	}
 
 	static void error() nothrow
@@ -55,10 +55,10 @@ extern (C++) struct Mem
 		__gshared static oom = new Error("out of memory");
 		throw oom;
 	}
-	static void* check(void* p) nothrow
+	static void* check(void* p) nothrow pure
 	{
 		if (!p)
-			error();
+			(cast(void function() nothrow pure)&error)();
 		return p;
 	}
 

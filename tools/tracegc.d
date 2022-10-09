@@ -321,7 +321,7 @@ class GCTraceProxy : GC
 		return p;
 	}
 
-	BlkInfo qalloc(size_t size, uint bits, const TypeInfo ti) nothrow
+	BlkInfo qalloc(size_t size, uint bits, scope const TypeInfo ti) nothrow
 	{
 		BlkInfo bi = gc.qalloc(size, bits, ti);
 		traceAlloc(bi.base);
@@ -706,7 +706,7 @@ void dumpAddr(AddrTracePair[] traceMap, void* addr, size_t size)
 		filename = "<unknown address>: ";
 
 	auto xtra = dumpExtra(addr);
-	trace_printf("%s(%d): %p %llx%.*s\n", filename, line, addr, cast(long) size, cast(int)xtra.length, xtra.ptr);
+	trace_printf("%s(%d): %p %llx %.*s\n", filename, line, addr, cast(long) size, cast(int)xtra.length, xtra.ptr);
 }
 
 struct AddrInfoStat
@@ -874,7 +874,8 @@ HashTab!(void*, void*) *g_references;
 HashTab!(void*, size_t) *g_objects;
 ConservativeGC g_cgc;
 
-void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
+void collectReferences(ConservativeGC cgc, bool precise,
+					   ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
 {
 	g_cgc = cgc;
 	g_references = &references;
@@ -895,7 +896,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	*/
     static void mark(bool precise)(Gcx.ScanRange!precise rng) nothrow
     {
-	auto pooltable = g_cgc.gcx.pooltable;
+        auto pooltable = g_cgc.gcx.pooltable;
         alias toscan = scanStack!precise;
 
         debug(MARK_PRINTF)
@@ -969,7 +970,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                     printf("\t\tfound pool %p, base=%p, pn = %lld, bin = %d\n", pool, pool.baseAddr, cast(long)pn, bin);
 
                 // Adjust bit to be at start of allocated memory block
-                if (bin < B_PAGE)
+                if (bin < Bins.B_PAGE)
                 {
                     // We don't care abou setting pointsToBase correctly
                     // because it's ignored for small object pools anyhow.
@@ -994,7 +995,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                         goto LaddRange;
                     }
                 }
-                else if (bin == B_PAGE)
+                else if (bin == Bins.B_PAGE)
                 {
                     biti = offset >> Pool.ShiftBy.Large;
                     //debug(PRINTF) printf("\t\tbiti = x%x\n", biti);
@@ -1018,7 +1019,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                         goto LaddLargeRange;
                     }
                 }
-                else if (bin == B_PAGEPLUS)
+                else if (bin == Bins.B_PAGEPLUS)
                 {
                     pn -= pool.bPageOffsets[pn];
                     biti = pn * (PAGESIZE >> Pool.ShiftBy.Large);
@@ -1075,7 +1076,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                 else
                 {
                     // Don't mark bits in B_FREE pages
-                    assert(bin == B_FREE);
+                    assert(bin == Bins.B_FREE);
                 }
             }
         LnextPtr:
@@ -1175,7 +1176,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 				//debug(PRINTF) printf("\t\tfound pool %p, base=%p, pn = %zd, bin = %d, biti = x%x\n", pool, pool.baseAddr, pn, bin, biti);
 
 				// Adjust bit to be at start of allocated memory block
-				if (bin < B_PAGE)
+				if (bin < Bins.B_PAGE)
 				{
 					// We don't care abou setting pointsToBase correctly
 					// because it's ignored for small object pools anyhow.
@@ -1193,7 +1194,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 							break;
 					}
 				}
-				else if (bin == B_PAGE)
+				else if (bin == Bins.B_PAGE)
 				{
 					auto offsetBase = offset & ~cast(size_t)(PAGESIZE-1);
 					base = pool.baseAddr + offsetBase;
@@ -1282,16 +1283,29 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	thread_suspendAll();
 	cgc.gcx.prepare(); // set freebits
 
-	foreach(root; cgc.rootIter)
-		mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
-	foreach(range; cgc.rangeIter)
-		mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
+	if (precise)
+	{
+		foreach(root; cgc.rootIter)
+			mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
+		foreach(range; cgc.rangeIter)
+			mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
+		thread_scanAll((b, t) => mark!true(Gcx.ScanRange!true(b, t)));
+	}
+	else
+	{
+		foreach(root; cgc.rootIter)
+			mark!false(Gcx.ScanRange!false(&root, &root + 1));
+		foreach(range; cgc.rangeIter)
+			mark!false(Gcx.ScanRange!false(range.pbot, range.ptop));
+		thread_scanAll((b, t) => mark!false(Gcx.ScanRange!false(b, t)));
+	}
+
+	toscanConservative.clear();
+	toscanPrecise.clear();
 
 	g_cgc = null;
 	g_references = null;
 	g_objects = null;
-	toscanConservative.clear();
-	toscanPrecise.clear();
 
 	//thread_scanAll(&mark);
 	thread_resumeAll();
@@ -1329,7 +1343,7 @@ void dumpGC(GC _gc)
 		{
 			foreach (pn, bin; pool.pagetable[0 .. pool.npages])
 			{
-				if (bin == B_PAGE)
+				if (bin == Bins.B_PAGE)
 				{
 					auto lpool = cast(LargeObjectPool*) pool;
 					size_t npages = lpool.bPageOffsets[pn];
@@ -1338,11 +1352,11 @@ void dumpGC(GC _gc)
 					dumpAddr(traceMap, addr, npages * PAGESIZE);
 					usedSize += npages * PAGESIZE;
 				}
-				else if (bin == B_FREE)
+				else if (bin == Bins.B_FREE)
 				{
 					freeSize += PAGESIZE;
 				}
-				else if (bin < B_PAGE)
+				else if (bin < Bins.B_PAGE)
 				{
 					immutable size = binsize[bin];
 					void *p = pool.baseAddr + pn * PAGESIZE;
@@ -1415,7 +1429,7 @@ void dumpGC(GC _gc)
 			Bins   bin = cast(Bins)pool.pagetable[pn];
 			void* base = void;
 
-			if (bin < B_PAGE)
+			if (bin < Bins.B_PAGE)
 			{
 				auto offsetBase = baseOffset(offset, cast(Bins)bin);
 				base = pool.baseAddr + offsetBase;
@@ -1423,12 +1437,12 @@ void dumpGC(GC _gc)
 				if (pool.freebits.test(biti))
 					continue;
 			}
-			else if (bin == B_PAGE)
+			else if (bin == Bins.B_PAGE)
 			{
 				auto offsetBase = offset & ~cast(size_t)(PAGESIZE-1);
 				base = pool.baseAddr + offsetBase;
 			}
-			else if (bin == B_PAGEPLUS)
+			else if (bin == Bins.B_PAGEPLUS)
 			{
 				pn -= pool.bPageOffsets[pn];
 				base = pool.baseAddr + (pn * PAGESIZE);
@@ -1575,7 +1589,7 @@ void findRoot(void* sobj)
 	HashTab!(void*, void*)* preferences = &references;
 	pp_references = &preferences;
 
-	collectReferences(cgc, references, objects);
+	collectReferences(cgc, true, references, objects);
 
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;

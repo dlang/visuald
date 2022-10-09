@@ -572,7 +572,7 @@
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\res dmd\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -1072,7 +1072,7 @@
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\res</fileImppath>
+  <fileImppath>dmd dmd\res dmd\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />

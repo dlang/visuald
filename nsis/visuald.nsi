@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.100.0"
+!define DMD_VERSION "2.100.2"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.29.0"
+!define LDC_VERSION "1.30.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -332,6 +332,8 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release-v17\ dbuild.17.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_1\ dbuild.17.1.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_2\ dbuild.17.2.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_3\ dbuild.17.3.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_4\ dbuild.17.4.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif

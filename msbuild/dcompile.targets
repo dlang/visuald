@@ -136,7 +136,7 @@
     Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
     DependsOnTargets="_collectDFiles;_replacePackageName">
     
-    <VCMessage Condition="$(MSBDBuildVersion_Major) == '17'" Type="Message" Code="MSB8034" Importance="low" Arguments="CPPTaskPath;$(CPPTaskPath)"/>
+    <VCMessage Condition="$(MSBuildVersion_Major) == '17'" Type="Message" Code="MSB8034" Importance="low" Arguments="CPPTaskPath;$(CPPTaskPath)"/>
 
     <ItemGroup Condition="'@(dcompile_SelectedFiles)' != ''">
       <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(dcompile_SelectedFiles)'" />

@@ -622,6 +622,22 @@ class idl2d
 		case "RtlFlushNonVolatileMemoryRanges":
 			return 1;
 
+		// SDK 10.0.22621.0
+		case "WIN_NOEXCEPT":
+		case "ReadLongPtrAcquire":
+		case "ReadLongPtrNoFence":
+		case "ReadLongPtrRaw":
+		case "WriteLongPtrRelease":
+		case "WriteLongPtrNoFence":
+		case "WriteLongPtrRaw":
+		case "ReadULongPtrAcquire":
+		case "ReadULongPtrNoFence":
+		case "ReadULongPtrRaw":
+		case "WriteULongPtrRelease":
+		case "WriteULongPtrNoFence":
+		case "WriteULongPtrRaw":
+			return 1;
+
 		default:
 			break;
 		}
@@ -1086,6 +1102,8 @@ version(all)
 		while(replaceTokenSequence(tokens, "$_not $_ident($_ident1)($expr)",  "$_not cast($_ident1)($expr)", true) > 0) {}
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)cast", "$_not cast($_ident1)cast", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1*)$_not_semi;",    "$_not cast($_ident1*)$_not_semi", true);
+		replaceTokenSequence(tokens,       "$_not $_ident(const $_ident1*)$_not_semi;",   "$_not cast(const $_ident1*)$_not_semi", true);
+		replaceTokenSequence(tokens,       "$_not $_ident(volatile const $_ident1*)$_not_semi;",   "$_not cast(volatile const $_ident1*)$_not_semi", true);
 		replaceTokenSequence(tokens,       "$_not $_ident(struct $_ident1*)$_not_semi;",   "$_not cast(struct $_ident1*)$_not_semi", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1 $_ident2*)", "$_not cast($_ident1 $_ident2*)", true);
 		replaceTokenSequence(tokens, "HRESULT cast", "HRESULT", true);
@@ -1270,6 +1288,11 @@ version(all)
 			replaceTokenSequence(tokens, "#ifndef TRUE\n#define TRUE$def\n#endif\n", "#define TRUE 1\n", false);
 		}
 
+		if(currentModule == "memoryapi")
+		{
+			replaceTokenSequence(tokens, "typedef struct DECLSPEC_ALIGN($_num)", "align($_num) typedef struct", true);
+		}
+
 		if(currentModule == "winnt")
 		{
 			replaceTokenSequence(tokens, "#if defined(MIDL_PASS)\ntypedef struct $_ident {\n"
@@ -1299,6 +1322,13 @@ version(all)
 
 			replaceTokenSequence(tokens, "RtlZeroMemory($dest,$length)",
 			                             "import core.stdc.string: memset; memset($dest,0,$length)", true);
+			// win 10.0.22621.0: duplicate definition
+			replaceTokenSequence(tokens, "POWER_SETTING_ALTITUDE, *PPOWER_SETTING_ALTITUDE;",
+								 "*PPOWER_SETTING_ALTITUDE;", true);
+			replaceTokenSequence(tokens, "FORCEINLINE BYTE ReadUCharAcquire $code WriteULong64Raw($args) { $code2 }",
+								 "/+ $* +/", true);
+			replaceTokenSequence(tokens, "FORCEINLINE PVOID ReadPointerAcquire $code WritePointerRaw($args) { $code2 }",
+								 "/+ $* +/", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1385,7 +1415,10 @@ version(all)
 			// type name and field name identical
 			replaceTokenSequence(tokens, "ImageMoniker ImageMoniker;", "ImageMoniker mImageMoniker;", true);
 		}
-
+		if(currentModule.startsWith("webprop"))
+		{
+			replaceTokenSequence(tokens, "importlib(\"Microsoft.VisualStudio.Interop.tlb\");", "/+ $* +/;", true);
+		}
 		// select unicode version of the API when defining without postfix A/W
 		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n",
 			"    return $_identW(", false);
@@ -1573,6 +1606,8 @@ version(all)
 					enums[tok.text] = true;
 				break;
 			}
+			if(indexOf(tok.pretext, "\\\n") >= 0)
+				tok.pretext = replace(tok.pretext, "\\\n", "\n");
 			prevtext = tok.text;
 			++tokIt;
 		}
@@ -1652,6 +1687,10 @@ version(none) version(vsi)
 			replaceTokenSequence(tokens, "alias _InterlockedAnd InterlockedAnd;", "/+ $*", true);
 			replaceTokenSequence(tokens, "InterlockedCompareExchange($args __in LONG ExChange, __in LONG Comperand);", "$* +/", true);
 			replaceTokenSequence(tokens, "InterlockedOr(&Barrier, 0);", "InterlockedExchangeAdd(&Barrier, 0);", true); // InterlockedOr exist only as intrinsic
+		}
+		if (currentModule == "winerror")
+		{
+			replaceTokenSequence(tokens, "HRESULT HRESULT_FROM_SETUPAPI($args) { $code }", "/+ $* +/", true);
 		}
 		if(currentModule == "ocidl")
 		{
@@ -2134,6 +2173,8 @@ else
 		TokenIterator inAlias = tokens.end();
 		for(TokenIterator tokIt = tokens.begin(); !tokIt.atEnd(); ++tokIt)
 		{
+			bool isAssign(string txt) { return txt == "=" || txt == "&=" || txt == "|=" || txt == "+=" || txt == "-="; }
+
 			Token tok = *tokIt;
 			//tok.pretext = tok.pretext.replace("//D", "");
 			tok.text = translateToken(tok.text);
@@ -2150,8 +2191,9 @@ else
 			}
 			else if(tok.text == "[" && tokIt[1].text != "]")
 			{
-				if((tokIt.atBegin() || tokIt[-1].text != "{" || tokIt[-2].text != "=") &&
+				if((tokIt.atBegin() || tokIt[-1].text != "{" || !isAssign(tokIt[-2].text)) &&
 				   (tokIt[1].type != Token.Number || tokIt[2].text != "]") &&
+				   tokIt[1].text != "i" && // RtlConstantTimeEqualMemory
 				   (tokIt[2].text != "]" || tokIt[3].text != ";"))
 				{
 					TokenIterator bit = tokIt;
@@ -2168,8 +2210,9 @@ else
 			{
 				TokenIterator openit = tokIt;
 				if(retreatToOpeningBracket(openit) &&
-				   (openit.atBegin || (openit-1).atBegin || openit[-1].text != "{" || openit[-2].text != "="))
+				   (openit.atBegin || (openit-1).atBegin || openit[-1].text != "{" || !isAssign(openit[-2].text)))
 					if((tokIt[-1].type != Token.Number || tokIt[-2].text != "[") &&
+					   tokIt[-1].text != "i" && // RtlConstantTimeEqualMemory
 					   (tokIt[-2].text != "[" || tokIt[1].text != ";"))
 						tok.text = "]+/";
 			}
@@ -2900,8 +2943,8 @@ unittest
 	string exptxt = "
 int convert() { return  " ~ "
 	hello; }
-// #define noconvert(n,m) \\
-//	hallo1 |\\
+// #define noconvert(n,m) 
+//	hallo1 |
 //	hallo2
 ";
 	version(macro2template) exptxt = replace(exptxt, "int", "auto");

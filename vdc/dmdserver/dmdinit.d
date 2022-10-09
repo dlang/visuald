@@ -30,6 +30,7 @@ import dmd.objc;
 import dmd.target;
 
 import dmd.common.outbuffer;
+import dmd.root.ctfloat;
 
 import std.string;
 import core.stdc.string;
@@ -160,6 +161,7 @@ void dmdInit()
 	target._init(global.params); // needed by Type._init
 	Type._init();
 	Module._init();
+	CTFloat.initialize();
 }
 
 struct Options
@@ -353,6 +355,7 @@ void dmdSetupParams(const ref Options opts)
 // for another platform/architecture, different versions)
 void dmdReinit()
 {
+	// Dsymbol.deinitialize();
 	target._init(global.params); // needed by Type._init
 	Type._reinit();
 

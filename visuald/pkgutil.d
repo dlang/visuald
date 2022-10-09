@@ -240,18 +240,18 @@ void writeGCStatsToOutputPane()
 	GCStats stats =	gc_stats();
 	writeToBuildOutputPane(format("numpools = %s, poolsize = %s, usedsize = %s, freelistsize = %s\n",
 		   stats.numpools, stats.poolsize, stats.usedsize, stats.freelistsize));
-    writeToBuildOutputPane(format("pool[B_16]    = %s\n", stats.numpool[B_16]   ));
-    writeToBuildOutputPane(format("pool[B_32]    = %s\n", stats.numpool[B_32]   ));
-    writeToBuildOutputPane(format("pool[B_64]    = %s\n", stats.numpool[B_64]   ));
-    writeToBuildOutputPane(format("pool[B_128]   = %s\n", stats.numpool[B_128]  ));
-    writeToBuildOutputPane(format("pool[B_256]   = %s\n", stats.numpool[B_256]  ));
-    writeToBuildOutputPane(format("pool[B_512]   = %s\n", stats.numpool[B_512]  ));
-    writeToBuildOutputPane(format("pool[B_1024]  = %s\n", stats.numpool[B_1024] ));
-    writeToBuildOutputPane(format("pool[B_2048]  = %s\n", stats.numpool[B_2048] ));
-    writeToBuildOutputPane(format("pool[B_PAGE]  = %s\n", stats.numpool[B_PAGE] ));
-    writeToBuildOutputPane(format("pool[B_PAGE+] = %s\n", stats.numpool[B_PAGEPLUS]));
-    writeToBuildOutputPane(format("pool[B_FREE]  = %s\n", stats.numpool[B_FREE] ));
-    writeToBuildOutputPane(format("pool[B_UNCOM] = %s\n", stats.numpool[B_UNCOMMITTED]));
+    writeToBuildOutputPane(format("pool[B_16]    = %s\n", stats.numpool[Bins.B_16]   ));
+    writeToBuildOutputPane(format("pool[B_32]    = %s\n", stats.numpool[Bins.B_32]   ));
+    writeToBuildOutputPane(format("pool[B_64]    = %s\n", stats.numpool[Bins.B_64]   ));
+    writeToBuildOutputPane(format("pool[B_128]   = %s\n", stats.numpool[Bins.B_128]  ));
+    writeToBuildOutputPane(format("pool[B_256]   = %s\n", stats.numpool[Bins.B_256]  ));
+    writeToBuildOutputPane(format("pool[B_512]   = %s\n", stats.numpool[Bins.B_512]  ));
+    writeToBuildOutputPane(format("pool[B_1024]  = %s\n", stats.numpool[Bins.B_1024] ));
+    writeToBuildOutputPane(format("pool[B_2048]  = %s\n", stats.numpool[Bins.B_2048] ));
+    writeToBuildOutputPane(format("pool[B_PAGE]  = %s\n", stats.numpool[Bins.B_PAGE] ));
+    writeToBuildOutputPane(format("pool[B_PAGE+] = %s\n", stats.numpool[Bins.B_PAGEPLUS]));
+    writeToBuildOutputPane(format("pool[B_FREE]  = %s\n", stats.numpool[Bins.B_FREE] ));
+    writeToBuildOutputPane(format("pool[B_UNCOM] = %s\n", stats.numpool[Bins.B_UNCOMMITTED]));
 	writeClasses();
 }
 
