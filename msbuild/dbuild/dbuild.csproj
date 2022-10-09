@@ -517,12 +517,12 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetVer)' == '17.3'">
     <Reference Include="Microsoft.Build.CPPTasks.Common">
-      <HintPath>assemblies\v17_2\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+      <HintPath>assemblies\v17_3\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetVer)' == '17.4'">
     <Reference Include="Microsoft.Build.CPPTasks.Common">
-      <HintPath>assemblies\v17_2\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+      <HintPath>assemblies\v17_4\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

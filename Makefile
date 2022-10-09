@@ -143,6 +143,14 @@ dbuild17_1:
 dbuild17_2:
 	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_2;Platform=AnyCPU /t:Rebuild
 
+dbuild17_3:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_3;Platform=AnyCPU /t:Rebuild
+
+dbuild17_4:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_4;Platform=AnyCPU /t:Rebuild
+
+dbuild17_all: dbuild17 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4
+
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
