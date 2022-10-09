@@ -1341,4 +1341,4 @@ Version history
   * fixed building against WinSDK 10.0.22621.0
   * fixed projects no longer considered failing
   * D files in VC projects failed to build in VS 2022 17.3 and 17.4, added separate versions of
-    dbuild.17.x.dll linked respective Microsoft.Build.CPPTasks.Common.dll
+    dbuild.17.x.dll linked against respective version of Microsoft.Build.CPPTasks.Common.dll
