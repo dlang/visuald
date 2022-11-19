@@ -214,7 +214,6 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 	Module.rootModule = ctxt.modules[rootModuleIndex].semanticModule;
 	Module.rootModule.importAll(null);
 	Module.rootModule.dsymbolSemantic(null);
-	Module.dprogress = 1;
 	Module.runDeferredSemantic();
 	Module.rootModule.semantic2(null);
 	Module.runDeferredSemantic2();
@@ -1959,7 +1958,7 @@ void test_ana_dmd()
 	dmdInit();
 
 	string thisdir = std.path.dirName(__FILE_FULL_PATH__);
-	string srcdir = std.path.buildPath(thisdir, "dmd", "src");
+	string srcdir = std.path.buildPath(thisdir, "dmd", "compiler", "src");
 
 	Options opts;
 	opts.predefineDefaultVersions = true;
@@ -1968,7 +1967,7 @@ void test_ana_dmd()
 	opts.warnings = true;
 	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
 	opts.stringImportDirs ~= srcdir ~ "/dmd/res"; // for default_ddoc_theme.ddoc 
-	opts.stringImportDirs ~= srcdir ~ "/.."; // for VERSION
+	opts.stringImportDirs ~= srcdir ~ "/../.."; // for VERSION
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 
