@@ -3193,7 +3193,7 @@ class Config :	DisposingComObject,
 			cmd ~= ":reportError\n";
 			cmd ~= "set ERR=%ERRORLEVEL%\n"; // clears errorlevel
 			cmd ~= "set DISPERR=%ERR%\n";
-			cmd ~= "if %ERR% LSS -65535 then DISPERR=0x%=EXITCODE%\n";
+			cmd ~= "if %ERR% LSS -65535 set DISPERR=0x%=EXITCODE%\n";
 			if(syntaxOnly)
 				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed (error code %DISPERR%)!\n";
 			else
@@ -3882,7 +3882,7 @@ class Config :	DisposingComObject,
 		cmd ~= "\n:reportError\n";
 		cmd ~= "set ERR=%ERRORLEVEL%\n"; // clears errorlevel
 		cmd ~= "set DISPERR=%ERR%\n";
-		cmd ~= "if %ERR% LSS -65535 then DISPERR=0x%=EXITCODE%\n";
+		cmd ~= "if %ERR% LSS -65535 set DISPERR=0x%=EXITCODE%\n";
 		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed (error code %DISPERR%)!\n";
 		cmd ~= "exit /B %ERR%\n";
 		cmd ~= "\n:noError\n";
@@ -4056,16 +4056,29 @@ class Config :	DisposingComObject,
 	{
 		string[] imports;
 		string workdir = GetProjectDir().normalizeDir();
+		Config[] processed;
 		processDependentProjects((IVsProjectCfg prjcfg)
 		{
 			if (auto cfg = qi_cast!Config(prjcfg))
 			{
-				string projdir = cfg.GetProjectDir();
-				imports.addunique(projdir.makeRelative(workdir));
-				string[] imps = tokenizeArgs(cfg.GetProjectOptions().imppath);
-				foreach(imp; imps)
-					imports.addunique(makeFilenameAbsolute(imp, projdir).makeRelative(workdir));
-				release(cfg);
+				// avoid endless recursion and project being referenced by mutliple dependencies
+				if (!processed.contains(cfg))
+				{
+					processed ~= cfg;
+					string projdir = cfg.GetProjectDir();
+					projdir = projdir.removeDotDotPath();
+					imports.addunique(projdir.makeRelative(workdir));
+					string[] imps = tokenizeArgs(cfg.GetProjectOptions().imppath);
+					imps ~= cfg.getImportsFromDependentProjects();
+					foreach(imp; imps)
+					{
+						string dir = makeFilenameAbsolute(imp, projdir);
+						dir = dir.removeDotDotPath();
+						dir = dir.makeRelative(workdir);
+						imports.addunique(dir);
+					}
+					release(cfg);
+				}
 			}
 		});
 		return imports;

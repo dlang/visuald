@@ -1,0 +1,1 @@
+module microsoft.visualstudio.interop;

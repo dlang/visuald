@@ -694,9 +694,9 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c -nologo -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program />
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
+  <imppath>dmd\compiler\src</imppath>
   <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
@@ -1194,9 +1194,9 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c -nologo -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program>c:\s\d\dlang\dmd\generated\Windows\Release\x64\dmd.exe</program>
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
+  <imppath>dmd\compiler\src</imppath>
   <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>

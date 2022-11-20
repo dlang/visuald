@@ -1188,7 +1188,7 @@ L_C3:		if(false) L_C2: {}
 		else if (c)
 			x = 3;
 }
-version(0) {
+version(all) {
 		if(a)
 			x = 1;
 		else static if(COND)
@@ -1199,8 +1199,8 @@ version(0) {
 		if(c)
 			x = 3;
 
-		return x;
 }
+		return x;
 	}
 
 	assert(fn!(true)(false, false, false) == 0);
