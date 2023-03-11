@@ -40,6 +40,7 @@ import dmd.hdrgen;
 import dmd.id;
 import dmd.identifier;
 import dmd.init;
+import dmd.location;
 import dmd.mtype;
 import dmd.objc;
 import dmd.sapply;
@@ -532,7 +533,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	override void visit(StaticAssertStatement stmt)
 	{
 		visitExpression(stmt.sa.exp);
-		visitExpression(stmt.sa.msg);
+		if (stmt.sa.msgs)
+			foreach(e; *stmt.sa.msgs)
+				visitExpression(e);
 		visit(cast(Statement)stmt);
 	}
 
@@ -746,7 +749,9 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	override void visit(StaticAssert sa)
 	{
 		visitExpression(sa.exp);
-		visitExpression(sa.msg);
+		if (sa.msgs)
+			foreach(e; *sa.msgs)
+				visitExpression(e);
 		super.visit(sa);
 	}
 

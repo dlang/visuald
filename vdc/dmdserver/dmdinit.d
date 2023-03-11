@@ -43,7 +43,10 @@ enum string[2][] dmdStatics =
 [
 	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
 	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
-	["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
+	// 2.103
+	["_D3dmd7dmodule6Module11loadStdMathFZ8std_mathCQBsQBrQBm", "Module"],
+	["_D3dmd7dmodule6Module14loadCoreAtomicFZ11core_atomicCQBzQByQBt", "Module"],
+	
 	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
 	// 2.091
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
@@ -51,10 +54,14 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ5fhashCQEp4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
 	// 2.092
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
+	// 2.103
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
@@ -68,7 +75,10 @@ enum string[2][] dmdStatics =
 	//["_D3dmd10expression10IntegerExp__T7literalVii0ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
-	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
+
+//	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
+	// 2.103
+	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
 ];
 
@@ -102,9 +112,9 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ7fdapplyPCQFz4func15FuncDeclaration")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ7fdapplyPCQFs4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ6fldeTyPCQFyQBf12TypeDelegate")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ6fldeTyPCQFrQy12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
 
 

@@ -1835,6 +1835,7 @@
    <File path="dmd\compiler\src\dmd\eh.d" tool="None" />
    <File path="dmd\compiler\src\dmd\entity.d" />
    <File path="dmd\compiler\src\dmd\errors.d" />
+   <File path="dmd\compiler\src\dmd\errorsink.d" />
    <File path="dmd\compiler\src\dmd\escape.d" />
    <File path="dmd\compiler\src\dmd\expression.d" />
    <File path="dmd\compiler\src\dmd\expressionsem.d" />
@@ -1869,6 +1870,7 @@
    <File path="dmd\compiler\src\dmd\libmscoff.d" tool="None" />
    <File path="dmd\compiler\src\dmd\libomf.d" tool="None" />
    <File path="dmd\compiler\src\dmd\link.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\location.d" />
    <File path="dmd\compiler\src\dmd\mars.d" tool="None" />
    <File path="dmd\compiler\src\dmd\mtype.d" />
    <File path="dmd\compiler\src\dmd\mustuse.d" />

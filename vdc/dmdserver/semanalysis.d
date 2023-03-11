@@ -20,6 +20,7 @@ import dmd.dsymbolsem;
 import dmd.errors;
 import dmd.globals;
 import dmd.identifier;
+import dmd.location;
 import dmd.semantic2;
 import dmd.semantic3;
 
