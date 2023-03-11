@@ -4,6 +4,7 @@ using Microsoft.Build.CPPTasks;
 using System.Collections;
 using System.Resources;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
 
@@ -313,11 +314,17 @@ namespace dbuild
             return architecture;
         }
 
+        [DllImport("Kernel32.dll")] static extern int GetACP();
+
         protected override Encoding ResponseFileEncoding
         {
             get
             {
-                return new UTF8Encoding(false);
+                // DMD assumes filenames encoded in system default Windows ANSI code page
+                if (Compiler == "LDC")
+                    return new UTF8Encoding(false);
+                else
+                    return System.Text.Encoding.GetEncoding(GetACP());
             }
         }
 
