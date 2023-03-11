@@ -8,24 +8,28 @@ import core.sys.windows.windows;
 class StackTrace : Throwable.TraceInfo
 {
 public:
-	this(size_t skip, CONTEXT* context)
+	this(size_t skip, CONTEXT* context) @nogc
 	{
 	}
 	int opApply(scope int delegate(ref const(char[])) dg) const
 	{
-    	return 0;
+		return 0;
 	}
 	int opApply(scope int delegate(ref size_t, ref const(char[])) dg) const
 	{
-    	return 0;
+		return 0;
 	}
-	override string toString() const
+	override string toString() const @trusted
 	{
-    	return null;
+		return null;
 	}
 	static ulong[] trace(size_t skip = 0, CONTEXT* context = null)
 	{
-    	return null;
+		return null;
+	}
+	static ulong[] trace(ulong[] buffer, size_t skip = 0, CONTEXT* context = null) @nogc
+	{
+		return null;
 	}
 	static char[][] resolve(const(ulong)[] addresses)
 	{
