@@ -620,7 +620,7 @@ class CFolderNode : CHierContainer
 		if(searchNode(this, (CHierNode n) { return cast(CFileNode) n !is null; }) is null)
 		{
 			string dir = GuessFolderPath();
-			if (std.file.exists(dir) && std.file.isDir(dir))
+			if (isExistingDir(dir))
 			{
 				string newdir = normalizeDir(dirName(dir)) ~ label;
 				scope dg = (){
@@ -805,7 +805,7 @@ class CFolderNode : CHierContainer
 				case cmdidExploreFolderInWindows:
 					fSupported = true;
 					string s = GuessFolderPath();
-					fEnabled = s.length > 0 && std.file.isDir(s);
+					fEnabled = s.length > 0 && isExistingDir(s);
 					break;
 				default:
 					hr = OLECMDERR_E_NOTSUPPORTED;
@@ -1043,7 +1043,7 @@ class CFolderNode : CHierContainer
 	HRESULT OnExploreFolderInWindows()
 	{
 		string s = GuessFolderPath();
-		if(s.length && std.file.isDir(s))
+		if(s.length && isExistingDir(s))
 			std.process.browse(s);
 		return S_OK;
 	}
