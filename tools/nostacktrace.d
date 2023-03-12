@@ -8,9 +8,15 @@ import core.sys.windows.windows;
 class StackTrace : Throwable.TraceInfo
 {
 public:
-	this(size_t skip, CONTEXT* context) @nogc
-	{
-	}
+	static if (__VERSION__ < 2102)
+		this(size_t skip, CONTEXT* context)
+		{
+		}
+	else
+		this(size_t skip, CONTEXT* context) @nogc
+		{
+		}
+
 	int opApply(scope int delegate(ref const(char[])) dg) const
 	{
 		return 0;
