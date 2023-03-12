@@ -1341,4 +1341,12 @@ Version history
   * fixed building against WinSDK 10.0.22621.0
   * fixed projects no longer considered failing
   * D files in VC projects failed to build in VS 2022 17.3 and 17.4, added separate versions of
-    dbuild.17.x.dll linked respective Microsoft.Build.CPPTasks.Common.dll
+    dbuild.17.x.dll linked against respective version of Microsoft.Build.CPPTasks.Common.dll
+
+2023-03-12 version 1.4.0
+  * dmdserver updated to frontend of DMD 2.103.0-beta1
+  * full installer now bundled with DMD 2.102.2 and LDC 1.31.0
+  * fixed issue 23734: avoid exception by std.file.isDir when clicking a project folder that doesn't exist
+  * added separate version of Microsoft.Build.CPPTasks.Common for VS 17.5.
+  * improved message when dmd crashes
+  * "add imports from dependent projects" is now evaluated recursively

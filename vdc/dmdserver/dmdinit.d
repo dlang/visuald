@@ -17,6 +17,7 @@ import dmd.dclass;
 import dmd.declaration;
 import dmd.dimport;
 import dmd.dinterpret;
+import dmd.dmdparams;
 import dmd.dmodule;
 import dmd.dstruct;
 import dmd.dsymbol;
@@ -42,7 +43,10 @@ enum string[2][] dmdStatics =
 [
 	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
 	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
-	["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
+	// 2.103
+	["_D3dmd7dmodule6Module11loadStdMathFZ8std_mathCQBsQBrQBm", "Module"],
+	["_D3dmd7dmodule6Module14loadCoreAtomicFZ11core_atomicCQBzQByQBt", "Module"],
+	
 	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
 	// 2.091
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
@@ -50,14 +54,18 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ5fhashCQEp4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
 	// 2.092
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
+	// 2.103
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
-	["_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
+	//["_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
 	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
 	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
 	["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMFPSQCc6dscope5ScopeZ4nesti", "int"],
@@ -67,7 +75,10 @@ enum string[2][] dmdStatics =
 	//["_D3dmd10expression10IntegerExp__T7literalVii0ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
-	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
+
+//	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
+	// 2.103
+	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
 ];
 
@@ -77,8 +88,8 @@ string cmangled(string s)
 	{
 		if (s == "_D3dmd10identifier10Identifier9newSuffixFNbZ1ik")
 			return "_D3dmd10identifier10Identifier9newSuffixFNbZ1im"; // size_t
-		if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti")
-			return "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBuffermKmAxaZ4nesti";
+		//if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti")
+		//	return "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBuffermKmAxaZ4nesti";
 	}
 	return s;
 }
@@ -101,9 +112,9 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ7fdapplyPCQFz4func15FuncDeclaration")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ7fdapplyPCQFs4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ6fldeTyPCQFyQBf12TypeDelegate")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ6fldeTyPCQFrQy12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
 
 
@@ -245,14 +256,14 @@ void dmdSetupParams(const ref Options opts)
 	target.os = Target.OS.Windows;
 	global.params.errorLimit = 0;
 	global.params.color = false;
-	global.params.link = true;
+//	global.params.link = true;
 	global.params.useUnitTests = opts.unittestOn;
 	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useInvariants = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useIn = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useOut = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useArrayBounds = opts.noBoundsCheck ? CHECKENABLE.on : CHECKENABLE.off; // set correct value later
-	global.params.doDocComments = opts.doDoc;
+	global.params.ddoc.doOutput = opts.doDoc;
 	global.params.useSwitchError = CHECKENABLE.on;
 	global.params.useInline = false;
 	global.params.ignoreUnsupportedPragmas = opts.ldcCompiler;
@@ -265,7 +276,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.libfiles = Strings();
 	global.params.dllfiles = Strings();
 	global.params.objfiles = Strings();
-	global.params.ddocfiles = Strings();
+	global.params.ddoc.files = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
 	target.is64bit = opts.x64;
 	target.omfobj = !opts.msvcrt;
@@ -294,14 +305,14 @@ void dmdSetupParams(const ref Options opts)
 			case "-transition=field": global.params.vfield = true; break;
 			//case "-transition=checkimports": global.params.check10378 = true; break;
 			case "-transition=complex": global.params.vcomplex = true; break;
-			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
+//			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
 			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
 			case "-preview=fieldwise": global.params.fieldwise = true; break;
 			case "-preview=intpromote": global.params.fix16997 = true; break;
 			case "-preview=dtorfields": global.params.dtorFields = FeatureState.enabled; break;
-			case "-preview=markdown": global.params.markdown = true; break;
+//			case "-preview=markdown": global.params.markdown = true; break;
 			case "-preview=rvaluerefparam": global.params.rvalueRefParam = FeatureState.enabled; break;
-			case "-preview=nosharedaccess": global.params.noSharedAccess = true; break;
+			case "-preview=nosharedaccess": global.params.noSharedAccess = FeatureState.enabled; break;
 			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
 			case "-preview=in": global.params.previewIn = true; break;
 			case "-preview=inclusiveincontracts": global.params.inclusiveInContracts = true; break;
@@ -330,7 +341,7 @@ void dmdSetupParams(const ref Options opts)
 		addDefaultVersionIdentifiers(global.params);
 
 	// always enable for tooltips
-	global.params.doDocComments = true;
+	global.params.ddoc.doOutput = true;
 
 	global.params.debugids = new Strings();
 	global.params.debuglevel = opts.debugLevel;
@@ -397,7 +408,6 @@ void dmdReinit()
 	Module.deferred = Dsymbols();    // deferred Dsymbol's needing semantic() run on them
 	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
 	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
-	Module.dprogress = 0;      // progress resolving the deferred list
 	Module.rootModule = null;
 
 	dinterpret_init();
@@ -415,12 +425,13 @@ void addDefaultVersionIdentifiers(const ref Param params)
 
 	target.addPredefinedGlobalIdentifiers();
 
-	if (params.doDocComments)
+	if (params.ddoc.doOutput)
 		VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
 	if (params.cov)
 		VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-	if (params.pic != PIC.fixed)
-		VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
+
+	if (driverParams.pic != PIC.fixed)
+		VersionCondition.addPredefinedGlobalIdent(driverParams.pic == PIC.pic ? "D_PIC" : "D_PIE");
 	if (params.useUnitTests)
 		VersionCondition.addPredefinedGlobalIdent("unittest");
 	if (params.useAssert == CHECKENABLE.on)
@@ -448,6 +459,9 @@ void addDefaultVersionIdentifiers(const ref Param params)
 
     if (params.tracegc)
         VersionCondition.addPredefinedGlobalIdent("D_ProfileGC");
+
+    if (driverParams.optimize)
+        VersionCondition.addPredefinedGlobalIdent("D_Optimized");
 }
 
 /**

@@ -10,13 +10,13 @@ module visuald.xmlwrap;
 
 version(D_Version2)
 {
-private static import std.xml;
+private static import stdxml = stdext.xml;
 
-alias std.xml.Element Element;
-alias std.xml.Document Document;
+alias stdxml.Element Element;
+alias stdxml.Document Document;
 
-alias std.xml.XMLException XmlException;
-alias std.xml.CheckException RecodeException;
+alias stdxml.XMLException XmlException;
+alias stdxml.CheckException RecodeException;
 
 Element[] elementsById(Element elem, string id)
 {
@@ -54,7 +54,7 @@ Element getElement(Element e, string s)
 
 Document newDocument(string root)
 {
-	return new Document(new std.xml.Tag(root));
+	return new Document(new stdxml.Tag(root));
 }
 
 Document readDocument(string text)
@@ -68,8 +68,8 @@ string[] writeDocument(Document doc)
 	return doc.pretty(1);
 }
 
-alias std.xml.encode encode;
-alias std.xml.decode decode;
+alias stdxml.encode encode;
+alias stdxml.decode decode;
 
 }
 else

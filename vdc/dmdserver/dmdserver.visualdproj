@@ -72,7 +72,7 @@
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -317,12 +317,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -nologo -c -TP -Idmd\src -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
+  <cccmd>$(CC) -nologo -c -TP -Idmd\src -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -447,7 +447,7 @@
   <addDepImp>0</addDepImp>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -567,12 +567,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\res dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\res dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -692,12 +692,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program />
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <imppath>dmd\compiler\src</imppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -817,7 +817,7 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
@@ -942,12 +942,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -1067,12 +1067,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\res dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\res dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -1192,12 +1192,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program>c:\s\d\dlang\dmd\generated\Windows\Release\x64\dmd.exe</program>
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <imppath>dmd\compiler\src</imppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -1317,12 +1317,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>c:\l\dmc\bin\dmc -c -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DMARS -e -wx -DTARGET_WINDOS=1 -DDM_TARGET_CPU_X86=1</cccmd>
+  <cccmd>c:\l\dmc\bin\dmc -c -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DMARS -e -wx -DTARGET_WINDOS=1 -DDM_TARGET_CPU_X86=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -1442,12 +1442,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -nologo -c -Idmd\src -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
+  <cccmd>$(CC) -nologo -c -Idmd\src -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\s\d\rainers\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src c:\s\d\dlang\druntime\src</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <imppath>dmd\compiler\src</imppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -1567,7 +1567,7 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
@@ -1692,12 +1692,12 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c -nologo -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <cccmd>$(CC) -c -nologo -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\s\d\dlang\dmd\generated\Windows\Release\x64\dmd.exe</program>
   <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\src\dmd\res</fileImppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
@@ -1753,168 +1753,171 @@
  <Folder name="dmdserver">
   <Folder name="dmd">
    <Folder name="common">
-    <File path="dmd\src\dmd\common\file.d" />
-    <File path="dmd\src\dmd\common\int128.d" />
-    <File path="dmd\src\dmd\common\outbuffer.d" />
-    <File path="dmd\src\dmd\common\string.d" />
+    <File path="dmd\compiler\src\dmd\common\file.d" />
+    <File path="dmd\compiler\src\dmd\common\int128.d" />
+    <File path="dmd\compiler\src\dmd\common\outbuffer.d" />
+    <File path="dmd\compiler\src\dmd\common\string.d" />
    </Folder>
    <Folder name="root">
-    <File path="dmd\src\dmd\root\aav.d" />
-    <File path="dmd\src\dmd\root\array.d" />
-    <File path="dmd\src\dmd\root\bitarray.d" />
-    <File path="dmd\src\dmd\root\complex.d" />
-    <File path="dmd\src\dmd\root\ctfloat.d" />
-    <File path="dmd\src\dmd\root\file.d" />
-    <File path="dmd\src\dmd\root\filename.d" />
-    <File path="dmd\src\dmd\root\hash.d" />
-    <File path="dmd\src\dmd\root\longdouble.d" />
-    <File path="dmd\src\dmd\root\longdouble.h" />
-    <File path="dmd\src\dmd\root\man.d" />
-    <File path="dmd\src\dmd\root\port.d" />
-    <File path="dmd\src\dmd\root\response.d" />
-    <File path="dmd\src\dmd\root\rmem.d" tool="None" />
-    <File path="dmd\src\dmd\root\rootobject.d" />
-    <File path="dmd\src\dmd\root\speller.d" />
-    <File path="dmd\src\dmd\root\string.d" />
-    <File path="dmd\src\dmd\root\stringtable.d" />
-    <File path="dmd\src\dmd\root\strtold.d" />
-    <File path="dmd\src\dmd\root\utf.d" />
+    <File path="dmd\compiler\src\dmd\root\aav.d" />
+    <File path="dmd\compiler\src\dmd\root\array.d" />
+    <File path="dmd\compiler\src\dmd\root\bitarray.d" />
+    <File path="dmd\compiler\src\dmd\root\complex.d" />
+    <File path="dmd\compiler\src\dmd\root\ctfloat.d" />
+    <File path="dmd\compiler\src\dmd\root\file.d" />
+    <File path="dmd\compiler\src\dmd\root\filename.d" />
+    <File path="dmd\compiler\src\dmd\root\hash.d" />
+    <File path="dmd\compiler\src\dmd\root\longdouble.d" />
+    <File path="dmd\compiler\src\dmd\root\longdouble.h" />
+    <File path="dmd\compiler\src\dmd\root\man.d" />
+    <File path="dmd\compiler\src\dmd\root\port.d" />
+    <File path="dmd\compiler\src\dmd\root\response.d" />
+    <File path="dmd\compiler\src\dmd\root\rmem.d" tool="None" />
+    <File path="dmd\compiler\src\dmd\root\rootobject.d" />
+    <File path="dmd\compiler\src\dmd\root\speller.d" />
+    <File path="dmd\compiler\src\dmd\root\string.d" />
+    <File path="dmd\compiler\src\dmd\root\stringtable.d" />
+    <File path="dmd\compiler\src\dmd\root\strtold.d" />
+    <File path="dmd\compiler\src\dmd\root\utf.d" />
    </Folder>
-   <File path="dmd\src\dmd\access.d" />
-   <File path="dmd\src\dmd\aggregate.d" />
-   <File path="dmd\src\dmd\aliasthis.d" />
-   <File path="dmd\src\dmd\apply.d" />
-   <File path="dmd\src\dmd\argtypes_aarch64.d" />
-   <File path="dmd\src\dmd\argtypes_sysv_x64.d" />
-   <File path="dmd\src\dmd\argtypes_x86.d" />
-   <File path="dmd\src\dmd\arrayop.d" />
-   <File path="dmd\src\dmd\arraytypes.d" />
-   <File path="dmd\src\dmd\ast_node.d" />
-   <File path="dmd\src\dmd\astbase.d" tool="None" />
-   <File path="dmd\src\dmd\astcodegen.d" />
-   <File path="dmd\src\dmd\astenums.d" />
-   <File path="dmd\src\dmd\asttypename.d" tool="None" />
-   <File path="dmd\src\dmd\attrib.d" />
-   <File path="dmd\src\dmd\blockexit.d" />
-   <File path="dmd\src\dmd\boostlicense.txt" />
-   <File path="dmd\src\dmd\builtin.d" />
-   <File path="dmd\src\dmd\canthrow.d" />
-   <File path="dmd\src\dmd\chkformat.d" />
-   <File path="dmd\src\dmd\cli.d" tool="None" />
-   <File path="dmd\src\dmd\clone.d" />
-   <File path="dmd\src\dmd\compiler.d" />
-   <File path="dmd\src\dmd\cond.d" />
-   <File path="dmd\src\dmd\console.d" />
-   <File path="dmd\src\dmd\constfold.d" />
-   <File path="dmd\src\dmd\cparse.d" />
-   <File path="dmd\src\dmd\cppmangle.d" />
-   <File path="dmd\src\dmd\cppmanglewin.d" />
-   <File path="dmd\src\dmd\ctfeexpr.d" />
-   <File path="dmd\src\dmd\ctorflow.d" />
-   <File path="dmd\src\dmd\dcast.d" />
-   <File path="dmd\src\dmd\dclass.d" />
-   <File path="dmd\src\dmd\declaration.d" />
-   <File path="dmd\src\dmd\delegatize.d" />
-   <File path="dmd\src\dmd\denum.d" />
-   <File path="dmd\src\dmd\dimport.d" />
-   <File path="dmd\src\dmd\dinifile.d" tool="None" />
-   <File path="dmd\src\dmd\dinterpret.d" />
-   <File path="dmd\src\dmd\dmacro.d" />
-   <File path="dmd\src\dmd\dmangle.d" />
-   <File path="dmd\src\dmd\dmodule.d" />
-   <File path="dmd\src\dmd\dmsc.d" tool="None" />
-   <File path="dmd\src\dmd\doc.d" />
-   <File path="dmd\src\dmd\dscope.d" />
-   <File path="dmd\src\dmd\dstruct.d" />
-   <File path="dmd\src\dmd\dsymbol.d" />
-   <File path="dmd\src\dmd\dsymbolsem.d" />
-   <File path="dmd\src\dmd\dtemplate.d" />
-   <File path="dmd\src\dmd\dversion.d" />
-   <File path="dmd\src\dmd\e2ir.d" tool="None" />
-   <File path="dmd\src\dmd\eh.d" tool="None" />
-   <File path="dmd\src\dmd\entity.d" />
-   <File path="dmd\src\dmd\errors.d" />
-   <File path="dmd\src\dmd\escape.d" />
-   <File path="dmd\src\dmd\expression.d" />
-   <File path="dmd\src\dmd\expressionsem.d" />
-   <File path="dmd\src\dmd\file_manager.d" />
-   <File path="dmd\src\dmd\foreachvar.d" />
-   <File path="dmd\src\dmd\frontend.d" tool="None" />
-   <File path="dmd\src\dmd\func.d" />
-   <File path="dmd\src\dmd\globals.d" />
-   <File path="dmd\src\dmd\glue.d" tool="None" />
-   <File path="dmd\src\dmd\gluelayer.d" />
-   <File path="dmd\src\dmd\hdrgen.d" />
-   <File path="dmd\src\dmd\iasm.d" tool="None" />
-   <File path="dmd\src\dmd\iasmdmd.d" tool="None" />
-   <File path="dmd\src\dmd\iasmgcc.d" tool="None" />
-   <File path="dmd\src\dmd\id.d" />
-   <File path="dmd\src\dmd\identifier.d" />
-   <File path="dmd\src\dmd\impcnvtab.d" />
-   <File path="dmd\src\dmd\imphint.d" />
-   <File path="dmd\src\dmd\importc.d" />
-   <File path="dmd\src\dmd\init.d" />
-   <File path="dmd\src\dmd\initsem.d" />
-   <File path="dmd\src\dmd\inline.d" />
-   <File path="dmd\src\dmd\inlinecost.d" />
-   <File path="dmd\src\dmd\intrange.d" />
-   <File path="dmd\src\dmd\irstate.d" tool="None" />
-   <File path="dmd\src\dmd\json.d" />
-   <File path="dmd\src\dmd\lambdacomp.d" />
-   <File path="dmd\src\dmd\lexer.d" />
-   <File path="dmd\src\dmd\lib.d" tool="None" />
-   <File path="dmd\src\dmd\libelf.d" tool="None" />
-   <File path="dmd\src\dmd\libmach.d" tool="None" />
-   <File path="dmd\src\dmd\libmscoff.d" tool="None" />
-   <File path="dmd\src\dmd\libomf.d" tool="None" />
-   <File path="dmd\src\dmd\link.d" tool="None" />
-   <File path="dmd\src\dmd\mars.d" tool="None" />
-   <File path="dmd\src\dmd\mtype.d" />
-   <File path="dmd\src\dmd\mustuse.d" />
-   <File path="dmd\src\dmd\nogc.d" />
-   <File path="dmd\src\dmd\nspace.d" />
-   <File path="dmd\src\dmd\ob.d" />
-   <File path="dmd\src\dmd\objc.d" />
-   <File path="dmd\src\dmd\objc_glue.d" tool="None" />
-   <File path="dmd\src\dmd\opover.d" />
-   <File path="dmd\src\dmd\optimize.d" />
-   <File path="dmd\src\dmd\parse.d" />
-   <File path="dmd\src\dmd\parsetimevisitor.d" />
-   <File path="dmd\src\dmd\permissivevisitor.d" />
-   <File path="dmd\src\dmd\printast.d" />
-   <File path="dmd\src\dmd\root\region.d" />
-   <File path="dmd\src\dmd\s2ir.d" tool="None" />
-   <File path="dmd\src\dmd\safe.d" />
-   <File path="dmd\src\dmd\sapply.d" />
-   <File path="dmd\src\dmd\scanelf.d" tool="None" />
-   <File path="dmd\src\dmd\scanmach.d" tool="None" />
-   <File path="dmd\src\dmd\scanmscoff.d" tool="None" />
-   <File path="dmd\src\dmd\scanomf.d" tool="None" />
-   <File path="dmd\src\dmd\semantic2.d" />
-   <File path="dmd\src\dmd\semantic3.d" />
-   <File path="dmd\src\dmd\sideeffect.d" />
-   <File path="dmd\src\dmd\statement.d" />
-   <File path="dmd\src\dmd\statement_rewrite_walker.d" />
-   <File path="dmd\src\dmd\statementsem.d" />
-   <File path="dmd\src\dmd\staticassert.d" />
-   <File path="dmd\src\dmd\staticcond.d" />
-   <File path="dmd\src\dmd\stmtstate.d" />
-   <File path="dmd\src\dmd\strictvisitor.d" />
-   <File path="dmd\src\dmd\target.d" />
-   <File path="dmd\src\dmd\templateparamsem.d" />
-   <File path="dmd\src\dmd\tocsym.d" tool="None" />
-   <File path="dmd\src\dmd\toctype.d" tool="None" />
-   <File path="dmd\src\dmd\tocvdebug.d" tool="None" />
-   <File path="dmd\src\dmd\todt.d" tool="None" />
-   <File path="dmd\src\dmd\toir.d" tool="None" />
-   <File path="dmd\src\dmd\tokens.d" />
-   <File path="dmd\src\dmd\toobj.d" tool="None" />
-   <File path="dmd\src\dmd\traits.d" />
-   <File path="dmd\src\dmd\transitivevisitor.d" />
-   <File path="dmd\src\dmd\typesem.d" />
-   <File path="dmd\src\dmd\typinf.d" />
-   <File path="dmd\src\dmd\utils.d" />
-   <File path="dmd\src\dmd\visitor.d" />
+   <File path="dmd\compiler\src\dmd\access.d" />
+   <File path="dmd\compiler\src\dmd\aggregate.d" />
+   <File path="dmd\compiler\src\dmd\aliasthis.d" />
+   <File path="dmd\compiler\src\dmd\apply.d" />
+   <File path="dmd\compiler\src\dmd\argtypes_aarch64.d" />
+   <File path="dmd\compiler\src\dmd\argtypes_sysv_x64.d" />
+   <File path="dmd\compiler\src\dmd\argtypes_x86.d" />
+   <File path="dmd\compiler\src\dmd\arrayop.d" />
+   <File path="dmd\compiler\src\dmd\arraytypes.d" />
+   <File path="dmd\compiler\src\dmd\ast_node.d" />
+   <File path="dmd\compiler\src\dmd\astbase.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\astcodegen.d" />
+   <File path="dmd\compiler\src\dmd\astenums.d" />
+   <File path="dmd\compiler\src\dmd\asttypename.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\attrib.d" />
+   <File path="dmd\compiler\src\dmd\blockexit.d" />
+   <File path="dmd\compiler\src\dmd\boostlicense.txt" />
+   <File path="dmd\compiler\src\dmd\builtin.d" />
+   <File path="dmd\compiler\src\dmd\canthrow.d" />
+   <File path="dmd\compiler\src\dmd\chkformat.d" />
+   <File path="dmd\compiler\src\dmd\cli.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\clone.d" />
+   <File path="dmd\compiler\src\dmd\compiler.d" />
+   <File path="dmd\compiler\src\dmd\cond.d" />
+   <File path="dmd\compiler\src\dmd\console.d" />
+   <File path="dmd\compiler\src\dmd\constfold.d" />
+   <File path="dmd\compiler\src\dmd\cparse.d" />
+   <File path="dmd\compiler\src\dmd\cppmangle.d" />
+   <File path="dmd\compiler\src\dmd\cppmanglewin.d" />
+   <File path="dmd\compiler\src\dmd\ctfeexpr.d" />
+   <File path="dmd\compiler\src\dmd\ctorflow.d" />
+   <File path="dmd\compiler\src\dmd\dcast.d" />
+   <File path="dmd\compiler\src\dmd\dclass.d" />
+   <File path="dmd\compiler\src\dmd\declaration.d" />
+   <File path="dmd\compiler\src\dmd\delegatize.d" />
+   <File path="dmd\compiler\src\dmd\denum.d" />
+   <File path="dmd\compiler\src\dmd\dimport.d" />
+   <File path="dmd\compiler\src\dmd\dinifile.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\dinterpret.d" />
+   <File path="dmd\compiler\src\dmd\dmacro.d" />
+   <File path="dmd\compiler\src\dmd\dmangle.d" />
+   <File path="dmd\compiler\src\dmd\dmdparams.d" />
+   <File path="dmd\compiler\src\dmd\dmodule.d" />
+   <File path="dmd\compiler\src\dmd\dmsc.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\doc.d" />
+   <File path="dmd\compiler\src\dmd\dscope.d" />
+   <File path="dmd\compiler\src\dmd\dstruct.d" />
+   <File path="dmd\compiler\src\dmd\dsymbol.d" />
+   <File path="dmd\compiler\src\dmd\dsymbolsem.d" />
+   <File path="dmd\compiler\src\dmd\dtemplate.d" />
+   <File path="dmd\compiler\src\dmd\dversion.d" />
+   <File path="dmd\compiler\src\dmd\e2ir.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\eh.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\entity.d" />
+   <File path="dmd\compiler\src\dmd\errors.d" />
+   <File path="dmd\compiler\src\dmd\errorsink.d" />
+   <File path="dmd\compiler\src\dmd\escape.d" />
+   <File path="dmd\compiler\src\dmd\expression.d" />
+   <File path="dmd\compiler\src\dmd\expressionsem.d" />
+   <File path="dmd\compiler\src\dmd\file_manager.d" />
+   <File path="dmd\compiler\src\dmd\foreachvar.d" />
+   <File path="dmd\compiler\src\dmd\frontend.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\func.d" />
+   <File path="dmd\compiler\src\dmd\globals.d" />
+   <File path="dmd\compiler\src\dmd\glue.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\gluelayer.d" />
+   <File path="dmd\compiler\src\dmd\hdrgen.d" />
+   <File path="dmd\compiler\src\dmd\iasm.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\iasmdmd.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\iasmgcc.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\id.d" />
+   <File path="dmd\compiler\src\dmd\identifier.d" />
+   <File path="dmd\compiler\src\dmd\impcnvtab.d" />
+   <File path="dmd\compiler\src\dmd\imphint.d" />
+   <File path="dmd\compiler\src\dmd\importc.d" />
+   <File path="dmd\compiler\src\dmd\init.d" />
+   <File path="dmd\compiler\src\dmd\initsem.d" />
+   <File path="dmd\compiler\src\dmd\inline.d" />
+   <File path="dmd\compiler\src\dmd\inlinecost.d" />
+   <File path="dmd\compiler\src\dmd\intrange.d" />
+   <File path="dmd\compiler\src\dmd\irstate.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\json.d" />
+   <File path="dmd\compiler\src\dmd\lambdacomp.d" />
+   <File path="dmd\compiler\src\dmd\lexer.d" />
+   <File path="dmd\compiler\src\dmd\lib.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\libelf.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\libmach.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\libmscoff.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\libomf.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\link.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\location.d" />
+   <File path="dmd\compiler\src\dmd\mars.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\mtype.d" />
+   <File path="dmd\compiler\src\dmd\mustuse.d" />
+   <File path="dmd\compiler\src\dmd\nogc.d" />
+   <File path="dmd\compiler\src\dmd\nspace.d" />
+   <File path="dmd\compiler\src\dmd\ob.d" />
+   <File path="dmd\compiler\src\dmd\objc.d" />
+   <File path="dmd\compiler\src\dmd\objc_glue.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\opover.d" />
+   <File path="dmd\compiler\src\dmd\optimize.d" />
+   <File path="dmd\compiler\src\dmd\parse.d" />
+   <File path="dmd\compiler\src\dmd\parsetimevisitor.d" />
+   <File path="dmd\compiler\src\dmd\permissivevisitor.d" />
+   <File path="dmd\compiler\src\dmd\printast.d" />
+   <File path="dmd\compiler\src\dmd\root\region.d" />
+   <File path="dmd\compiler\src\dmd\s2ir.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\safe.d" />
+   <File path="dmd\compiler\src\dmd\sapply.d" />
+   <File path="dmd\compiler\src\dmd\scanelf.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\scanmach.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\scanmscoff.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\scanomf.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\semantic2.d" />
+   <File path="dmd\compiler\src\dmd\semantic3.d" />
+   <File path="dmd\compiler\src\dmd\sideeffect.d" />
+   <File path="dmd\compiler\src\dmd\statement.d" />
+   <File path="dmd\compiler\src\dmd\statement_rewrite_walker.d" />
+   <File path="dmd\compiler\src\dmd\statementsem.d" />
+   <File path="dmd\compiler\src\dmd\staticassert.d" />
+   <File path="dmd\compiler\src\dmd\staticcond.d" />
+   <File path="dmd\compiler\src\dmd\stmtstate.d" />
+   <File path="dmd\compiler\src\dmd\strictvisitor.d" />
+   <File path="dmd\compiler\src\dmd\target.d" />
+   <File path="dmd\compiler\src\dmd\templateparamsem.d" />
+   <File path="dmd\compiler\src\dmd\tocsym.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\toctype.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\tocvdebug.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\todt.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\toir.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\tokens.d" />
+   <File path="dmd\compiler\src\dmd\toobj.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\traits.d" />
+   <File path="dmd\compiler\src\dmd\transitivevisitor.d" />
+   <File path="dmd\compiler\src\dmd\typesem.d" />
+   <File path="dmd\compiler\src\dmd\typinf.d" />
+   <File path="dmd\compiler\src\dmd\utils.d" />
+   <File path="dmd\compiler\src\dmd\visitor.d" />
   </Folder>
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />

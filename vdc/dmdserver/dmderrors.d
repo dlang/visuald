@@ -11,6 +11,7 @@ module vdc.dmdserver.dmderrors;
 import dmd.console;
 import dmd.errors;
 import dmd.globals;
+import dmd.location;
 
 import std.ascii;
 import std.string;

@@ -2014,5 +2014,6 @@
   <File path="registry.d" />
   <File path="string.d" />
   <File path="util.d" />
+  <File path="xml.d" />
  </Folder>
 </DProject>

@@ -98,8 +98,8 @@ $(UL
     definitions for the identifier at the caret position, the $(VDLINK Search,Search Window) will show up.
   )
   $(LI Use Alexander Bothe's D parsing engine:
-    Use the semantic engine that also powers Mono-D and D-IDE. It is more powerful than the
-    engine that is part of Visual D. You must have installed it from within the Visual D installer.
+    Use the semantic engine that also powers Mono-D and D-IDE. It is a bit outdated, but runs on
+    a 32-bit machine. You must have installed it from within the Visual D installer.
   )
 )
 

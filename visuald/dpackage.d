@@ -2805,7 +2805,7 @@ class GlobalOptions
 
 		foreach(dir; coverageExecutionDirs)
 		{
-			if(!std.file.exists(dir) || !std.file.isDir(dir))
+			if(!isExistingDir(dir))
 				continue;
 
 			foreach(string f; dirEntries(dir, SpanMode.shallow))
@@ -2857,7 +2857,7 @@ class GlobalOptions
 			dirs.addunique(dirName(src.GetFileName()));
 
 		foreach(dir; dirs)
-			if(std.file.exists(dir) && std.file.isDir(dir))
+			if(isExistingDir(dir))
 			{
 				string[] lstfiles;
 				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
