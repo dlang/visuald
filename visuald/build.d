@@ -803,7 +803,7 @@ class CLaunchPadEvents : DComObject, IVsLaunchPadEvents
 		m_pBuilder = builder;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLaunchPadEvents) (this, riid, pvObject))
 			return S_OK;
@@ -869,7 +869,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		mConfig = builder.mConfig;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLaunchPadOutputParser) (this, riid, pvObject))
 			return S_OK;
@@ -877,7 +877,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 	}
 
 	override HRESULT ParseOutputStringForInfo(
-		in LPCOLESTR pszOutputString,   // one line of output text
+		const LPCOLESTR pszOutputString,   // one line of output text
 		/+[out, optional]+/ BSTR *pbstrFilename,        // fully-qualified file name for task list item (may be NULL)
 		/+[out, optional]+/ ULONG *pnLineNum,           // file line number for task list item (may be NULL)
 		/+[out, optional]+/ ULONG *pnPriority,          // priority for task list item (may be NULL)

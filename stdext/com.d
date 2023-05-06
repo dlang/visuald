@@ -65,7 +65,7 @@ class ComObject : IUnknown
 	}
 
 extern (Windows):
-	override HRESULT QueryInterface(in IID* riid, void** ppv)
+	override HRESULT QueryInterface(const IID* riid, void** ppv)
 	{
 		if (*riid == IID_IUnknown)
 		{

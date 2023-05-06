@@ -30,28 +30,28 @@ import visuald.comutil;
 
 // Registers COM objects normally and registers VS Packages to the specified VS registry hive under HKCU
 extern(Windows)
-HRESULT VSDllRegisterServerUser(in wchar* strRegRoot)
+HRESULT VSDllRegisterServerUser(const wchar* strRegRoot)
 {
 	return VSDllRegisterServerInternal(strRegRoot, true);
 }
 
 // Unregisters COM objects normally and unregisters VS Packages from the specified VS registry hive under HKCU
 extern(Windows)
-HRESULT VSDllUnregisterServerUser(in wchar* strRegRoot)
+HRESULT VSDllUnregisterServerUser(const wchar* strRegRoot)
 {
 	return VSDllUnregisterServerInternal(strRegRoot, true);
 }
 
 // Registers COM objects normally and registers VS Packages to the specified VS registry hive
 extern(Windows)
-HRESULT VSDllRegisterServer(in wchar* strRegRoot)
+HRESULT VSDllRegisterServer(const wchar* strRegRoot)
 {
 	return VSDllRegisterServerInternal(strRegRoot, false);
 }
 
 // Unregisters COM objects normally and unregisters VS Packages from the specified VS registry hive
 extern(Windows)
-HRESULT VSDllUnregisterServer(in wchar* strRegRoot)
+HRESULT VSDllUnregisterServer(const wchar* strRegRoot)
 {
 	return VSDllUnregisterServerInternal(strRegRoot, false);
 }
@@ -71,7 +71,7 @@ HRESULT DllUnregisterServer()
 }
 
 extern(Windows)
-HRESULT WriteExtensionPackageDefinition(in wchar* args)
+HRESULT WriteExtensionPackageDefinition(const wchar* args)
 {
 	wstring wargs = to_wstring(args);
 	auto idx = indexOf(wargs, ' ');
@@ -798,7 +798,7 @@ static if(hasDubSupport)
 		registerMago(pszRegRoot, useRanu);
 
 		// global registry keys for marshalled objects
-		void registerMarshalObject(ref in GUID iid)
+		void registerMarshalObject(ref const GUID iid)
 		{
 			scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(iid) ~ "\\InprocServer32"w);
 			keyMarshal1.Set(null, dllPath);

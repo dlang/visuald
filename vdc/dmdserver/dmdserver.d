@@ -178,7 +178,7 @@ class DMDServer : ComObject, IVDServer
 		return super.Release();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 //		MessageBoxW(null, "Object1.QueryInterface"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
 		if(queryInterface!(IVDServer) (this, riid, pvObject))

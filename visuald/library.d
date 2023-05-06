@@ -67,7 +67,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		return S_OK;
 	}
 
-	HRESULT GetLibraryAt(in ULONG uIndex, IVsLibrary *pLibrary)
+	HRESULT GetLibraryAt(const ULONG uIndex, IVsLibrary *pLibrary)
 	{
 		mixin(LogCallMix);
 
@@ -79,7 +79,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		return mLibraries[uIndex].QueryInterface(&IID_IVsLibrary, cast(void**) pLibrary);
 	}
 
-	HRESULT GetNameAt(in ULONG uIndex, WCHAR ** pszName)
+	HRESULT GetNameAt(const ULONG uIndex, WCHAR ** pszName)
 	{
 		mixin(LogCallMix2);
 
@@ -91,7 +91,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		return mLibraries[uIndex].GetName(pszName);
 	}
 
-	HRESULT ToggleCheckAt(in ULONG uIndex)
+	HRESULT ToggleCheckAt(const ULONG uIndex)
 	{
 		mixin(LogCallMix2);
 
@@ -102,7 +102,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		return S_OK;
 	}
 
-	HRESULT GetCheckAt(in ULONG uIndex, LIB_CHECKSTATE *pstate)
+	HRESULT GetCheckAt(const ULONG uIndex, LIB_CHECKSTATE *pstate)
 	{
 		mixin(LogCallMix2);
 
@@ -114,7 +114,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		return mLibraries[uIndex].GetCheckState(pstate);
 	}
 
-	HRESULT SetLibraryGroupEnabled(in LIB_PERSISTTYPE lpt, in BOOL fEnable)
+	HRESULT SetLibraryGroupEnabled(const LIB_PERSISTTYPE lpt, const BOOL fEnable)
 	{
 		mixin(LogCallMix2);
 
@@ -146,7 +146,7 @@ class Library : DComObject,
 	string[]        mLastFindReferencesResult;
 	Source          mLastFindReferencesSource;
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(*riid == IVsLibrary2Ex.iid) // keep out of log file
 			return E_NOINTERFACE;
@@ -252,7 +252,7 @@ class Library : DComObject,
 
 	// IVsSimpleLibrary2 ////////////////////////////////////////////////////////
     //Return E_FAIL if category not supported.
-    override HRESULT GetSupportedCategoryFields2(in LIB_CATEGORY2 eCategory,
+    override HRESULT GetSupportedCategoryFields2(const LIB_CATEGORY2 eCategory,
 		/+[out, retval]+/ DWORD *pCatField)
 	{
 		mixin(LogCallMix2);
@@ -370,7 +370,7 @@ class Library : DComObject,
 	}
 
 	//Retrieve a IVsObjectList interface of LISTTYPE
-	override HRESULT GetList2(in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch,
+	override HRESULT GetList2(const LIB_LISTTYPE2 eListType, const LIB_LISTFLAGS eFlags, const VSOBSEARCHCRITERIA2 *pobSrch,
 		/+[out, retval]+/ IVsSimpleObjectList2 *ppList)
 	{
 		mixin(LogCallMix2);
@@ -435,7 +435,7 @@ class Library : DComObject,
     //Retrieve the persisted state of this library from the passed stream
     //(essentially information for each browse container being browsed). Only
     //implement for GLOBAL browse containers
-    override HRESULT LoadState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
+    override HRESULT LoadState(/+[in]+/ IStream pIStream, const LIB_PERSISTTYPE lptType)
 	{
 		mixin(LogCallMix2);
 		// we do not save/load persisted state
@@ -445,7 +445,7 @@ class Library : DComObject,
     //Save the current state of this library to the passed stream
     //(essentially information for each browse container being browsed). Only
     //implement for GLOBAL browse containers
-    override HRESULT SaveState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
+    override HRESULT SaveState(/+[in]+/ IStream pIStream, const LIB_PERSISTTYPE lptType)
 	{
 		mixin(LogCallMix2);
 		// we do not save/load persisted state
@@ -456,7 +456,7 @@ class Library : DComObject,
     // project (hierarchy). Only return a list if your package owns this hierarchy
     // Meaningful only for libraries providing PROJECT browse containers.
     override HRESULT GetBrowseContainersForHierarchy(/+[in]+/ IVsHierarchy pHierarchy,
-        in ULONG celt,
+        const ULONG celt,
         /+[in, out, size_is(celt)]+/ VSBROWSECONTAINER *rgBrowseContainers,
         /+[out, optional]+/ ULONG *pcActual)
 	{
@@ -487,7 +487,7 @@ class Library : DComObject,
     // Start browsing the component specified in PVSCOMPONENTSELECTORDATA (name is equivalent to that
     // returned thru the liblist's GetText method for this browse container).
     // Only meaningful for registered libraries for a given type of GLOBAL browse container
-    override HRESULT AddBrowseContainer(in PVSCOMPONENTSELECTORDATA pcdComponent,
+    override HRESULT AddBrowseContainer(const PVSCOMPONENTSELECTORDATA pcdComponent,
 		/+[in, out]+/ LIB_ADDREMOVEOPTIONS *pgrfOptions,
 		/+[out]+/ BSTR *pbstrComponentAdded)
 	{
@@ -499,14 +499,14 @@ class Library : DComObject,
     // Stop browsing the component identified by name (name is equivalent to that
     // returned thru the liblist's GetText method for this browse container
     // Only meaningful for registered libraries for a given type of GLOBAL browse container
-    override HRESULT RemoveBrowseContainer(in DWORD dwReserved, in LPCWSTR pszLibName)
+    override HRESULT RemoveBrowseContainer(const DWORD dwReserved, const LPCWSTR pszLibName)
 	{
 		mixin(LogCallMix2);
 		// we do not support GLOBAL browse containers
 		return E_NOTIMPL;
 	}
 
-    override HRESULT CreateNavInfo(/+[ size_is (ulcNodes)]+/ in SYMBOL_DESCRIPTION_NODE *rgSymbolNodes, in ULONG ulcNodes,
+    override HRESULT CreateNavInfo(/+[ size_is (ulcNodes)]+/ const SYMBOL_DESCRIPTION_NODE *rgSymbolNodes, const ULONG ulcNodes,
 		/+[out]+/ IVsNavInfo * ppNavInfo)
 	{
 		mixin(LogCallMix2);
@@ -536,7 +536,7 @@ class Library : DComObject,
 	}
 
     //An item has been expanded, get the next list
-    override HRESULT GetExpandedList(in ULONG Index,
+    override HRESULT GetExpandedList(const ULONG Index,
 		/+[out]+/ BOOL *pfCanRecurse,
 		/+[out]+/ IVsLiteTreeList *pptlNode)
 	{
@@ -571,7 +571,7 @@ class Library : DComObject,
 	}
     //Get a pointer to the main text for the list item. Caller will NOT free, implementor
     //can reuse buffer for each call to GetText except for TTO_SORTTEXT. See VSTREETEXTOPTIONS for tto details
-    override HRESULT GetText(in ULONG uIndex, in VSTREETEXTOPTIONS tto,
+    override HRESULT GetText(const ULONG uIndex, const VSTREETEXTOPTIONS tto,
 		/+[out]+/ const( WCHAR)**ppszText)
 	{
 		// mixin(LogCallMix2);
@@ -584,7 +584,7 @@ class Library : DComObject,
     //Get a pointer to the tip text for the list item. Like GetText, caller will NOT free, implementor
     //can reuse buffer for each call to GetTipText. If you want tiptext to be same as TTO_DISPLAYTEXT, you can
     //E_NOTIMPL this call.
-    override HRESULT GetTipText(in ULONG uIndex, in VSTREETOOLTIPTYPE eTipType,
+    override HRESULT GetTipText(const ULONG uIndex, const VSTREETOOLTIPTYPE eTipType,
 		/+[out]+/ const( WCHAR)**ppszText)
 	{
 		mixin(LogCallMix2);
@@ -597,7 +597,7 @@ class Library : DComObject,
 	}
 
     //Is this item expandable?  Not called if TF_NOEXPANSION is set
-    override HRESULT GetExpandable(in ULONG uIndex,
+    override HRESULT GetExpandable(const ULONG uIndex,
 		/+[out]+/ BOOL *pfExpandable)
 	{
 		mixin(LogCallMix2);
@@ -611,7 +611,7 @@ class Library : DComObject,
 	}
 
     //Retrieve information to draw the item
-    /+[local]+/ override HRESULT GetDisplayData(in ULONG uIndex,
+    /+[local]+/ override HRESULT GetDisplayData(const ULONG uIndex,
 		/+[out]+/ VSTREEDISPLAYDATA *pData)
 	{
 		//mixin(LogCallMix2);
@@ -642,7 +642,7 @@ class Library : DComObject,
     // *pcChanges will indicate the size of the array (so that caller can allocate the array) to fill
     // with the VSTREELISTITEMCHANGE records
     override HRESULT GetListChanges(/+[in,out]+/ ULONG *pcChanges,
-		/+[ size_is (*pcChanges)]+/ in VSTREELISTITEMCHANGE *prgListChanges)
+		/+[ size_is (*pcChanges)]+/ const VSTREELISTITEMCHANGE *prgListChanges)
 	{
 		mixin(LogCallMix2);
 
@@ -651,7 +651,7 @@ class Library : DComObject,
 	}
 
     //Toggles the state of the given item (may be more than two states)
-    override HRESULT ToggleState(in ULONG uIndex,
+    override HRESULT ToggleState(const ULONG uIndex,
 		/+[out]+/ VSTREESTATECHANGEREFRESH *ptscr)
 	{
 		mixin(LogCallMix2);
@@ -720,7 +720,7 @@ version(todo)
 	// IVsSolutionEvents //////////////////////////////////////////////////////
     // fAdded   == TRUE means project added to solution after solution open.
     // fAdded   == FALSE means project added to solution during solution open.
-    override HRESULT OnAfterOpenProject(/+[in]+/ IVsHierarchy pIVsHierarchy, in BOOL fAdded)
+    override HRESULT OnAfterOpenProject(/+[in]+/ IVsHierarchy pIVsHierarchy, const BOOL fAdded)
 	{
 		mixin(LogCallMix2);
 		assert(pIVsHierarchy);
@@ -759,7 +759,7 @@ version(todo)
 
     // fRemoving == TRUE means project being removed from   solution before solution close.
     // fRemoving == FALSE   means project being removed from solution during solution close.
-    override HRESULT OnQueryCloseProject(/+[in]+/ IVsHierarchy   pHierarchy, in BOOL fRemoving,
+    override HRESULT OnQueryCloseProject(/+[in]+/ IVsHierarchy   pHierarchy, const BOOL fRemoving,
 		/+[in,out]+/ BOOL *pfCancel)
 	{
 		mixin(LogCallMix2);
@@ -768,7 +768,7 @@ version(todo)
 
     // fRemoved == TRUE means   project removed from solution before solution close.
     // fRemoved == FALSE means project removed from solution during solution close.
-    override HRESULT OnBeforeCloseProject(/+[in]+/   IVsHierarchy pHierarchy, in BOOL fRemoved)
+    override HRESULT OnBeforeCloseProject(/+[in]+/   IVsHierarchy pHierarchy, const BOOL fRemoved)
 	{
 		mixin(LogCallMix2);
 
@@ -823,7 +823,7 @@ version(todo)
 
     // fNewSolution == TRUE means   solution is being created now.
     // fNewSolution == FALSE means solution was created previously, is being loaded.
-    override HRESULT OnAfterOpenSolution(/+[in]+/ IUnknown   pUnkReserved, in BOOL fNewSolution)
+    override HRESULT OnAfterOpenSolution(/+[in]+/ IUnknown   pUnkReserved, const BOOL fNewSolution)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
@@ -1041,7 +1041,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	InfoObject mObject;
 	InfoObject[] mMembers;
 
-	this(Library lib, in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
+	this(Library lib, const LIB_LISTTYPE2 eListType, const LIB_LISTFLAGS eFlags, const VSOBSEARCHCRITERIA2 *pobSrch)
 	{
 		mLibrary = lib;
 		mListType = eListType;
@@ -1051,7 +1051,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
 
 	this(Library lib, LibraryInfo libInfo, ObjectList parent, InfoObject object,
-		 in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
+		 const LIB_LISTTYPE2 eListType, const LIB_LISTFLAGS eFlags, const VSOBSEARCHCRITERIA2 *pobSrch)
 	{
 		mListType = eListType;
 		mFlags = eFlags;
@@ -1064,7 +1064,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		initMembers();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsSimpleObjectList2) (this, riid, pvObject))
 			return S_OK;
@@ -1265,7 +1265,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetTextWithOwnership(in ULONG uIndex, in VSTREETEXTOPTIONS tto,
+	override HRESULT GetTextWithOwnership(const ULONG uIndex, const VSTREETEXTOPTIONS tto,
 		/+[out]+/ BSTR *pbstrText)
 	{
 		//mixin(LogCallMix2);
@@ -1304,7 +1304,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
 
 	//If you want tiptext to be same as TTO_DISPLAYTEXT, you can E_NOTIMPL this call.
-	override HRESULT GetTipTextWithOwnership(in ULONG uIndex, in VSTREETOOLTIPTYPE eTipType,
+	override HRESULT GetTipTextWithOwnership(const ULONG uIndex, const VSTREETOOLTIPTYPE eTipType,
 		/+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
@@ -1319,7 +1319,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
 
     //Retrieve information to draw the item
-    /+[local]+/ HRESULT GetDisplayData(in ULONG Index, /+[out]+/ VSTREEDISPLAYDATA *pData)
+    /+[local]+/ HRESULT GetDisplayData(const ULONG Index, /+[out]+/ VSTREEDISPLAYDATA *pData)
 	{
 		//mixin(LogCallMix2);
 		pData.Mask = TDM_IMAGE | TDM_SELECTEDIMAGE;
@@ -1387,7 +1387,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return S_OK;
 	}
     // Get a sublist
-	override HRESULT GetList2(in ULONG uIndex, in LIB_LISTTYPE2 ListType, in LIB_LISTFLAGS Flags, in VSOBSEARCHCRITERIA2 *pobSrch,
+	override HRESULT GetList2(const ULONG uIndex, const LIB_LISTTYPE2 ListType, const LIB_LISTFLAGS Flags, const VSOBSEARCHCRITERIA2 *pobSrch,
 		/+[out]+/ IVsSimpleObjectList2 *ppList)
 	{
 		mixin(LogCallMix2);
@@ -1399,7 +1399,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return list.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 	}
 
-	override HRESULT GetCategoryField2(in ULONG uIndex, in LIB_CATEGORY2 Category,
+	override HRESULT GetCategoryField2(const ULONG uIndex, const LIB_CATEGORY2 Category,
 		/+[out,retval]+/ DWORD* pField)
 	{
 		mixin(LogCallMix2);
@@ -1470,7 +1470,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return S_OK;
 	}
 
-	override HRESULT GetExpandable3(in ULONG Index, in LIB_LISTTYPE2 ListTypeExcluded,
+	override HRESULT GetExpandable3(const ULONG Index, const LIB_LISTTYPE2 ListTypeExcluded,
 		/+[out]+/ BOOL *pfExpandable)
 	{
 		//mixin(LogCallMix2);
@@ -1485,12 +1485,12 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return S_OK;
 	}
 
-	override HRESULT GetNavInfo(in ULONG uIndex, /+[out]+/ IVsNavInfo * ppNavInfo)
+	override HRESULT GetNavInfo(const ULONG uIndex, /+[out]+/ IVsNavInfo * ppNavInfo)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetNavInfoNode(in ULONG Index,
+	override HRESULT GetNavInfoNode(const ULONG Index,
 		/+[out]+/ IVsNavInfoNode * ppNavInfoNode)
 	{
 		mixin(LogCallMix2);
@@ -1504,31 +1504,31 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetBrowseObject(in ULONG Index,
+	override HRESULT GetBrowseObject(const ULONG Index,
 		/+[out]+/ IDispatch *ppdispBrowseObj)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetUserContext(in ULONG Index,
+	override HRESULT GetUserContext(const ULONG Index,
 		/+[out]+/ IUnknown *ppunkUserCtx)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT ShowHelp(in ULONG Index)
+	override HRESULT ShowHelp(const ULONG Index)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetSourceContextWithOwnership(in ULONG Index,
+	override HRESULT GetSourceContextWithOwnership(const ULONG Index,
 		/+[out]+/ BSTR *pszFileName,
 		/+[out]+/ ULONG *pulLineNum)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetProperty(in ULONG Index, in VSOBJLISTELEMPROPID propid,
+	override HRESULT GetProperty(const ULONG Index, const VSOBJLISTELEMPROPID propid,
 		/+[out]+/ VARIANT *pvar)
 	{
 		mixin(LogCallMix2);
@@ -1540,7 +1540,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // If there are >1 itemids, return VSITEMID_SELECTION and a subsequent call will be made
     // on GetMultipleSourceItems to get them. If there are no available source items, return
     // VSITEMID_ROOT to indicate the root of the hierarchy as a whole.
-	override HRESULT CountSourceItems(in ULONG Index,
+	override HRESULT CountSourceItems(const ULONG Index,
 		/+[out]+/ IVsHierarchy *ppHier,
 		/+[out]+/ VSITEMID *pitemid,
 		/+[out, retval]+/ ULONG *pcItems)
@@ -1550,7 +1550,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
     // Used if CountSourceItems returns > 1. Details for filling up these out params are same
     // as IVsMultiItemSelect::GetSelectedItems
-	override HRESULT GetMultipleSourceItems(in ULONG Index, in VSGSIFLAGS grfGSI, in ULONG cItems,
+	override HRESULT GetMultipleSourceItems(const ULONG Index, const VSGSIFLAGS grfGSI, const ULONG cItems,
 		/+[out, size_is(cItems)]+/ VSITEMSELECTION *rgItemSel)
 	{
 		mixin(LogCallMix2);
@@ -1558,7 +1558,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
     // Return TRUE if navigation to source of the specified type (definition or declaration),
     // is possible, FALSE otherwise
-	override HRESULT CanGoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType,
+	override HRESULT CanGoToSource(const ULONG Index, const VSOBJGOTOSRCTYPE SrcType,
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1578,7 +1578,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // item Index. You must must coordinate with the project system to open the
     // source file and navigate it to the approp. line. Return S_OK on success or an
     // hr error (along with rich error info if possible) if the navigation failed.
-	override HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
+	override HRESULT GoToSource(const ULONG Index, const VSOBJGOTOSRCTYPE SrcType)
 	{
 		mixin(LogCallMix2);
 
@@ -1598,7 +1598,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return OpenFileInSolution(file, line, 0, modname, true);
 	}
 
-	override HRESULT GetContextMenu(in ULONG Index,
+	override HRESULT GetContextMenu(const ULONG Index,
 		/+[out]+/ CLSID *pclsidActive,
 		/+[out]+/ LONG *pnMenuId,
 		/+[out]+/ IOleCommandTarget *ppCmdTrgtActive)
@@ -1606,13 +1606,13 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		// mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT QueryDragDrop(in ULONG Index, /+[in]+/ IDataObject pDataObject, in DWORD grfKeyState,
+	override HRESULT QueryDragDrop(const ULONG Index, /+[in]+/ IDataObject pDataObject, const DWORD grfKeyState,
 		/+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT DoDragDrop(in ULONG Index, /+[in]+/ IDataObject  pDataObject, in DWORD grfKeyState,
+	override HRESULT DoDragDrop(const ULONG Index, /+[in]+/ IDataObject  pDataObject, const DWORD grfKeyState,
 		/+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
@@ -1624,7 +1624,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // and return TRUE if successful rename with that new name is possible or an an error hr (along with FALSE)
     // if the name is somehow invalid (and set the rich error info to indicate to the user
     // what was wrong)
-	override HRESULT CanRename(in ULONG Index, in LPCOLESTR pszNewName,
+	override HRESULT CanRename(const ULONG Index, const LPCOLESTR pszNewName,
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1634,13 +1634,13 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // been called with the newname so that you've had a chance to validate the name. If
     // Rename succeeds, return S_OK, other wise error hr (and set the rich error info)
     // indicating the problem encountered.
-	override HRESULT DoRename(in ULONG Index, in LPCOLESTR pszNewName, in VSOBJOPFLAGS grfFlags)
+	override HRESULT DoRename(const ULONG Index, const LPCOLESTR pszNewName, const VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
     // Says whether the item Index can be deleted or not. Return TRUE if it can, FALSE if not.
-	override HRESULT CanDelete(in ULONG Index,
+	override HRESULT CanDelete(const ULONG Index,
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1650,14 +1650,14 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // the item previously returned TRUE. On a successful deletion this should return S_OK, if
     // the deletion failed, return the failure as an error hresult and set any pertinent error
     // info in the standard ole error info.
-	override HRESULT DoDelete(in ULONG Index, in VSOBJOPFLAGS grfFlags)
+	override HRESULT DoDelete(const ULONG Index, const VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
     // Used to add the description pane text in OBject Browser. Also an alternate
     // mechanism for providing tooltips (ODO_TOOLTIPDESC is set in that case)
-	override HRESULT FillDescription2(in ULONG Index, in VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
+	override HRESULT FillDescription2(const ULONG Index, const VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
 	{
 		mixin(LogCallMix2);
 
@@ -1750,26 +1750,26 @@ class ObjectList : DComObject, IVsSimpleObjectList2
     // and will be called respectively on GetClipboardFormat or GetExtendedClipboardVariant for each.
     // Note that CV/OB will automatically provide a CF_NAVINFO and a CF_TEXT/CF_UNICODETEXT format, so
     // EnumClipboardFormats should NOT return these values.
-	override HRESULT EnumClipboardFormats(in ULONG Index,
-        in VSOBJCFFLAGS grfFlags,
-        in ULONG  celt,
+	override HRESULT EnumClipboardFormats(const ULONG Index,
+        const VSOBJCFFLAGS grfFlags,
+        const ULONG  celt,
         /+[in, out, size_is(celt)]+/ VSOBJCLIPFORMAT *rgcfFormats,
         /+[out, optional]+/ ULONG *pcActual)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetClipboardFormat(in ULONG Index,
-        in    VSOBJCFFLAGS grfFlags,
-        in    FORMATETC *pFormatetc,
-        in    STGMEDIUM *pMedium)
+	override HRESULT GetClipboardFormat(const ULONG Index,
+        const    VSOBJCFFLAGS grfFlags,
+        const    FORMATETC *pFormatetc,
+        const    STGMEDIUM *pMedium)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-	override HRESULT GetExtendedClipboardVariant(in ULONG Index,
-        in VSOBJCFFLAGS grfFlags,
-        in const( VSOBJCLIPFORMAT)*pcfFormat,
+	override HRESULT GetExtendedClipboardVariant(const ULONG Index,
+        const VSOBJCFFLAGS grfFlags,
+        const const( VSOBJCLIPFORMAT)*pcfFormat,
         /+[out]+/ VARIANT *pvarFormat)
 	{
 		mixin(LogCallMix2);
@@ -1798,7 +1798,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 			parseRef(i, r, source);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsSimpleObjectList2) (this, riid, pvObject))
 			return S_OK;
@@ -1889,7 +1889,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		*pCount = mReferences.ilength;
 		return S_OK;
 	}
-    /+[local]+/ HRESULT GetDisplayData(in ULONG Index,
+    /+[local]+/ HRESULT GetDisplayData(const ULONG Index,
 									   /+[out]+/ VSTREEDISPLAYDATA *pData)
 	{
 		mixin(LogCallMix2);
@@ -1906,7 +1906,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 
 		return S_OK;
 	}
-    HRESULT GetTextWithOwnership(in ULONG Index, in VSTREETEXTOPTIONS tto,
+    HRESULT GetTextWithOwnership(const ULONG Index, const VSTREETEXTOPTIONS tto,
 								 /+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
@@ -1925,36 +1925,36 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		}
 		return E_FAIL;
 	}
-    HRESULT GetTipTextWithOwnership(in ULONG Index, in VSTREETOOLTIPTYPE eTipType,
+    HRESULT GetTipTextWithOwnership(const ULONG Index, const VSTREETOOLTIPTYPE eTipType,
 									/+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
 		return GetTextWithOwnership(Index, TTO_DEFAULT, pbstrText);
 	}
-    HRESULT GetCategoryField2(in ULONG Index, in LIB_CATEGORY2 Category,
+    HRESULT GetCategoryField2(const ULONG Index, const LIB_CATEGORY2 Category,
 							  /+[out,retval]+/ DWORD *pfCatField)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetBrowseObject(in ULONG Index,
+    HRESULT GetBrowseObject(const ULONG Index,
 							/+[out]+/ IDispatch *ppdispBrowseObj)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetUserContext(in ULONG Index,
+    HRESULT GetUserContext(const ULONG Index,
 						   /+[out]+/ IUnknown *ppunkUserCtx)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT ShowHelp(in ULONG Index)
+    HRESULT ShowHelp(const ULONG Index)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetSourceContextWithOwnership(in ULONG Index,
+    HRESULT GetSourceContextWithOwnership(const ULONG Index,
 										  /+[out]+/ BSTR *pbstrFileName,
 										  /+[out]+/ ULONG *pulLineNum)
 	{
@@ -1973,7 +1973,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		else
 			return E_NOTIMPL;
 	}
-    HRESULT CountSourceItems(in ULONG Index,
+    HRESULT CountSourceItems(const ULONG Index,
 							 /+[out]+/ IVsHierarchy *ppHier,
 							 /+[out]+/ VSITEMID *pitemid,
 							 /+[out, retval]+/ ULONG *pcItems)
@@ -1981,13 +1981,13 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetMultipleSourceItems(in ULONG Index, in VSGSIFLAGS grfGSI, in ULONG cItems,
+    HRESULT GetMultipleSourceItems(const ULONG Index, const VSGSIFLAGS grfGSI, const ULONG cItems,
 								   /+[out, size_is(cItems)]+/ VSITEMSELECTION *rgItemSel)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT CanGoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType,
+    HRESULT CanGoToSource(const ULONG Index, const VSOBJGOTOSRCTYPE SrcType,
 						  /+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1997,7 +1997,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		*pfOK = (SrcType == GS_ANY || SrcType == GS_REFERENCE);
 		return S_OK;
 	}
-    HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
+    HRESULT GoToSource(const ULONG Index, const VSOBJGOTOSRCTYPE SrcType)
 	{
 		mixin(LogCallMix2);
 		if (!IsValidIndex(Index))
@@ -2009,7 +2009,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		string modname;
 		return OpenFileInSolution(r.file, r.line, r.col, modname, true);
 	}
-    HRESULT GetContextMenu(in ULONG Index,
+    HRESULT GetContextMenu(const ULONG Index,
 						   /+[out]+/ CLSID *pclsidActive,
 						   /+[out]+/ LONG *pnMenuId,
 						   /+[out]+/ IOleCommandTarget *ppCmdTrgtActive)
@@ -2017,76 +2017,76 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT QueryDragDrop(in ULONG Index, /+[in]+/ IDataObject pDataObject, in DWORD grfKeyState,
+    HRESULT QueryDragDrop(const ULONG Index, /+[in]+/ IDataObject pDataObject, const DWORD grfKeyState,
 						  /+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT DoDragDrop(in ULONG Index, /+[in]+/ IDataObject  pDataObject, in DWORD grfKeyState,
+    HRESULT DoDragDrop(const ULONG Index, /+[in]+/ IDataObject  pDataObject, const DWORD grfKeyState,
 					   /+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT CanRename(in ULONG Index, in LPCOLESTR pszNewName,
+    HRESULT CanRename(const ULONG Index, const LPCOLESTR pszNewName,
 					  /+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT DoRename(in ULONG Index, in LPCOLESTR pszNewName, in VSOBJOPFLAGS grfFlags)
+    HRESULT DoRename(const ULONG Index, const LPCOLESTR pszNewName, const VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT CanDelete(in ULONG Index,
+    HRESULT CanDelete(const ULONG Index,
 					  /+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT DoDelete(in ULONG Index, in VSOBJOPFLAGS grfFlags)
+    HRESULT DoDelete(const ULONG Index, const VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT FillDescription2(in ULONG Index, in VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
+    HRESULT FillDescription2(const ULONG Index, const VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT EnumClipboardFormats(in ULONG Index, in VSOBJCFFLAGS grfFlags, in ULONG  celt,
+    HRESULT EnumClipboardFormats(const ULONG Index, const VSOBJCFFLAGS grfFlags, const ULONG  celt,
 								 /+[in, out, size_is(celt)]+/ VSOBJCLIPFORMAT *rgcfFormats,
 								 /+[out, optional]+/ ULONG *pcActual)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetClipboardFormat(in ULONG Index, in VSOBJCFFLAGS grfFlags, in FORMATETC *pFormatetc, in STGMEDIUM *pMedium)
+    HRESULT GetClipboardFormat(const ULONG Index, const VSOBJCFFLAGS grfFlags, const FORMATETC *pFormatetc, const STGMEDIUM *pMedium)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetExtendedClipboardVariant(in ULONG Index, in VSOBJCFFLAGS grfFlags, in const( VSOBJCLIPFORMAT)*pcfFormat,
+    HRESULT GetExtendedClipboardVariant(const ULONG Index, const VSOBJCFFLAGS grfFlags, const const( VSOBJCLIPFORMAT)*pcfFormat,
 										/+[out]+/ VARIANT *pvarFormat)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetProperty(in ULONG Index, in VSOBJLISTELEMPROPID propid,
+    HRESULT GetProperty(const ULONG Index, const VSOBJLISTELEMPROPID propid,
 						/+[out]+/ VARIANT *pvar)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetNavInfo(in ULONG Index,
+    HRESULT GetNavInfo(const ULONG Index,
 					   /+[out]+/ IVsNavInfo * ppNavInfo)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetNavInfoNode(in ULONG Index,
+    HRESULT GetNavInfoNode(const ULONG Index,
 						   /+[out]+/ IVsNavInfoNode * ppNavInfoNode)
 	{
 		mixin(LogCallMix2);
@@ -2098,13 +2098,13 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetExpandable3(in ULONG Index, in LIB_LISTTYPE2 ListTypeExcluded,
+    HRESULT GetExpandable3(const ULONG Index, const LIB_LISTTYPE2 ListTypeExcluded,
 						   /+[out]+/ BOOL *pfExpandable)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetList2(in ULONG Index, in LIB_LISTTYPE2 ListType, in LIB_LISTFLAGS Flags, in VSOBSEARCHCRITERIA2 *pobSrch,
+    HRESULT GetList2(const ULONG Index, const LIB_LISTTYPE2 ListType, const LIB_LISTFLAGS Flags, const VSOBSEARCHCRITERIA2 *pobSrch,
 					 /+[out, retval]+/ IVsSimpleObjectList2 *ppIVsSimpleObjectList2)
 	{
 		mixin(LogCallMix2);
@@ -2152,7 +2152,7 @@ class LibraryItem
 		return S_OK;
 	}
 
-	HRESULT GetTipText(in VSTREETOOLTIPTYPE eTipType, const( WCHAR)**ppszText)
+	HRESULT GetTipText(const VSTREETOOLTIPTYPE eTipType, const( WCHAR)**ppszText)
 	{
 		*ppszText = "LibItem.GetTipText"w.ptr;
 		return S_OK;

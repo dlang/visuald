@@ -391,13 +391,13 @@ string varToString(in VARIANT arg)
 }
 
 string _toLog(GUID arg) { return GUID2utf8(arg); }
-string _toLog(in GUID* arg) { return GUID2utf8(*arg); }
-string _toLog(in VARIANT arg) { return format("VAR(%d,%s)", arg.vt, varToString(arg)); }
+string _toLog(const GUID* arg) { return GUID2utf8(*arg); }
+string _toLog(const VARIANT arg) { return format("VAR(%d,%s)", arg.vt, varToString(arg)); }
 string _toLog(string arg) { return arg; }
 
-wstring _toLog(in wchar* arg) { return arg ? to_wstring(arg) : "null"; }
+wstring _toLog(const wchar* arg) { return arg ? to_wstring(arg) : "null"; }
 void* _toLog(IUnknown arg) { return cast(void*) arg; }
-void* _toLog(in void* arg) { return cast(void*) arg; }
+void* _toLog(const void* arg) { return cast(void*) arg; }
 
 } // !version(test)
 

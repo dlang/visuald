@@ -739,7 +739,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		mSource = source;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCompletionSetEx) (this, riid, pvObject))
 			return S_OK;
@@ -861,7 +861,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return mDecls.GetCount();
 	}
 
-	override int GetDisplayText(in int index, WCHAR** text, int* glyph)
+	override int GetDisplayText(const int index, WCHAR** text, int* glyph)
 	{
 		//mixin(LogCallMix);
 
@@ -871,7 +871,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return S_OK;
 	}
 
-	override int GetDescriptionText(in int index, BSTR* description)
+	override int GetDescriptionText(const int index, BSTR* description)
 	{
 		mixin(LogCallMix2);
 
@@ -924,7 +924,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return hr;
 	}
 
-	override int GetBestMatch(in WCHAR* wtextSoFar, in int length, int* index, uint* flags)
+	override int GetBestMatch(const WCHAR* wtextSoFar, const int length, int* index, uint* flags)
 	{
 		mixin(LogCallMix);
 
@@ -961,7 +961,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return S_OK;
 	}
 
-	override int OnCommit(in WCHAR* wtextSoFar, in int index, in BOOL selected, in WCHAR commitChar, BSTR* completeWord)
+	override int OnCommit(const WCHAR* wtextSoFar, const int index, const BOOL selected, const WCHAR commitChar, BSTR* completeWord)
 	{
 		mixin(LogCallMix);
 
@@ -1017,7 +1017,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 	}
 
 	// IVsCompletionSetEx Members
-	override int CompareItems(in BSTR bstrSoFar, in BSTR bstrOther, in int lCharactersToCompare, int* plResult)
+	override int CompareItems(const BSTR bstrSoFar, const BSTR bstrOther, const int lCharactersToCompare, int* plResult)
 	{
 		mixin(LogCallMix);
 
@@ -1025,21 +1025,21 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return E_NOTIMPL;
 	}
 
-	override int IncreaseFilterLevel(in int iSelectedItem)
+	override int IncreaseFilterLevel(const int iSelectedItem)
 	{
 		mixin(LogCallMix2);
 
 		return E_NOTIMPL;
 	}
 
-	override int DecreaseFilterLevel(in int iSelectedItem)
+	override int DecreaseFilterLevel(const int iSelectedItem)
 	{
 		mixin(LogCallMix2);
 
 		return E_NOTIMPL;
 	}
 
-	override int GetCompletionItemColor(in int iIndex, COLORREF* dwFGColor, COLORREF* dwBGColor)
+	override int GetCompletionItemColor(const int iIndex, COLORREF* dwFGColor, COLORREF* dwBGColor)
 	{
 		mixin(LogCallMix);
 
@@ -1069,7 +1069,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 	}
 
 	// IVsCompletionSet3 adds icons on the right side of the completion list
-	override HRESULT GetContextIcon(in int iIndex, int *piGlyph)
+	override HRESULT GetContextIcon(const int iIndex, int *piGlyph)
 	{
 		mixin(LogCallMix);
 
@@ -1108,7 +1108,7 @@ class MethodData : DisposingComObject, IVsMethodData
 			mMethodTipWindow.SetMethodData(this);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsMethodData) (this, riid, pvObject))
 			return S_OK;
@@ -1210,7 +1210,7 @@ class MethodData : DisposingComObject, IVsMethodData
 		return mCurrentMethod;
 	}
 
-	override int GetParameterCount(in int method)
+	override int GetParameterCount(const int method)
 	{
 		if (mMethods.length == 0)
 			return 0;
@@ -1220,7 +1220,7 @@ class MethodData : DisposingComObject, IVsMethodData
 		return mMethods[method].GetParameterCount();
 	}
 
-	override int GetCurrentParameter(in int method)
+	override int GetCurrentParameter(const int method)
 	{
 		return mCurrentParameter;
 	}
@@ -1263,7 +1263,7 @@ class MethodData : DisposingComObject, IVsMethodData
 		return S_OK;
 	}
 
-	override WCHAR* GetMethodText(in int method, in MethodTextType type)
+	override WCHAR* GetMethodText(const int method, const MethodTextType type)
 	{
 		if (mMethods.length == 0)
 			return null;
@@ -1326,7 +1326,7 @@ class MethodData : DisposingComObject, IVsMethodData
 		return result.length == 0 ? null : allocBSTR(result); // produces leaks?
 	}
 
-	override WCHAR* GetParameterText(in int method, in int parameter, in ParameterTextType type)
+	override WCHAR* GetParameterText(const int method, const int parameter, const ParameterTextType type)
 	{
 		if (mMethods.length == 0)
 			return null;

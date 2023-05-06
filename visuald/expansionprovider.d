@@ -81,7 +81,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		mView = release(mView);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsExpansionClient) (this, riid, pvObject))
 			return S_OK;
@@ -104,7 +104,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	}
 
 
-	bool HandlePreExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, in VARIANT* pvaIn, VARIANT* pvaOut)
+	bool HandlePreExec(const GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, const VARIANT* pvaIn, VARIANT* pvaOut)
 	{
 		if(!expansionActive || !expansionSession)
 			return false;
@@ -152,7 +152,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return false;
 	}
 
-	bool HandlePostExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, bool commit, in VARIANT* pvaIn, VARIANT* pvaOut)
+	bool HandlePostExec(const GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, bool commit, const VARIANT* pvaIn, VARIANT* pvaOut)
 	{
 		if(*guidCmdGroup == CMDSETID_StandardCommandSet2K)
 		{
@@ -505,7 +505,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return S_OK;
 	}
 
-	override int FormatSpan(IVsTextLines buffer, in TextSpan* ts)
+	override int FormatSpan(IVsTextLines buffer, const TextSpan* ts)
 	{
 		mixin(LogCallMix);
 
@@ -526,7 +526,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return rc;
 	}
 
-	override int IsValidKind(IVsTextLines buffer, in TextSpan *ts, in BSTR bstrKind, BOOL *fIsValid)
+	override int IsValidKind(IVsTextLines buffer, const TextSpan *ts, const BSTR bstrKind, BOOL *fIsValid)
 	{
 		mixin(LogCallMix);
 
@@ -537,7 +537,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return S_OK;
 	}
 
-	override int IsValidType(IVsTextLines buffer, in TextSpan* ts, in BSTR* rgTypes, in int iCountTypes, BOOL *fIsValid)
+	override int IsValidType(IVsTextLines buffer, const TextSpan* ts, const BSTR* rgTypes, const int iCountTypes, BOOL *fIsValid)
 	{
 		mixin(LogCallMix);
 
@@ -548,7 +548,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return S_OK;
 	}
 
-	override int OnItemChosen(in BSTR pszTitle, in BSTR pszPath)
+	override int OnItemChosen(const BSTR pszTitle, const BSTR pszPath)
 	{
 		mixin(LogCallMix2);
 
@@ -569,7 +569,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 							&expansionSession);
 	}
 
-	override int PositionCaretForEditing(IVsTextLines pBuffer, in TextSpan* ts)
+	override int PositionCaretForEditing(IVsTextLines pBuffer, const TextSpan* ts)
 	{
 		mixin(LogCallMix2);
 
@@ -613,7 +613,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return S_OK;
 	}
 
-	override int GetExpansionFunction(IXMLDOMNode xmlFunctionNode, in BSTR bstrFieldName, IVsExpansionFunction* func)
+	override int GetExpansionFunction(IXMLDOMNode xmlFunctionNode, const BSTR bstrFieldName, IVsExpansionFunction* func)
 	{
 		//mixin(LogCallMix);
 
@@ -643,7 +643,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 		mProvider = release(mProvider);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsExpansionFunction) (this, riid, pvObject))
 			return S_OK;
@@ -762,7 +762,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 		return result;
 	}
 
-	override int FieldChanged(in BSTR bstrField, BOOL *fRequeryValue)
+	override int FieldChanged(const BSTR bstrField, BOOL *fRequeryValue)
 	{
 		// Returns true if we care about this field changing.
 		// We care if the field changes if one of the arguments refers to it.
@@ -812,7 +812,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 		return S_OK;
         }
 
-	override int GetListText(in int iIndex, BSTR* ppszText)
+	override int GetListText(const int iIndex, BSTR* ppszText)
 	{
 		if (!list.length)
 			list = GetIntellisenseList();

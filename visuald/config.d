@@ -1774,7 +1774,7 @@ class ConfigProvider : DisposingComObject,
 		mConfigs = mConfigs.init;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -1789,7 +1789,7 @@ class ConfigProvider : DisposingComObject,
 
 	// IVsCfgProvider
 	override int GetCfgs(
-		/* [in] */ in ULONG celt,
+		/* [in] */ const ULONG celt,
 		/* [size_is][out][in] */ IVsCfg *rgpcfg,
 		/* [optional][out] */ ULONG *pcActual,
 		/* [optional][out] */ VSCFGFLAGS *prgfFlags)
@@ -1807,7 +1807,7 @@ class ConfigProvider : DisposingComObject,
 
 	// IVsProjectCfgProvider
 	override int OpenProjectCfg(
-		/* [in] */ in wchar* szProjectCfgCanonicalName,
+		/* [in] */ const wchar* szProjectCfgCanonicalName,
 		/* [out] */ IVsProjectCfg *ppIVsProjectCfg)
 	{
 		mixin(LogCallMix);
@@ -1823,7 +1823,7 @@ class ConfigProvider : DisposingComObject,
 
 	// IVsCfgProvider2
 	override int GetCfgNames(
-		/* [in] */ in ULONG celt,
+		/* [in] */ const ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
 	{
@@ -1848,7 +1848,7 @@ class ConfigProvider : DisposingComObject,
 
 
 	override int GetPlatformNames(
-		/* [in] */ in ULONG celt,
+		/* [in] */ const ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
 	{
@@ -1872,8 +1872,8 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int GetCfgOfName(
-		/* [in] */ in wchar* pszCfgName,
-		/* [in] */ in wchar* pszPlatformName,
+		/* [in] */ const wchar* pszCfgName,
+		/* [in] */ const wchar* pszPlatformName,
 		/* [out] */ IVsCfg *ppCfg)
 	{
 		mixin(LogCallMix);
@@ -1904,9 +1904,9 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int AddCfgsOfCfgName(
-		/* [in] */ in wchar* pszCfgName,
-		/* [in] */ in wchar* pszCloneCfgName,
-		/* [in] */ in BOOL fPrivate)
+		/* [in] */ const wchar* pszCfgName,
+		/* [in] */ const wchar* pszCloneCfgName,
+		/* [in] */ const BOOL fPrivate)
 	{
 		mixin(LogCallMix);
 
@@ -1943,7 +1943,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int DeleteCfgsOfCfgName(
-		/* [in] */ in wchar* pszCfgName)
+		/* [in] */ const wchar* pszCfgName)
 	{
 		logCall("%s.DeleteCfgsOfCfgName(pszCfgName=%s)", this, _toLog(pszCfgName));
 
@@ -1964,8 +1964,8 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int RenameCfgsOfCfgName(
-		/* [in] */ in wchar* pszOldName,
-		/* [in] */ in wchar* pszNewName)
+		/* [in] */ const wchar* pszOldName,
+		/* [in] */ const wchar* pszNewName)
 	{
 		mixin(LogCallMix2);
 
@@ -1996,8 +1996,8 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int AddCfgsOfPlatformName(
-		/* [in] */ in wchar* pszPlatformName,
-		/* [in] */ in wchar* pszClonePlatformName)
+		/* [in] */ const wchar* pszPlatformName,
+		/* [in] */ const wchar* pszClonePlatformName)
 	{
 		logCall("%s.AddCfgsOfPlatformName(pszPlatformName=%s,pszClonePlatformName=%s)", this, _toLog(pszPlatformName), _toLog(pszClonePlatformName));
 
@@ -2033,7 +2033,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int DeleteCfgsOfPlatformName(
-		/* [in] */ in wchar* pszPlatformName)
+		/* [in] */ const wchar* pszPlatformName)
 	{
 		logCall("%s.DeleteCfgsOfPlatformName(pszPlatformName=%s)", this, _toLog(pszPlatformName));
 
@@ -2054,7 +2054,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int GetSupportedPlatformNames(
-		/* [in] */ in ULONG celt,
+		/* [in] */ const ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
 	{
@@ -2067,7 +2067,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int GetCfgProviderProperty(
-		/* [in] */ in VSCFGPROPID propid,
+		/* [in] */ const VSCFGPROPID propid,
 		/* [out] */ VARIANT *var)
 	{
 		mixin(LogCallMix);
@@ -2089,7 +2089,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int AdviseCfgProviderEvents(
-		/* [in] */ IVsCfgProviderEvents pCPE,
+		/* [in] */  IVsCfgProviderEvents pCPE,
 		/* [out] */ VSCOOKIE *pdwCookie)
 	{
 		mixin(LogCallMix);
@@ -2101,7 +2101,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	override int UnadviseCfgProviderEvents(
-		/* [in] */ in VSCOOKIE dwCookie)
+		/* [in] */ const VSCOOKIE dwCookie)
 	{
 		logCall("%s.UnadviseCfgProviderEvents(dwCookie=%s)", this, _toLog(dwCookie));
 
@@ -2170,7 +2170,7 @@ class Config :	DisposingComObject,
 		return super.Release();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -2255,7 +2255,7 @@ class Config :	DisposingComObject,
 		return S_OK;
 	}
 
-	override int OpenOutput(in wchar* szOutputCanonicalName, IVsOutput *ppIVsOutput)
+	override int OpenOutput(const wchar* szOutputCanonicalName, IVsOutput *ppIVsOutput)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
@@ -2322,7 +2322,7 @@ class Config :	DisposingComObject,
 
 	// IVsProjectCfg2
 	override int get_CfgType(
-		/* [in] */ in IID* iidCfg,
+		/* [in] */ const IID* iidCfg,
 		/* [iid_is][out] */ void **ppCfg)
 	{
 		debug(FULL_DBG) mixin(LogCallMix);
@@ -2330,7 +2330,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int get_OutputGroups(
-		/* [in] */ in ULONG celt,
+		/* [in] */ const ULONG celt,
 		/* [size_is][out][in] */ IVsOutputGroup *rgpcfg,
 		/* [optional][out] */ ULONG *pcActual)
 	{
@@ -2350,7 +2350,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int OpenOutputGroup(
-		/* [in] */ in wchar* szCanonicalName,
+		/* [in] */ const wchar* szCanonicalName,
 		/* [out] */ IVsOutputGroup *ppIVsOutputGroup)
 	{
 		mixin(LogCallMix);
@@ -2390,7 +2390,7 @@ class Config :	DisposingComObject,
 
 	// IVsDebuggableProjectCfg
 	override int DebugLaunch(
-		/* [in] */ in VSDBGLAUNCHFLAGS grfLaunch)
+		/* [in] */ const VSDBGLAUNCHFLAGS grfLaunch)
 	{
 		logCall("%s.DebugLaunch(grfLaunch=%s)", this, _toLog(grfLaunch));
 
@@ -2499,7 +2499,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int QueryDebugLaunch(
-		/* [in] */ in VSDBGLAUNCHFLAGS grfLaunch,
+		/* [in] */ const VSDBGLAUNCHFLAGS grfLaunch,
 		/* [out] */ BOOL *pfCanLaunch)
 	{
 //		mixin(LogCallMix);
@@ -2508,14 +2508,14 @@ class Config :	DisposingComObject,
 	}
 
 	// IVsDebuggableProjectCfg2
-	HRESULT OnBeforeDebugLaunch(in VSDBGLAUNCHFLAGS grfLaunch)
+	HRESULT OnBeforeDebugLaunch(const VSDBGLAUNCHFLAGS grfLaunch)
 	{
 		mixin(LogCallMix);
 		return S_OK; // returnError(E_NOTIMPL);
 	}
 
 	// IVsQueryDebuggableProjectCfg
-	HRESULT QueryDebugTargets(in VSDBGLAUNCHFLAGS grfLaunch, in ULONG cTargets,
+	HRESULT QueryDebugTargets(const VSDBGLAUNCHFLAGS grfLaunch, const ULONG cTargets,
 							  VsDebugTargetInfo2 *dti, ULONG *pcActual)
 	{
 		if(cTargets > 0)
@@ -2583,7 +2583,7 @@ class Config :	DisposingComObject,
 		SafeArrayPutElement(tasks, &index, &task);
 		return S_OK;
 	}
-	HRESULT BeforeLaunch(in BSTR profilingTask)
+	HRESULT BeforeLaunch(const BSTR profilingTask)
 	{
 		mixin(LogCallMix);
 		return S_OK;
@@ -2648,7 +2648,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int AdviseBuildStatusCallback(
-		/* [in] */ IVsBuildStatusCallback pIVsBuildStatusCallback,
+		/* [in] */  IVsBuildStatusCallback pIVsBuildStatusCallback,
 		/* [out] */ VSCOOKIE *pdwCookie)
 	{
 		mixin(LogCallMix);
@@ -2661,7 +2661,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int UnadviseBuildStatusCallback(
-		/* [in] */ in VSCOOKIE dwCookie)
+		/* [in] */ const VSCOOKIE dwCookie)
 	{
 //		mixin(LogCallMix);
 
@@ -2678,7 +2678,7 @@ class Config :	DisposingComObject,
 
 	override int StartBuild(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
-		/* [in] */ in DWORD dwOptions)
+		/* [in] */ const DWORD dwOptions)
 	{
 		mixin(LogCallMix);
 
@@ -2689,7 +2689,7 @@ class Config :	DisposingComObject,
 
 	override int StartClean(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
-		/* [in] */ in DWORD dwOptions)
+		/* [in] */ const DWORD dwOptions)
 	{
 		mixin(LogCallMix);
 
@@ -2698,7 +2698,7 @@ class Config :	DisposingComObject,
 
 	override int StartUpToDateCheck(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
-		/* [in] */ in DWORD dwOptions)
+		/* [in] */ const DWORD dwOptions)
 	{
 		mixin(LogCallMix);
 
@@ -2716,7 +2716,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int Stop(
-		/* [in] */ in BOOL fSync)
+		/* [in] */ const BOOL fSync)
 	{
 		logCall("%s.Stop(fSync=%s)", this, _toLog(fSync));
 		mBuilder.Stop(fSync);
@@ -2724,15 +2724,15 @@ class Config :	DisposingComObject,
 	}
 
 	override int Wait(
-		/* [in] */ in DWORD dwMilliseconds,
-		/* [in] */ in BOOL fTickWhenMessageQNotEmpty)
+		/* [in] */ const DWORD dwMilliseconds,
+		/* [in] */ const BOOL fTickWhenMessageQNotEmpty)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	override int QueryStartBuild(
-		/* [in] */ in DWORD dwOptions,
+		/* [in] */ const DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
 	{
@@ -2748,7 +2748,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int QueryStartClean(
-		/* [in] */ in DWORD dwOptions,
+		/* [in] */ const DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
 	{
@@ -2763,7 +2763,7 @@ class Config :	DisposingComObject,
 	}
 
 	override int QueryStartUpToDateCheck(
-		/* [in] */ in DWORD dwOptions,
+		/* [in] */ const DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
 	{
@@ -4247,14 +4247,14 @@ private:
 
 class DEnumOutFactory : DComObject, IClassFactory
 {
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -4262,7 +4262,7 @@ class DEnumOutFactory : DComObject, IClassFactory
 		DEnumOutputs eo = newCom!DEnumOutputs(null, 0);
 		return eo.QueryInterface(riid, pvObject);
 	}
-	override HRESULT LockServer(in BOOL fLock)
+	override HRESULT LockServer(const BOOL fLock)
 	{
 		return returnError(E_NOTIMPL);
 	}
@@ -4296,7 +4296,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		mPos = eo.mPos;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumOutputs) (this, riid, pvObject))
 			return S_OK;
@@ -4317,7 +4317,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		return S_OK;
 	}
 
-	override HRESULT Next(in ULONG cElements, IVsOutput *rgpIVsOutput, ULONG *pcElementsFetched)
+	override HRESULT Next(const ULONG cElements, IVsOutput *rgpIVsOutput, ULONG *pcElementsFetched)
 	{
 		mixin(LogCallMix);
 
@@ -4335,7 +4335,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		return S_OK;
 	}
 
-	override HRESULT Skip(in ULONG cElements)
+	override HRESULT Skip(const ULONG cElements)
 	{
 		logCall("%s.Skip(cElements=%s)", this, _toLog(cElements));
 
@@ -4358,9 +4358,9 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 	// ICallFactory
 	override HRESULT CreateCall(
-		/+[in]+/  in IID*              riid,
+		/+[in]+/  const IID*              riid,
 		/+[in]+/  IUnknown          pCtrlUnk,
-		/+[in]+/  in IID*              riid2,
+		/+[in]+/  const IID*              riid2,
 		/+[out, iid_is(riid2)]+/ IUnknown *ppv )
 	{
 		mixin(LogCallMix);
@@ -4369,8 +4369,8 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 	// IExternalConnection
 	override DWORD AddConnection (
-		/+[in]+/ in DWORD extconn,
-		/+[in]+/ in DWORD reserved )
+		/+[in]+/ const DWORD extconn,
+		/+[in]+/ const DWORD reserved )
 	{
 		mixin(LogCallMix);
 
@@ -4378,9 +4378,9 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	}
 
 	override DWORD ReleaseConnection(
-		/+[in]+/ in DWORD extconn,
-		/+[in]+/ in DWORD reserved,
-		/+[in]+/ in BOOL  fLastReleaseCloses )
+		/+[in]+/ const DWORD extconn,
+		/+[in]+/ const DWORD reserved,
+		/+[in]+/ const BOOL  fLastReleaseCloses )
 	{
 		mixin(LogCallMix);
 
@@ -4396,11 +4396,11 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	// IMarshall
 	override HRESULT GetUnmarshalClass
 		(
-		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ in void *pv,
-		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ in void *pvDestContext,
-		/+[in]+/ in DWORD mshlflags,
+		/+[in]+/ const IID* riid,
+		/+[in, unique]+/ const void *pv,
+		/+[in]+/ const DWORD dwDestContext,
+		/+[in, unique]+/ const void *pvDestContext,
+		/+[in]+/ const DWORD mshlflags,
 		/+[out]+/ CLSID *pCid
 		)
 	{
@@ -4412,11 +4412,11 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 	override HRESULT GetMarshalSizeMax
 		(
-		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ in void *pv,
-		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ in void *pvDestContext,
-		/+[in]+/ in DWORD mshlflags,
+		/+[in]+/ const IID* riid,
+		/+[in, unique]+/ const void *pv,
+		/+[in]+/ const DWORD dwDestContext,
+		/+[in, unique]+/ const void *pvDestContext,
+		/+[in]+/ const DWORD mshlflags,
 		/+[out]+/ DWORD *pSize
 		)
 	{
@@ -4434,11 +4434,11 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	override HRESULT MarshalInterface
 		(
 		/+[in, unique]+/ IStream pStm,
-		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ in void *pv,
-		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ in void *pvDestContext,
-		/+[in]+/ in DWORD mshlflags
+		/+[in]+/ const IID* riid,
+		/+[in, unique]+/ const void *pv,
+		/+[in]+/ const DWORD dwDestContext,
+		/+[in, unique]+/ const void *pvDestContext,
+		/+[in]+/ const DWORD mshlflags
 		)
 	{
 		mixin(LogCallMixNoRet);
@@ -4465,7 +4465,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	override HRESULT UnmarshalInterface
 		(
 		/+[in, unique]+/ IStream pStm,
-		/+[in]+/ in IID* riid,
+		/+[in]+/ const IID* riid,
 		/+[out]+/ void **ppv
 		)
 	{
@@ -4503,7 +4503,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		return returnError(E_NOTIMPL);
 	}
 
-	override HRESULT DisconnectObject(/+[in]+/ in DWORD dwReserved)
+	override HRESULT DisconnectObject(/+[in]+/ const DWORD dwReserved)
 	{
 		logCall("%s.DisconnectObject(dwReserved=%s)", this, _toLog(dwReserved));
 		return returnError(E_NOTIMPL);
@@ -4520,7 +4520,7 @@ class VsOutput : DComObject, IVsOutput2
 		mTarget = target;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 	version(hasOutputGroup)
 		if(queryInterface!(IVsOutput2) (this, riid, pvObject))
@@ -4568,7 +4568,7 @@ class VsOutput : DComObject, IVsOutput2
 		return returnError(E_NOTIMPL);
 	}
 
-	HRESULT get_Property(in LPCOLESTR szProperty, /+[out]+/ VARIANT *pvar)
+	HRESULT get_Property(const LPCOLESTR szProperty, /+[out]+/ VARIANT *pvar)
 	{
 		mixin(LogCallMix);
 		string prop = to_string(szProperty);
@@ -4589,7 +4589,7 @@ class VsOutputGroup : DComObject, IVsOutputGroup
 		mConfig = cfg;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsOutputGroup) (this, riid, pvObject))
 			return S_OK;
@@ -4630,7 +4630,7 @@ class VsOutputGroup : DComObject, IVsOutputGroup
     // The list of outputs.  There might be none!  Not all files go out
     // on every configuration, and a groups files might all be configuration
     // dependent!
-    HRESULT get_Outputs(in ULONG celt,
+    HRESULT get_Outputs(const ULONG celt,
 						/+[in, out, size_is(celt)]+/ IVsOutput2  *rgpcfg,
 						/+[out, optional]+/ ULONG *pcActual)
 	{
@@ -4645,7 +4645,7 @@ class VsOutputGroup : DComObject, IVsOutputGroup
 		return S_OK;
 	}
 
-    HRESULT get_DeployDependencies(in ULONG celt,
+    HRESULT get_DeployDependencies(const ULONG celt,
 								   /+[in,    out, size_is(celt)]+/ IVsDeployDependency  *rgpdpd,
 								   /+[out, optional]+/ ULONG *pcActual)
 	{
@@ -4668,14 +4668,14 @@ version(hasProfilableConfig)
 {
 class TargetInfoFactory : DComObject, IClassFactory
 {
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -4711,7 +4711,7 @@ class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchE
 		}
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsProfilerTargetInfo) (this, riid, pvObject))
 			return S_OK;
@@ -4787,11 +4787,11 @@ class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchE
 	}
 
 	override HRESULT GetMarshalSizeMax(
-		 /+[in]+/ in IID* riid,
-		 /+[in, unique]+/ in void *pv,
-		 /+[in]+/ in DWORD dwDestContext,
-		 /+[in, unique]+/ in void *pvDestContext,
-		 /+[in]+/ in DWORD mshlflags,
+		 /+[in]+/ const IID* riid,
+		 /+[in, unique]+/ const void *pv,
+		 /+[in]+/ const DWORD dwDestContext,
+		 /+[in, unique]+/ const void *pvDestContext,
+		 /+[in]+/ const DWORD mshlflags,
 		 /+[out]+/ DWORD *pSize)
 	{
 		mixin(LogCallMixNoRet);
@@ -4807,11 +4807,11 @@ class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchE
 
 	override HRESULT MarshalInterface(
 		 /+[in, unique]+/ IStream pStm,
-		 /+[in]+/ in IID* riid,
-		 /+[in, unique]+/ in void *pv,
-		 /+[in]+/ in DWORD dwDestContext,
-		 /+[in, unique]+/ in void *pvDestContext,
-		 /+[in]+/ in DWORD mshlflags)
+		 /+[in]+/ const IID* riid,
+		 /+[in, unique]+/ const void *pv,
+		 /+[in]+/ const DWORD dwDestContext,
+		 /+[in, unique]+/ const void *pvDestContext,
+		 /+[in]+/ const DWORD mshlflags)
 	{
 		mixin(LogCallMixNoRet);
 
@@ -4834,7 +4834,7 @@ class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchE
 
 	override HRESULT UnmarshalInterface(
 		 /+[in, unique]+/ IStream pStm,
-		 /+[in]+/ in IID* riid,
+		 /+[in]+/ const IID* riid,
 		 /+[out]+/ void **ppv)
 	{
 		mixin(LogCallMix);
@@ -4875,7 +4875,7 @@ class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchE
 		return returnError(E_NOTIMPL);
 	}
 
-	override HRESULT DisconnectObject(/+[in]+/ in DWORD dwReserved)
+	override HRESULT DisconnectObject(/+[in]+/ const DWORD dwReserved)
 	{
 		logCall("%s.DisconnectObject(dwReserved=%s)", this, _toLog(dwReserved));
 		return returnError(E_NOTIMPL);
@@ -4894,7 +4894,7 @@ class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
 		mConfig = cfg;
 		mPos = 0;
 	}
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IEnumVsProfilerTargetInfos) (this, uuid_IEnumVsProfilerTargetInfos, riid, pvObject))
 			return S_OK;

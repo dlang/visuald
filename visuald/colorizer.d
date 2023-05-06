@@ -160,7 +160,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		mRgbBackground = rgbBackground;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorableItem) (this, riid, pvObject))
 			return S_OK;
@@ -199,7 +199,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 	}
 
 	// IVsHiColorItem
-	HRESULT GetColorData(in VSCOLORDATA cdElement, /+[out]+/ COLORREF* pcrColor)
+	HRESULT GetColorData(const VSCOLORDATA cdElement, /+[out]+/ COLORREF* pcrColor)
 	{
 		if(cdElement == CD_FOREGROUND && mForeground == -1)
 		{
@@ -321,7 +321,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorizer) (this, riid, pvObject))
 			return S_OK;
@@ -345,7 +345,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return S_OK;
 	}
 
-	override int ColorizeLine(in int iLine, in int iLength, in wchar* pText, in int iState, uint* pAttributes)
+	override int ColorizeLine(const int iLine, const int iLength, const wchar* pText, const int iState, uint* pAttributes)
 	{
 		bool versionsChanged = false;
 		int state = GetLineState(iLine);
@@ -428,7 +428,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return S_OK;
 	}
 
-	override int GetStateAtEndOfLine(in int iLine, in int iLength, in wchar* pText, in int iState)
+	override int GetStateAtEndOfLine(const int iLine, const int iLength, const wchar* pText, const int iState)
 	{
 		version(LOG) mixin(LogCallMix2);
 
@@ -469,7 +469,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return type;
 	}
 
-	int GetStateAtEndOfLine(in int iLine, wstring text, in int iState, ref bool versionsChanged)
+	int GetStateAtEndOfLine(const int iLine, wstring text, const int iState, ref bool versionsChanged)
 	{
 		version(LOG) logCall("%s.GetStateAtEndOfLine(%d,%s,%x)", this, iLine, text, iState);
 		version(LOG) mixin(_LogIndentNoRet);

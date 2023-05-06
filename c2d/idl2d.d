@@ -2246,7 +2246,7 @@ else
 			else if(tok.type == Token.String && tok.text.length > 4 && tok.text[0] == '\'')
 				tok.text = "\"" ~ tok.text[1 .. $-1] ~ "\"";
 
-			else if(tok.text == "in" && (tokIt[1].text in classes))
+			else if((tok.text == "in" || tok.text == "const") && (tokIt[1].text in classes))
 				tok.text = "/+[in]+/";
 
 			else if(tok.text == "alias")
@@ -2305,6 +2305,7 @@ else
 		{
 		case "denum":     return "enum";
 		case "dconst":    return "const";
+		case "in":        return "const";
 
 		case "_stdcall":  return "/*_stdcall*/";
 		case "_fastcall": return "/*_fastcall*/";

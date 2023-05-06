@@ -61,7 +61,7 @@ class CFileNode : CHierNode,
 		SetName(baseName(filename));
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(CFileNode) (this, riid, pvObject))
 			return S_OK;
@@ -122,7 +122,7 @@ class CFileNode : CHierNode,
 		}
 	}
 
-	override int SetProperty(VSHPROPID propid, in VARIANT var)
+	override int SetProperty(VSHPROPID propid, const VARIANT var)
 	{
 		switch(propid)
 		{
@@ -296,7 +296,7 @@ class CFileNode : CHierNode,
 	override uint GetContextMenu() { return IDM_VS_CTXT_ITEMNODE; }
 
 	override int QueryStatus(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -346,10 +346,10 @@ class CFileNode : CHierNode,
 	}
 
 	override int Exec(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [unique][in] */ const VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		int hr = OLECMDERR_E_NOTSUPPORTED;
@@ -612,7 +612,7 @@ class CFolderNode : CHierContainer
 		*ppEditLabel = allocBSTR(GetName());
 		return S_OK;
 	}
-	override int SetEditLabel(in BSTR pEditLabel)
+	override int SetEditLabel(const BSTR pEditLabel)
 	{
 		string label = to_string(pEditLabel);
 
@@ -753,7 +753,7 @@ class CFolderNode : CHierContainer
 		}
 	}
 
-	override int SetProperty(VSHPROPID propid, in VARIANT var)
+	override int SetProperty(VSHPROPID propid, const VARIANT var)
 	{
 		switch(propid)
 		{
@@ -768,7 +768,7 @@ class CFolderNode : CHierContainer
 	}
 
 	override int QueryStatus(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -858,10 +858,10 @@ class CFolderNode : CHierContainer
 	}
 
 	override int Exec(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [unique][in] */ const VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		int hr = OLECMDERR_E_NOTSUPPORTED;
@@ -1098,7 +1098,7 @@ class CProjectNode : CFolderNode
 	}
 
 	override int QueryStatus(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -1168,10 +1168,10 @@ class CProjectNode : CFolderNode
 	}
 
 	override int Exec(
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [unique][in] */ const VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		int hr = OLECMDERR_E_NOTSUPPORTED;
@@ -1231,7 +1231,7 @@ class CProjectNode : CFolderNode
 		return super.GetProperty(propid, var);
 	}
 
-	override int SetEditLabel(in BSTR pEditLabel)
+	override int SetEditLabel(const BSTR pEditLabel)
 	{
 		string label = to_string(pEditLabel);
 		SetName(label);
@@ -1261,7 +1261,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 		}
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsHierarchy) (this, riid, pvObject))
 			return S_OK;
@@ -1273,8 +1273,8 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 	}
 
 	// to be overridden
-	HRESULT QueryStatusSelection(in GUID *pguidCmdGroup,
-				     in ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText,
+	HRESULT QueryStatusSelection(const GUID *pguidCmdGroup,
+				     const ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText,
 				     ref CHierNode[] rgSelection, bool bIsHierCmd)
 	{
 		return returnError(OLECMDERR_E_NOTSUPPORTED);
@@ -1282,9 +1282,9 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 
 	// IVsUIHierarchy
 	override int QueryStatusCommand(
-		/* [in] */ in VSITEMID itemid,
-		/* [unique][in] */ in GUID *pguidCmdGroup,
-		/* [in] */ in ULONG cCmds,
+		/* [in] */ const VSITEMID itemid,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
+		/* [in] */ const ULONG cCmds,
 		/* [size_is][out][in] */ OLECMD *prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
 	{
@@ -1305,11 +1305,11 @@ version(none)
 	}
 
 	override int ExecCommand(
-		/* [in] */ in VSITEMID itemid,
-		/* [unique][in] */ in GUID *pguidCmdGroup,
-		/* [in] */ in DWORD nCmdID,
-		/* [in] */ in DWORD nCmdexecopt,
-		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [in] */ const VSITEMID itemid,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
+		/* [in] */ const DWORD nCmdID,
+		/* [in] */ const DWORD nCmdexecopt,
+		/* [unique][in] */ const VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		mixin(LogCallMix);
@@ -1410,7 +1410,7 @@ version(none)
 
 	alias VT_VSITEMID = VT_I4; // was VT_INT, was VT_INT_PTR
 
-	override int GetProperty(in VSITEMID itemid, in VSHPROPID propid, VARIANT* var)
+	override int GetProperty(const VSITEMID itemid, const VSHPROPID propid, VARIANT* var)
 	{
 		//mixin(LogCallMix);
 		CHierNode pNode = VSITEMID2Node(itemid);
@@ -1535,7 +1535,7 @@ version(none)
 		return S_OK;
 	}
 
-	override int SetProperty(in VSITEMID itemid, in VSHPROPID propid, in VARIANT var)
+	override int SetProperty(const VSITEMID itemid, const VSHPROPID propid, const VARIANT var)
 	{
 		CHierNode pNode = VSITEMID2Node(itemid);
 		if(!pNode)
@@ -1566,14 +1566,14 @@ version(none)
 		return S_OK;
 	}
 
-	override int GetGuidProperty(in VSITEMID itemid, in VSHPROPID propid, GUID* pGuid)
+	override int GetGuidProperty(const VSITEMID itemid, const VSHPROPID propid, GUID* pGuid)
 	{
 		if(CHierNode pNode = VSITEMID2Node(itemid))
 			return pNode.GetGuidProperty(propid, *pGuid);
 		return returnError(E_INVALIDARG);
 	}
 
-	override int GetNestedHierarchy(in VSITEMID itemid, in IID* iidHierarchyNested, void **ppHierarchyNested, VSITEMID* pitemidNested)
+	override int GetNestedHierarchy(const VSITEMID itemid, const IID* iidHierarchyNested, void **ppHierarchyNested, VSITEMID* pitemidNested)
 	{
 		mixin(LogCallMix);
 
@@ -1582,7 +1582,7 @@ version(none)
 		return returnError(E_FAIL);
 	}
 
-	override int GetCanonicalName(in VSITEMID itemid, BSTR *pbstrName)
+	override int GetCanonicalName(const VSITEMID itemid, BSTR *pbstrName)
 	{
 		logCall("GetCanonicalName(this=%s, itemid=%s, pbstrMkDocument=%s)", cast(void*)this, _toLog(itemid), _toLog(pbstrName));
 		scope(exit)
@@ -1596,7 +1596,7 @@ version(none)
 		return returnError(E_INVALIDARG);
 	}
 
-	override int ParseCanonicalName(in wchar* pszName, VSITEMID* pitemid)
+	override int ParseCanonicalName(const wchar* pszName, VSITEMID* pitemid)
 	{
 		mixin(LogCallMix2);
 
@@ -1623,7 +1623,7 @@ version(none)
 		return S_OK;
 	}
 
-	override int UnadviseHierarchyEvents(in uint dwCookie)
+	override int UnadviseHierarchyEvents(const uint dwCookie)
 	{
 //		mixin(LogCallMix);
 
@@ -1662,7 +1662,7 @@ version(none)
 
 	// IVsPersistHierarchyItem
 	override int IsItemDirty(
-		/* [in] */ in VSITEMID itemid,
+		/* [in] */ const VSITEMID itemid,
 		/* [in] */ IUnknown punkDocData,
 		/* [out] */ BOOL *pfDirty)
 	{
@@ -1674,9 +1674,9 @@ version(none)
 	}
 
 	override int SaveItem(
-		/* [in] */ in VSSAVEFLAGS dwSave,
-		/* [in] */ in wchar* pszSilentSaveAsName,
-		/* [in] */ in VSITEMID itemid,
+		/* [in] */ const VSSAVEFLAGS dwSave,
+		/* [in] */ const wchar* pszSilentSaveAsName,
+		/* [in] */ const VSITEMID itemid,
 		/* [in] */ IUnknown punkDocData,
 		/* [out] */ BOOL* pfCanceled)
 	{
@@ -2013,9 +2013,9 @@ public: // IVsHierarchyEvent propagation
 		/* [in]  */ bool             fNewFile            /*= FALSE*/,
 		/* [in]  */ bool             fUseOpenWith        /*= FALSE*/,
 		/* [in]  */ bool             fShow               /*= TRUE */,
-		/* [in]  */ in GUID*         rguidLogicalView    = &LOGVIEWID_Primary,
-		/* [in]  */ in GUID*         rguidEditorType     = &GUID_NULL,
-		/* [in]  */ in wchar*        pszPhysicalView     = null,
+		/* [in]  */ const GUID*      rguidLogicalView    = &LOGVIEWID_Primary,
+		/* [in]  */ const GUID*      rguidEditorType     = &GUID_NULL,
+		/* [in]  */ const wchar*     pszPhysicalView     = null,
 		/* [in]  */ IUnknown         punkDocDataExisting = DOCDATAEXISTING_UNKNOWN,
 		/* [out] */ IVsWindowFrame*  ppWindowFrame       = null)
 	{
@@ -2123,14 +2123,14 @@ public: // IVsHierarchyEvent propagation
 
 	HRESULT AddItemSpecific(CHierContainer pNode,
 		/* [in]                        */ VSADDITEMOPERATION    dwAddItemOperation,
-		/* [in]                        */ in wchar*             pszItemName,
+		/* [in]                        */ const wchar*          pszItemName,
 		/* [in]                        */ uint                  cFilesToOpen,
-		/* [in, size_is(cFilesToOpen)] */ in wchar**            rgpszFilesToOpen,
-		/* [in]                        */ in HWND               hwndDlg,
+		/* [in, size_is(cFilesToOpen)] */ const wchar**         rgpszFilesToOpen,
+		/* [in]                        */ const HWND            hwndDlg,
 		/* [in]                        */ VSSPECIFICEDITORFLAGS grfEditorFlags,
-		/* [in]                        */ in GUID*              rguidEditorType,
-		/* [in]                        */ in wchar*             pszPhysicalView,
-		/* [in]                        */ in GUID*              rguidLogicalView,
+		/* [in]                        */ const GUID*           rguidEditorType,
+		/* [in]                        */ const wchar*          pszPhysicalView,
+		/* [in]                        */ const GUID*           rguidLogicalView,
 		/* [in]                        */ bool                  moveIfInProject,
 		/* [out, retval]               */ VSADDRESULT*          pResult)
 	{
@@ -2436,10 +2436,10 @@ public: // IVsHierarchyEvent propagation
 	}
 
 	HRESULT RunWizard(CHierContainer pNode,
-		/* [in]                        */ in wchar*       pszItemName,
+		/* [in]                        */ const wchar*       pszItemName,
 		/* [in]                        */ ULONG           cFilesToOpen,
-		/* [in, size_is(cFilesToOpen)] */ in wchar**      rgpszFilesToOpen,
-		/* [in]                        */ in HWND         hwndDlg,
+		/* [in, size_is(cFilesToOpen)] */ const wchar**      rgpszFilesToOpen,
+		/* [in]                        */ const HWND         hwndDlg,
 		/* [out, retval]               */ VSADDRESULT*    pResult)
 	{
 		if(cFilesToOpen < 1)

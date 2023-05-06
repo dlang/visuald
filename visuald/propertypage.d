@@ -83,7 +83,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	/*const*/ int kLineSpacing = 2;
 	/*const*/ int kNeededLines = 11;
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IPropertyPage) (this, riid, pvObject))
 			return S_OK;
@@ -117,9 +117,9 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int Activate(
-		/* [in] */ in HWND hWndParent,
-		/* [in] */ in RECT *pRect,
-		/* [in] */ in BOOL bModal)
+		/* [in] */ const HWND hWndParent,
+		/* [in] */ const RECT *pRect,
+		/* [in] */ const BOOL bModal)
 	{
 		mixin(LogCallMix);
 
@@ -282,7 +282,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int SetObjects(
-		/* [in] */ in ULONG cObjects,
+		/* [in] */ const ULONG cObjects,
 		/* [size_is][in] */ IUnknown *ppUnk)
 	{
 		mixin(LogCallMix2);
@@ -304,7 +304,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int Show(
-		/* [in] */ in UINT nCmdShow)
+		/* [in] */ const UINT nCmdShow)
 	{
 		logCall("%s.Show(nCmdShow=%s)", this, _toLog(nCmdShow));
 		if(mWindow)
@@ -314,7 +314,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int Move(
-		/* [in] */ in RECT *pRect)
+		/* [in] */ const RECT *pRect)
 	{
 		mixin(LogCallMix);
 		updateSizes();
@@ -322,14 +322,14 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int Help(
-		/* [in] */ in wchar* pszHelpDir)
+		/* [in] */ const wchar* pszHelpDir)
 	{
 		logCall("%s.Help(pszHelpDir=%s)", this, _toLog(pszHelpDir));
 		return returnError(E_NOTIMPL);
 	}
 
 	override int TranslateAccelerator(
-		/* [in] */ in MSG *pMsg)
+		/* [in] */ const MSG *pMsg)
 	{
 		mixin(LogCallMix2);
 		if(mSite)
@@ -339,7 +339,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 	// IVsPropertyPage
 	override int get_CategoryTitle(
-		/* [in] */ in UINT iLevel,
+		/* [in] */ const UINT iLevel,
 		/* [retval][out] */ BSTR *pbstrCategory)
 	{
 		logCall("%s.get_CategoryTitle(iLevel=%s, pbstrCategory=%s)", this, _toLog(iLevel), _toLog(pbstrCategory));
@@ -361,7 +361,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 	// IVsPropertyPage2
 	override int GetProperty(
-		/* [in] */ in VSPPPID propid,
+		/* [in] */ const VSPPPID propid,
 		/* [out] */ VARIANT *pvar)
 	{
 		mixin(LogCallMix);
@@ -378,8 +378,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	override int SetProperty(
-		/* [in] */ in VSPPPID propid,
-		/* [in] */ in VARIANT var)
+		/* [in] */ const VSPPPID propid,
+		/* [in] */ const VARIANT var)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
@@ -599,7 +599,7 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 	abstract void SetControls(ProjectOptions options);
 	abstract int  DoApply(ProjectOptions options, ProjectOptions refoptions);
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		//if(queryInterface!(ConfigModifiedListener) (this, riid, pvObject))
 		//	return S_OK;
@@ -624,7 +624,7 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 	{
 	}
 
-	override int SetObjects(/* [in] */ in ULONG cObjects,
+	override int SetObjects(/* [in] */ const ULONG cObjects,
 							/* [size_is][in] */ IUnknown *ppUnk)
 	{
 		if(auto cfg = GetConfig())
@@ -3341,14 +3341,14 @@ class PropertyPageFactory : DComObject, IClassFactory
 		mClsid = *rclsid;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		PropertyPage ppp;
 		assert(!UnkOuter);
@@ -3389,7 +3389,7 @@ class PropertyPageFactory : DComObject, IClassFactory
 		return ppp.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT LockServer(in BOOL fLock)
+	override HRESULT LockServer(const BOOL fLock)
 	{
 		return S_OK;
 	}

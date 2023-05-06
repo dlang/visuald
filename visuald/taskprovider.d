@@ -39,7 +39,7 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 	{
 
 	}
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTaskProvider) (this, riid, pvObject))
 			return S_OK;
@@ -63,7 +63,7 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 		return E_NOTIMPL;
 	}
 
-	override HRESULT get_SubcategoryList(in ULONG cbstr, BSTR *rgbstr, ULONG *pcActual)
+	override HRESULT get_SubcategoryList(const ULONG cbstr, BSTR *rgbstr, ULONG *pcActual)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
@@ -229,7 +229,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 		mLine = line;
 		mColumn = col;
 	}
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTaskItem) (this, riid, pvObject))
 			return S_OK;
@@ -243,7 +243,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 		*ptpPriority = mPriority;
 		return S_OK;
 	}
-    override HRESULT put_Priority(in VSTASKPRIORITY tpPriority)
+    override HRESULT put_Priority(const VSTASKPRIORITY tpPriority)
 	{
 		mPriority = tpPriority;
 		return S_OK;
@@ -272,7 +272,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 		*pfChecked = mChecked;
 		return S_OK;
 	}
-    override HRESULT put_Checked(in BOOL fChecked)
+    override HRESULT put_Checked(const BOOL fChecked)
 	{
 		mChecked = fChecked != 0;
 		return S_OK;
@@ -282,7 +282,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 		*pbstrName = allocBSTR(mText);
 		return S_OK;
 	}
-    override HRESULT put_Text (in BSTR bstrName)
+    override HRESULT put_Text (const BSTR bstrName)
 	{
 		return E_NOTIMPL;
 	}
@@ -310,7 +310,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 		*pfCanDelete = FALSE;
 		return S_OK;
 	}
-	override HRESULT get_IsReadOnly(in VSTASKFIELD field, BOOL *pfReadOnly)
+	override HRESULT get_IsReadOnly(const VSTASKFIELD field, BOOL *pfReadOnly)
 	{
 		switch(field)
 		{
@@ -342,7 +342,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 	}
 
 	// Notifications
-    override HRESULT OnFilterTask(in BOOL fVisible)
+    override HRESULT OnFilterTask(const BOOL fVisible)
 	{
 		return E_NOTIMPL;
 	}
@@ -387,14 +387,14 @@ class TaskItemsEnum : DComObject, IVsEnumTaskItems
 		mPos = 0;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumTaskItems) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override int Next(in ULONG celt, IVsTaskItem *rgelt, ULONG *pceltFetched)
+	override int Next(const ULONG celt, IVsTaskItem *rgelt, ULONG *pceltFetched)
 	{
 		if(mPos + celt > mItems.length)
 			return E_FAIL;
@@ -409,7 +409,7 @@ class TaskItemsEnum : DComObject, IVsEnumTaskItems
 		return S_OK;
 	}
 
-	override int Skip(in ULONG celt)
+	override int Skip(const ULONG celt)
 	{
 		mPos += celt;
 		return S_OK;
