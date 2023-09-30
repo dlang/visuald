@@ -1185,7 +1185,7 @@ unittest
 	}
 
 	checkTip(5, 9, "(local variable) `int xyz`");
-	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`...");
+	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int __param_0, int __param_1, int __param_2) @safe`...");
 	checkTip(7, 12, "(local variable) `int xyz`");
 
 	version(traceGC)

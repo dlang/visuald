@@ -13,7 +13,6 @@ import vdc.ivdserver : TypeReferenceKind;
 import dmd.access;
 import dmd.aggregate;
 import dmd.aliasthis;
-import dmd.apply;
 import dmd.arraytypes;
 import dmd.astenums;
 import dmd.attrib;
@@ -43,6 +42,7 @@ import dmd.init;
 import dmd.location;
 import dmd.mtype;
 import dmd.objc;
+import dmd.postordervisitor;
 import dmd.sapply;
 import dmd.semantic2;
 import dmd.semantic3;
@@ -465,7 +465,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visit(cast(Statement)stmt);
 	}
 
-	override void visit(CompileStatement stmt)
+	override void visit(MixinStatement stmt)
 	{
 		if (stmt.exps)
 			foreach(e; *stmt.exps)
@@ -2776,7 +2776,7 @@ bool isConstantExpr(Expression expr)
 {
 	switch(expr.op)
 	{
-		case EXP.int64, EXP.float64, EXP.char_, EXP.complex80:
+		case EXP.int64, EXP.float64, EXP.complex80:
 		case EXP.null_, EXP.void_:
 		case EXP.string_:
 		case EXP.arrayLiteral, EXP.assocArrayLiteral, EXP.structLiteral:

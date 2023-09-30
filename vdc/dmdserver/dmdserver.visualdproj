@@ -1783,7 +1783,6 @@
    <File path="dmd\compiler\src\dmd\access.d" />
    <File path="dmd\compiler\src\dmd\aggregate.d" />
    <File path="dmd\compiler\src\dmd\aliasthis.d" />
-   <File path="dmd\compiler\src\dmd\apply.d" />
    <File path="dmd\compiler\src\dmd\argtypes_aarch64.d" />
    <File path="dmd\compiler\src\dmd\argtypes_sysv_x64.d" />
    <File path="dmd\compiler\src\dmd\argtypes_x86.d" />
@@ -1884,6 +1883,7 @@
    <File path="dmd\compiler\src\dmd\parse.d" />
    <File path="dmd\compiler\src\dmd\parsetimevisitor.d" />
    <File path="dmd\compiler\src\dmd\permissivevisitor.d" />
+   <File path="dmd\compiler\src\dmd\postordervisitor.d" />
    <File path="dmd\compiler\src\dmd\printast.d" />
    <File path="dmd\compiler\src\dmd\root\region.d" />
    <File path="dmd\compiler\src\dmd\s2ir.d" tool="None" />

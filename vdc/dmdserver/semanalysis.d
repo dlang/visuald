@@ -235,12 +235,15 @@ string[] guessImportPaths()
 {
 	import std.file;
 
-	string path = r"c:\D\dmd-" ~ to!string(__VERSION__)[0..1] ~ "." ~ to!string(__VERSION__)[1..$] ~ ".0";
-	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
-		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
-	path ~= "-beta.1";
-	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
-		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+	foreach(patch; '0'..'3')
+	{
+		string path = r"c:\D\dmd-" ~ to!string(__VERSION__)[0..1] ~ "." ~ to!string(__VERSION__)[1..$] ~ "." ~ patch;
+		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+		path ~= "-beta.1";
+		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+	}
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
 		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
 	if (std.file.exists(r"c:\s\d\rainers\druntime\import\object.d"))
@@ -444,9 +447,9 @@ void do_unittests()
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
-	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`\n...");
+	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int __param_0, int __param_1, int __param_2) @safe`\n...");
 	checkTip(m, 5, 11, "");
-	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`\n...");
+	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int __param_0, int __param_1, int __param_2) @safe`\n...");
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
@@ -1605,10 +1608,10 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-		"6,3,6,4:Error: found `if` when expecting `;` following statement\n" ~
+		"6,3,6,4:Error: found `if` when expecting `;` following statement `a = 1` on line source.d(5)\n" ~
 		"6,9,6,10:Error: found `==` when expecting `)`\n" ~
 		"6,12,6,13:Error: missing `{ ... }` for function literal\n" ~
-		"6,12,6,13:Error: found `1` when expecting `;` following statement\n" ~
+		"6,12,6,13:Error: found `1` when expecting `;` following statement `` on line source.d(6)\n" ~
 		"6,13,6,14:Error: found `)` instead of statement\n" ~
 		"9,2,9,3:Error: unmatched closing brace\n" ~
 		"5,3,5,4:Error: undefined identifier `a`\n" ~
@@ -2061,7 +2064,7 @@ void test_ana_dmd()
 		string source;
 		Module m;
 
-		foreach(f; ["access.d", "aggregate.d", "aliasthis.d", "apply.d", "argtypes_sysv_x64.d", "arrayop.d"])
+		foreach(f; ["access.d", "aggregate.d", "aliasthis.d", "argtypes_sysv_x64.d", "arrayop.d"])
 		{
 			filename = std.path.buildPath(srcdir, "dmd", f);
 			source = cast(string)std.file.read(filename);

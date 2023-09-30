@@ -57,14 +57,14 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
+//	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
 	// 2.103
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ11visitAArrayMFCQFcQEi10TypeAArrayZ8fd_aaLenCQGf4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ8noMemberMFQEdQDsQDdCQFh10identifier10IdentifieriZ4nesti", "int"],
 	//["_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
 	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
 	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
@@ -112,9 +112,9 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ7fdapplyPCQFs4func15FuncDeclaration")
+pragma(mangle, "_D3dmd12statementsem15applyAssocArrayFCQBl9statement16ForeachStatementCQCr10expression10ExpressionCQDt5mtype4TypeZ7fdapplyPCQEs4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ6fldeTyPCQFrQy12TypeDelegate")
+pragma(mangle, "_D3dmd12statementsem15applyAssocArrayFCQBl9statement16ForeachStatementCQCr10expression10ExpressionCQDt5mtype4TypeZ6fldeTyPCQErQy12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
 
 
@@ -278,10 +278,10 @@ void dmdSetupParams(const ref Options opts)
 	global.params.objfiles = Strings();
 	global.params.ddoc.files = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
-	target.is64bit = opts.x64;
+	target.isX86_64 = opts.x64;
 	target.omfobj = !opts.msvcrt;
 	target.cpu = CPU.baseline;
-	target.isLP64 = target.is64bit;
+	target.isLP64 = opts.x64;
 
 	string[] cli = opts.cmdline.split(' ');
 	foreach(opt; cli)
@@ -307,7 +307,7 @@ void dmdSetupParams(const ref Options opts)
 			case "-transition=complex": global.params.vcomplex = true; break;
 //			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
 			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
-			case "-preview=fieldwise": global.params.fieldwise = true; break;
+			case "-preview=fieldwise": global.params.fieldwise = FeatureState.enabled; break;
 			case "-preview=intpromote": global.params.fix16997 = true; break;
 			case "-preview=dtorfields": global.params.dtorFields = FeatureState.enabled; break;
 //			case "-preview=markdown": global.params.markdown = true; break;
@@ -498,7 +498,7 @@ void addPredefinedGlobalIdentifiers(const ref Target tgt)
 			case OS.Windows:
 				{
 					predef("Windows");
-					VersionCondition.addPredefinedGlobalIdent(tgt.is64bit ? "Win64" : "Win32");
+					VersionCondition.addPredefinedGlobalIdent(tgt.isX86_64 ? "Win64" : "Win32");
 					break;
 				}
 			case OS.OSX:
@@ -528,7 +528,7 @@ void addPredefinedGlobalIdentifiers(const ref Target tgt)
 	addCRuntimePredefinedGlobalIdent(tgt.c);
 	addCppRuntimePredefinedGlobalIdent(tgt.cpp);
 
-	if (tgt.is64bit)
+	if (tgt.isX86_64)
 	{
 		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
 		VersionCondition.addPredefinedGlobalIdent("X86_64");
@@ -541,7 +541,7 @@ void addPredefinedGlobalIdentifiers(const ref Target tgt)
 	}
 	if (tgt.isLP64)
 		VersionCondition.addPredefinedGlobalIdent("D_LP64");
-	else if (tgt.is64bit)
+	else if (tgt.isX86_64)
 		VersionCondition.addPredefinedGlobalIdent("X32");
 }
 
