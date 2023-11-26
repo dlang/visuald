@@ -1148,9 +1148,6 @@ class LanguageService : DisposingComObject,
 				i = normalizeDir(unquoteArgument(i));
 			makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
 
-			if (cfgopts.addDepImp)
-				foreach(dep; cfg.getImportsFromDependentProjects())
-					imp.addunique(dep);
 			string versions = cfg.getCompilerVersionIDs();
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
