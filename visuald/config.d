@@ -203,6 +203,7 @@ class ProjectOptions
 	bool preview_markdown;         // enable Markdown replacements in Ddoc
 	bool preview_in;               // `in` on parameters means `scope const [ref]` and accepts rvalues
 	bool preview_inclincontracts;  // 'in' contracts of overridden methods must be a superset of parent contract
+	bool preview_shortenedMethods; // allow => in normal function declarations
 	bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
@@ -486,6 +487,8 @@ class ProjectOptions
 			cmd ~= " -preview=in";
 		if (preview_inclincontracts)
 			cmd ~= " -preview=inclusiveincontracts";
+		if (preview_shortenedMethods)
+			cmd ~= " -preview=shortenedMethods";
 		if (transition_vmarkdown)
 			cmd ~= " -transition=vmarkdown";
 
@@ -1473,6 +1476,7 @@ class ProjectOptions
 		elem ~= new xml.Element("preview_nosharedaccess", toElem(preview_nosharedaccess));
 		elem ~= new xml.Element("preview_in", toElem(preview_in));
 		elem ~= new xml.Element("preview_inclincontracts", toElem(preview_inclincontracts));
+		elem ~= new xml.Element("preview_shortenedMethods", toElem(preview_shortenedMethods));
 		elem ~= new xml.Element("transition_vmarkdown", toElem(transition_vmarkdown));
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
@@ -1632,6 +1636,7 @@ class ProjectOptions
 		fromElem(elem, "preview_markdown", preview_markdown);
 		fromElem(elem, "preview_in", preview_in);
 		fromElem(elem, "preview_inclincontracts", preview_inclincontracts);
+		fromElem(elem, "preview_shortenedMethods", preview_shortenedMethods);
 		fromElem(elem, "transition_vmarkdown", transition_vmarkdown);
 
 		fromElem(elem, "compiler", compiler);

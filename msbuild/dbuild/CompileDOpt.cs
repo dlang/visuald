@@ -101,6 +101,9 @@ namespace dbuild
 			this.switchOrderList.Add("PreviewMarkdown");
 			this.switchOrderList.Add("PreviewIn");
 			this.switchOrderList.Add("PreviewInclusiveInContracts");
+			this.switchOrderList.Add("PreviewShortenedMethods");
+			this.switchOrderList.Add("PreviewFixImmutableConv");
+			this.switchOrderList.Add("PreviewSystemVariables");
 			this.switchOrderList.Add("TransitionVMarkdown");
 			this.switchOrderList.Add("TransitionField");
 			this.switchOrderList.Add("TransitionCheckImports");
@@ -646,8 +649,41 @@ namespace dbuild
 			set
 			{
 				SetBoolProperty("PreviewInclusiveInContracts", "Preview inclusiveincontracts",
-								"''in' contracts of overridden methods must be a superset of parent contract (-preview=inclusiveincontracts)",
+								"'in' contracts of overridden methods must be a superset of parent contract (-preview=inclusiveincontracts)",
 								"-preview=inclusiveincontracts", value);
+			}
+		}
+
+		public bool PreviewShortenedMethods
+		{
+			get { return GetBoolProperty("PreviewShortenedMethods"); }
+			set
+			{
+				SetBoolProperty("PreviewShortenedMethods", "Preview shortened methods",
+								"allow use of => for methods and top-level functions in addition to lambdas (-preview=shortenedMethods)",
+								"-preview=shortenedMethods", value);
+			}
+		}
+
+		public bool PreviewFixImmutableConv
+		{
+			get { return GetBoolProperty("PreviewFixImmutableConv"); }
+			set
+			{
+				SetBoolProperty("PreviewFixImmutableConv", "Preview disallowing unsound immutable conversions",
+								"disallow unsound immutable conversions that were formerly incorrectly permitted (-preview=fixImmutableConv)",
+								"-preview=fixImmutableConv", value);
+			}
+		}
+
+		public bool PreviewSystemVariables
+		{
+			get { return GetBoolProperty("PreviewSystemVariables"); }
+			set
+			{
+				SetBoolProperty("PreviewSystemVariables", "Preview system variables",
+								"disable access to variables marked '@system' from @safe code (-preview=systemVariables)",
+								"-preview=systemVariables", value);
 			}
 		}
 

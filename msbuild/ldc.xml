@@ -198,6 +198,12 @@
                   Description="'in' on parameters means `scope const [ref]` and accepts rvalues" />
     <BoolProperty Name="PreviewInclusiveInContracts" Category="Language" DisplayName="Preview inclusive in contracts" Switch="-preview=inclusiveincontracts"
                   Description="'in' contracts of overridden methods must be a superset of parent contract" />
+    <BoolProperty Name="PreviewShortenedMethods" Category="Language" DisplayName="Preview shortened method/function syntax" Switch="-preview=shortenedMethods"
+                  Description="allow use of => for methods and top-level functions in addition to lambdas (dmd 2.101+)" />
+    <BoolProperty Name="PreviewFixImmutableConv" Category="Language" DisplayName="Preview disallowing unsound immutable conversions" Switch="-preview=fixImmutableConv"
+                  Description="disallow unsound immutable conversions that were formerly incorrectly permitted (dmd 2.101+)" />
+    <BoolProperty Name="PreviewSystemVariables" Category="Language" DisplayName="Preview system variables" Switch="-preview=systemVariables"
+                  Description="disable access to variables marked '@system' from @safe code (dmd 2.102+)" />
 
     <BoolProperty Name="RevertImport" Category="Language" DisplayName="Revert import" Switch="-revert=import"
                   Description="revert to single phase name lookup." />

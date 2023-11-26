@@ -1299,8 +1299,9 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		AddControl("", mPreview_nosharedaccess  = new CheckBox(mCanvas, "disable access to shared memory objects (DMD 2.088+)"));
 		AddControl("", mPreview_in              = new CheckBox(mCanvas, "'in' on parameters means `scope const [ref]` (dmd 2.092+) and accepts rvalues (dmd 2.094+)"));
 		AddControl("", mPreview_inclInContracts = new CheckBox(mCanvas, "'in' contracts of overridden methods must be a superset of parent contract (dmd 2.095+)"));
+		AddControl("", mPreview_shortenedMethods = new CheckBox(mCanvas, "shortened method syntax: allow => in normal function declarations (dmd 2.101+)"));
 		AddHorizontalLine();
-		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071 - 2.087)"));
+		AddControl("", mRevert_import           = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071 - 2.087)"));
 		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
 		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators (DMD 2.078+)"));
 		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before upper scopes (DMD 2.084+)"));
@@ -1313,7 +1314,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mDip1000.setChecked(options.dip1000);
 		mDip1008.setChecked(options.dip1008);
 		mDip1021.setChecked(options.dip1021);
-		mTransition_import.setChecked(options.revert_import);
+		mRevert_import.setChecked(options.revert_import);
 		mTransition_dtorfields.setChecked(options.preview_dtorfields);
 		mTransition_intpromote.setChecked(options.preview_intpromote);
 		mTransition_fixAliasThis.setChecked(options.preview_fixAliasThis);
@@ -1321,6 +1322,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mPreview_nosharedaccess.setChecked(options.preview_nosharedaccess);
 		mPreview_in.setChecked(options.preview_in);
 		mPreview_inclInContracts.setChecked(options.preview_inclincontracts);
+		mPreview_shortenedMethods.setChecked(options.preview_shortenedMethods);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1331,7 +1333,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mDip1000.isChecked(), options.dip1000, refoptions.dip1000);
 		changes += changeOption(mDip1008.isChecked(), options.dip1008, refoptions.dip1008);
 		changes += changeOption(mDip1021.isChecked(), options.dip1021, refoptions.dip1021);
-		changes += changeOption(mTransition_import.isChecked(), options.revert_import, refoptions.revert_import);
+		changes += changeOption(mRevert_import.isChecked(), options.revert_import, refoptions.revert_import);
 		changes += changeOption(mTransition_dtorfields.isChecked(), options.preview_dtorfields, refoptions.preview_dtorfields);
 		changes += changeOption(mTransition_intpromote.isChecked(), options.preview_intpromote, refoptions.preview_intpromote);
 		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.preview_fixAliasThis, refoptions.preview_fixAliasThis);
@@ -1339,6 +1341,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mPreview_nosharedaccess.isChecked(), options.preview_nosharedaccess, refoptions.preview_nosharedaccess);
 		changes += changeOption(mPreview_in.isChecked(), options.preview_in, refoptions.preview_in);
 		changes += changeOption(mPreview_inclInContracts.isChecked(), options.preview_inclincontracts, refoptions.preview_inclincontracts);
+		changes += changeOption(mPreview_shortenedMethods.isChecked(), options.preview_shortenedMethods, refoptions.preview_shortenedMethods);
 		return changes;
 	}
 
@@ -1351,7 +1354,8 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 	CheckBox mPreview_nosharedaccess;
 	CheckBox mPreview_in;
 	CheckBox mPreview_inclInContracts;
-	CheckBox mTransition_import;
+	CheckBox mPreview_shortenedMethods;
+	CheckBox mRevert_import;
 	CheckBox mTransition_dtorfields;
 	CheckBox mTransition_intpromote;
 	CheckBox mTransition_fixAliasThis;
