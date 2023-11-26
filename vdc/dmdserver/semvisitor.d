@@ -56,7 +56,7 @@ import dmd.common.outbuffer;
 import dmd.root.file;
 import dmd.root.filename;
 import dmd.root.rmem;
-import dmd.root.rootobject;
+import dmd.rootobject;
 
 import std.algorithm;
 import std.string;
@@ -1179,9 +1179,9 @@ TipData tipForDeclaration(Declaration decl)
 		auto fntype = decl.type ? decl.type.isTypeFunction() : null;
 
 		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
-			functionToBufferFull(fntype, &buf, decl.getIdent(), &hgs, td);
+			functionToBufferFull(fntype, buf, decl.getIdent(), &hgs, td);
 		else if (fntype)
-			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars(true), &hgs, func.isStatic);
+			functionToBufferWithIdent(fntype, buf, decl.toPrettyChars(true), &hgs, func.isStatic);
 		else
 			buf.writestring(decl.toPrettyChars(true));
 		auto res = buf.extractSlice(); // take ownership
@@ -1240,7 +1240,7 @@ TipData tipForDeclaration(Declaration decl)
 	if (decl.storage_class & STC.manifest)
 		if (auto var = decl.isVarDeclaration())
 			if (var._init)
-				txt ~= " = " ~ var._init.toString();
+				txt ~= " = " ~ toString(var._init);
 	if (auto ad = decl.isAliasDeclaration())
 		if (ad.aliassym)
 			return tipForAlias(ad.aliassym, kind, txt);

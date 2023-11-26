@@ -84,13 +84,14 @@ void flushLastError()
 	}
 	else
 	{
+		// prepend the loc inside gErrorFile to the beginning of the error message
 		for (size_t i = 0; i < gLastErrorLocs.length; i++)
 		{
 			Loc loc = gLastErrorLocs[i];
 			if (loc.filename && _stricmp(loc.filename, gErrorFile) == 0)
 			{
 				gErrorMessages ~= genErrorMessage(i) ~ "\n";
-				gLastHeader = "Info: ";
+				break;
 			}
 		}
 	}

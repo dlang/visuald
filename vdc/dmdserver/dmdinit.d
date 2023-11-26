@@ -26,6 +26,7 @@ import dmd.expression;
 import dmd.func;
 import dmd.globals;
 import dmd.id;
+import dmd.identifier;
 import dmd.mtype;
 import dmd.objc;
 import dmd.target;
@@ -254,8 +255,8 @@ void dmdSetupParams(const ref Options opts)
 
 	global._init();
 	target.os = Target.OS.Windows;
-	global.params.errorLimit = 0;
-	global.params.color = false;
+	global.params.v.errorLimit = 0;
+	global.params.v.color = false;
 //	global.params.link = true;
 	global.params.useUnitTests = opts.unittestOn;
 	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
@@ -288,8 +289,8 @@ void dmdSetupParams(const ref Options opts)
 	{
 		switch(opt)
 		{
-			case "-vtls": global.params.vtls = true; break;
-			case "-vgc":  global.params.vgc = true; break;
+			case "-vtls": global.params.v.tls = true; break;
+			case "-vgc":  global.params.v.gc = true; break;
 			// case "-d": // already covered by flags
 			// case "-de":
 			// case "-release":
@@ -301,11 +302,11 @@ void dmdSetupParams(const ref Options opts)
 			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
 			case "-dip1000":  global.params.useDIP25 = global.params.useDIP1000 = FeatureState.enabled; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
-			case "-revert=import": global.params.vfield = true; break;
+			//case "-revert=import": global.params.vfield = true; break;
 			case "-revert=dip25": global.params.useDIP25 = FeatureState.disabled; break;
-			case "-transition=field": global.params.vfield = true; break;
+			case "-transition=field": global.params.v.field = true; break;
 			//case "-transition=checkimports": global.params.check10378 = true; break;
-			case "-transition=complex": global.params.vcomplex = true; break;
+			case "-transition=complex": global.params.v.complex = true; break;
 //			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
 			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
 			case "-preview=fieldwise": global.params.fieldwise = FeatureState.enabled; break;
@@ -324,22 +325,21 @@ void dmdSetupParams(const ref Options opts)
 		}
 	}
 	global.params.versionlevel = opts.versionLevel;
-	global.params.versionids = new Strings();
+	auto versionids = new Strings();
 	foreach(v; opts.versionIds)
-		global.params.versionids.push(toStringz(v));
+		versionids.push(toStringz(v));
 
 	global.versionids = new Identifiers();
-
 	// Add in command line versions
-	if (global.params.versionids)
-		foreach (charz; *global.params.versionids)
-		{
-			auto ident = charz[0 .. strlen(charz)];
-			if (VersionCondition.isReserved(ident))
-				VersionCondition.addPredefinedGlobalIdent(ident);
-			else
-				VersionCondition.addGlobalIdent(ident);
-		}
+	foreach (charz; *versionids)
+	{
+		global.versionids.push(new Identifier(charz));
+		auto ident = charz[0 .. strlen(charz)];
+		if (VersionCondition.isReserved(ident))
+			VersionCondition.addPredefinedGlobalIdent(ident);
+		else
+			VersionCondition.addGlobalIdent(ident);
+	}
 
 	if (opts.predefineDefaultVersions)
 		addDefaultVersionIdentifiers(global.params, target);
@@ -347,15 +347,17 @@ void dmdSetupParams(const ref Options opts)
 	// always enable for tooltips
 	global.params.ddoc.doOutput = true;
 
-	global.params.debugids = new Strings();
 	global.params.debuglevel = opts.debugLevel;
+	auto debugids = new Strings();
 	foreach(d; opts.debugIds)
-		global.params.debugids.push(toStringz(d));
+		debugids.push(toStringz(d));
 
 	global.debugids = new Identifiers();
-	if (global.params.debugids)
-		foreach (charz; *global.params.debugids)
-			DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+	foreach (charz; *debugids)
+	{
+		global.debugids.push(new Identifier(charz));
+		DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+	}
 
 	global.path = new Strings();
 	foreach(i; opts.importDirs)

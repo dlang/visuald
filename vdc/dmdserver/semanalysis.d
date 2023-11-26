@@ -243,6 +243,9 @@ string[] guessImportPaths()
 		path ~= "-beta.1";
 		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
 			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+		path = path[0..$-7] ~ "-rc.1";
+		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
 	}
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
 		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
@@ -419,7 +422,7 @@ void do_unittests()
 		import dmd.hdrgen;
 		auto buf = OutBuffer();
 		buf.doindent = 1;
-		moduleToBuffer(&buf, mod);
+		moduleToBuffer(buf, mod);
 
 		OutputDebugStringA(buf.peekChars);
 	}
@@ -702,9 +705,8 @@ void do_unittests()
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon needed to end declaration of `y`, instead of `}`\a" ~
 		"source.d(13): `y` declared here\n" ~
-		"13,7,13,8:Info: source.d(14): semicolon needed to end declaration of `y`, instead of `}`\a" ~
-		"--> `y` declared here\n" ~
-		"12,15,12,16:Error: no property `f` for type `source.S`\n");
+		"12,15,12,16:Error: no property `f` for type `source.S`\a" ~
+		"source.d(2): struct `S` defined here\n");
 	//dumpAST(m);
 	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
@@ -728,7 +730,8 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `source.S`\n" ~
+					"12,11,12,12:Error: no property `fool` for type `source.S`\a" ~
+					"source.d(2): struct `S` defined here\n" ~
 					"13,10,13,11:Error: undefined identifier `fok`, did you mean function `foo`?\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
@@ -1608,10 +1611,12 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-		"6,3,6,4:Error: found `if` when expecting `;` following statement `a = 1` on line source.d(5)\n" ~
+		"6,3,6,4:Error: found `if` when expecting `;` following expression\a" ~
+			"source.d(5): expression: `a = 1`\n" ~
 		"6,9,6,10:Error: found `==` when expecting `)`\n" ~
 		"6,12,6,13:Error: missing `{ ... }` for function literal\n" ~
-		"6,12,6,13:Error: found `1` when expecting `;` following statement `` on line source.d(6)\n" ~
+		"6,12,6,13:Error: found `1` when expecting `;` following expression\a" ~
+			"source.d(6): expression: ``\n" ~
 		"6,13,6,14:Error: found `)` instead of statement\n" ~
 		"9,2,9,3:Error: unmatched closing brace\n" ~
 		"5,3,5,4:Error: undefined identifier `a`\n" ~
