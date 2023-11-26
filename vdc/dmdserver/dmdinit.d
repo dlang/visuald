@@ -29,6 +29,7 @@ import dmd.id;
 import dmd.identifier;
 import dmd.mtype;
 import dmd.objc;
+import dmd.rootobject;
 import dmd.target;
 
 import dmd.common.outbuffer;
@@ -39,6 +40,7 @@ import core.stdc.string;
 
 ////////////////////////////////////////////////////////////////
 alias countersType = uint[uint]; // actually uint[Key]
+alias EscapeInfer = RootObject[int];
 
 enum string[2][] dmdStatics =
 [
@@ -81,6 +83,12 @@ enum string[2][] dmdStatics =
 	// 2.103
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
+
+	// 2.106
+	["_D3dmd7arrayop7arrayOpFCQw10expression6BinExpPSQBt6dscope5ScopeZQByCQCo9dtemplate19TemplateDeclaration", "TemplateDeclaration"],
+	["_D3dmd6errors18colorHighlightCodeFNbKSQBk6common9outbuffer9OutBufferZ6nestedi", "int"],
+	["_D3dmd7dmodule6Module18loadCoreStdcConfigFZ16core_stdc_configCQCiQChQCc", "Module"],
+	["_D3dmd6escape11EscapeState17scopeInferFailureHiCQBu10rootobject10RootObject", "EscapeInfer" ],
 ];
 
 string cmangled(string s)
