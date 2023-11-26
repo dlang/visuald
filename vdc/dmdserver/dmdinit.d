@@ -302,6 +302,7 @@ void dmdSetupParams(const ref Options opts)
 			case "-dip1000":  global.params.useDIP25 = global.params.useDIP1000 = FeatureState.enabled; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
 			case "-revert=import": global.params.vfield = true; break;
+			case "-revert=dip25": global.params.useDIP25 = FeatureState.disabled; break;
 			case "-transition=field": global.params.vfield = true; break;
 			//case "-transition=checkimports": global.params.check10378 = true; break;
 			case "-transition=complex": global.params.vcomplex = true; break;
@@ -316,6 +317,9 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
 			case "-preview=in": global.params.previewIn = true; break;
 			case "-preview=inclusiveincontracts": global.params.inclusiveInContracts = true; break;
+			case "-preview=shortenedMethods": global.params.shortenedMethods = true; break;
+			case "-preview=fixImmutableConv": global.params.fixImmutableConv = true; break;
+			case "-preview=systemVariables": global.params.systemVariables = FeatureState.enabled; break;
 			default: break;
 		}
 	}
@@ -338,7 +342,7 @@ void dmdSetupParams(const ref Options opts)
 		}
 
 	if (opts.predefineDefaultVersions)
-		addDefaultVersionIdentifiers(global.params);
+		addDefaultVersionIdentifiers(global.params, target);
 
 	// always enable for tooltips
 	global.params.ddoc.doOutput = true;
@@ -413,173 +417,4 @@ void dmdReinit()
 	dinterpret_init();
 
 	clearSemanticStatics();
-}
-
-// plain copy of dmd.mars.addDefaultVersionIdentifiers
-void addDefaultVersionIdentifiers(const ref Param params)
-{
-	VersionCondition.addPredefinedGlobalIdent("DigitalMars");
-	VersionCondition.addPredefinedGlobalIdent("LittleEndian");
-	VersionCondition.addPredefinedGlobalIdent("D_Version2");
-	VersionCondition.addPredefinedGlobalIdent("all");
-
-	target.addPredefinedGlobalIdentifiers();
-
-	if (params.ddoc.doOutput)
-		VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
-	if (params.cov)
-		VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-
-	if (driverParams.pic != PIC.fixed)
-		VersionCondition.addPredefinedGlobalIdent(driverParams.pic == PIC.pic ? "D_PIC" : "D_PIE");
-	if (params.useUnitTests)
-		VersionCondition.addPredefinedGlobalIdent("unittest");
-	if (params.useAssert == CHECKENABLE.on)
-		VersionCondition.addPredefinedGlobalIdent("assert");
-    if (params.useIn == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_PreConditions");
-    if (params.useOut == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_PostConditions");
-    if (params.useInvariants == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_Invariants");
-	if (params.useArrayBounds == CHECKENABLE.off)
-		VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
-	if (params.betterC)
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_BetterC");
-	}
-	else
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_ModuleInfo");
-		VersionCondition.addPredefinedGlobalIdent("D_Exceptions");
-		VersionCondition.addPredefinedGlobalIdent("D_TypeInfo");
-	}
-
-	VersionCondition.addPredefinedGlobalIdent("D_HardFloat");
-
-    if (params.tracegc)
-        VersionCondition.addPredefinedGlobalIdent("D_ProfileGC");
-
-    if (driverParams.optimize)
-        VersionCondition.addPredefinedGlobalIdent("D_Optimized");
-}
-
-/**
-* Add predefined global identifiers that are determied by the target
-*/
-private
-void addPredefinedGlobalIdentifiers(const ref Target tgt)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	if (tgt.cpu >= CPU.sse2)
-	{
-		predef("D_SIMD");
-		if (tgt.cpu >= CPU.avx)
-			predef("D_AVX");
-		if (tgt.cpu >= CPU.avx2)
-			predef("D_AVX2");
-	}
-
-	with (Target)
-	{
-		if (tgt.os & OS.Posix)
-			predef("Posix");
-		if (tgt.os & (OS.linux | OS.FreeBSD | OS.OpenBSD | OS.DragonFlyBSD | OS.Solaris))
-			predef("ELFv1");
-		switch (tgt.os)
-		{
-			case OS.none:         { predef("FreeStanding"); break; }
-			case OS.linux:        { predef("linux");        break; }
-			case OS.OpenBSD:      { predef("OpenBSD");      break; }
-			case OS.DragonFlyBSD: { predef("DragonFlyBSD"); break; }
-			case OS.Solaris:      { predef("Solaris");      break; }
-			case OS.Windows:
-				{
-					predef("Windows");
-					VersionCondition.addPredefinedGlobalIdent(tgt.isX86_64 ? "Win64" : "Win32");
-					break;
-				}
-			case OS.OSX:
-				{
-					predef("OSX");
-					// For legacy compatibility
-					predef("darwin");
-					break;
-				}
-			case OS.FreeBSD:
-				{
-					predef("FreeBSD");
-					switch (tgt.osMajor)
-					{
-						case 10: predef("FreeBSD_10");  break;
-						case 11: predef("FreeBSD_11"); break;
-						case 12: predef("FreeBSD_12"); break;
-						case 13: predef("FreeBSD_13"); break;
-						default: predef("FreeBSD_11"); break;
-					}
-					break;
-				}
-			default: assert(0);
-		}
-	}
-
-	addCRuntimePredefinedGlobalIdent(tgt.c);
-	addCppRuntimePredefinedGlobalIdent(tgt.cpp);
-
-	if (tgt.isX86_64)
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
-		VersionCondition.addPredefinedGlobalIdent("X86_64");
-	}
-	else
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
-		VersionCondition.addPredefinedGlobalIdent("X86");
-	}
-	if (tgt.isLP64)
-		VersionCondition.addPredefinedGlobalIdent("D_LP64");
-	else if (tgt.isX86_64)
-		VersionCondition.addPredefinedGlobalIdent("X32");
-}
-
-private
-void addCRuntimePredefinedGlobalIdent(const ref TargetC c)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	with (TargetC.Runtime) switch (c.runtime)
-	{
-		default:
-		case Unspecified: return;
-		case Bionic:      return predef("CRuntime_Bionic");
-		case DigitalMars: return predef("CRuntime_DigitalMars");
-		case Glibc:       return predef("CRuntime_Glibc");
-		case Microsoft:   return predef("CRuntime_Microsoft");
-		case Musl:        return predef("CRuntime_Musl");
-		case Newlib:      return predef("CRuntime_Newlib");
-		case UClibc:      return predef("CRuntime_UClibc");
-		case WASI:        return predef("CRuntime_WASI");
-	}
-}
-
-private
-void addCppRuntimePredefinedGlobalIdent(const ref TargetCPP cpp)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	with (TargetCPP.Runtime) switch (cpp.runtime)
-	{
-		default:
-		case Unspecified: return;
-		case Clang:       return predef("CppRuntime_Clang");
-		case DigitalMars: return predef("CppRuntime_DigitalMars");
-		case Gcc:         return predef("CppRuntime_Gcc");
-		case Microsoft:   return predef("CppRuntime_Microsoft");
-		case Sun:         return predef("CppRuntime_Sun");
-	}
 }

@@ -569,10 +569,10 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\res dmd\compiler\src\dmd\res</fileImppath>
+  <imppath>dmd\compiler\src</imppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -1069,10 +1069,10 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c -nologo -c -TP -Idmd\compiler\src\dmd -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\compiler\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
+  <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\..</imppath>
-  <fileImppath>dmd dmd\res dmd\compiler\src\dmd\res</fileImppath>
+  <imppath>dmd\compiler\src</imppath>
+  <fileImppath>dmd dmd\compiler\src\dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
@@ -1753,6 +1753,7 @@
  <Folder name="dmdserver">
   <Folder name="dmd">
    <Folder name="common">
+    <File path="dmd\compiler\src\dmd\common\bitfields.d" />
     <File path="dmd\compiler\src\dmd\common\file.d" />
     <File path="dmd\compiler\src\dmd\common\int128.d" />
     <File path="dmd\compiler\src\dmd\common\outbuffer.d" />
@@ -1770,6 +1771,7 @@
     <File path="dmd\compiler\src\dmd\root\longdouble.d" />
     <File path="dmd\compiler\src\dmd\root\longdouble.h" />
     <File path="dmd\compiler\src\dmd\root\man.d" />
+    <File path="dmd\compiler\src\dmd\root\optional.d" />
     <File path="dmd\compiler\src\dmd\root\port.d" />
     <File path="dmd\compiler\src\dmd\root\response.d" />
     <File path="dmd\compiler\src\dmd\root\rmem.d" tool="None" />
