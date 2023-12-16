@@ -3203,7 +3203,7 @@ class Config :	DisposingComObject,
 				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed (error code %DISPERR%)!\n";
 			else
 				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed (error code %DISPERR%)!\n";
-			cmd ~= "exit /B %ERR%\n";
+			cmd ~= "if %ERR% neq 0 exit /B %ERR%\n"; // assume fall through is for success
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
