@@ -13,7 +13,6 @@ import vdc.ivdserver : TypeReferenceKind;
 import dmd.access;
 import dmd.aggregate;
 import dmd.aliasthis;
-import dmd.apply;
 import dmd.arraytypes;
 import dmd.astenums;
 import dmd.attrib;
@@ -43,6 +42,7 @@ import dmd.init;
 import dmd.location;
 import dmd.mtype;
 import dmd.objc;
+import dmd.postordervisitor;
 import dmd.sapply;
 import dmd.semantic2;
 import dmd.semantic3;
@@ -56,7 +56,7 @@ import dmd.common.outbuffer;
 import dmd.root.file;
 import dmd.root.filename;
 import dmd.root.rmem;
-import dmd.root.rootobject;
+import dmd.rootobject;
 
 import std.algorithm;
 import std.string;
@@ -465,7 +465,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visit(cast(Statement)stmt);
 	}
 
-	override void visit(CompileStatement stmt)
+	override void visit(MixinStatement stmt)
 	{
 		if (stmt.exps)
 			foreach(e; *stmt.exps)
@@ -1179,9 +1179,9 @@ TipData tipForDeclaration(Declaration decl)
 		auto fntype = decl.type ? decl.type.isTypeFunction() : null;
 
 		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
-			functionToBufferFull(fntype, &buf, decl.getIdent(), &hgs, td);
+			functionToBufferFull(fntype, buf, decl.getIdent(), &hgs, td);
 		else if (fntype)
-			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars(true), &hgs, func.isStatic);
+			functionToBufferWithIdent(fntype, buf, decl.toPrettyChars(true), &hgs, func.isStatic);
 		else
 			buf.writestring(decl.toPrettyChars(true));
 		auto res = buf.extractSlice(); // take ownership
@@ -1240,7 +1240,7 @@ TipData tipForDeclaration(Declaration decl)
 	if (decl.storage_class & STC.manifest)
 		if (auto var = decl.isVarDeclaration())
 			if (var._init)
-				txt ~= " = " ~ var._init.toString();
+				txt ~= " = " ~ toString(var._init);
 	if (auto ad = decl.isAliasDeclaration())
 		if (ad.aliassym)
 			return tipForAlias(ad.aliassym, kind, txt);
@@ -2776,7 +2776,7 @@ bool isConstantExpr(Expression expr)
 {
 	switch(expr.op)
 	{
-		case EXP.int64, EXP.float64, EXP.char_, EXP.complex80:
+		case EXP.int64, EXP.float64, EXP.complex80:
 		case EXP.null_, EXP.void_:
 		case EXP.string_:
 		case EXP.arrayLiteral, EXP.assocArrayLiteral, EXP.structLiteral:

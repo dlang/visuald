@@ -26,8 +26,10 @@ import dmd.expression;
 import dmd.func;
 import dmd.globals;
 import dmd.id;
+import dmd.identifier;
 import dmd.mtype;
 import dmd.objc;
+import dmd.rootobject;
 import dmd.target;
 
 import dmd.common.outbuffer;
@@ -38,6 +40,7 @@ import core.stdc.string;
 
 ////////////////////////////////////////////////////////////////
 alias countersType = uint[uint]; // actually uint[Key]
+alias EscapeInfer = RootObject[int];
 
 enum string[2][] dmdStatics =
 [
@@ -57,14 +60,14 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ3feqCQEp4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ4fcmpCQEq4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
+//	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
 	// 2.103
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ11visitAArrayMFCQFcQEi10TypeAArrayZ8fd_aaLenCQGf4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ8noMemberMFQEdQDsQDdCQFh10identifier10IdentifieriZ4nesti", "int"],
 	//["_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
 	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
 	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
@@ -80,6 +83,12 @@ enum string[2][] dmdStatics =
 	// 2.103
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
+
+	// 2.106
+	["_D3dmd7arrayop7arrayOpFCQw10expression6BinExpPSQBt6dscope5ScopeZQByCQCo9dtemplate19TemplateDeclaration", "TemplateDeclaration"],
+	["_D3dmd6errors18colorHighlightCodeFNbKSQBk6common9outbuffer9OutBufferZ6nestedi", "int"],
+	["_D3dmd7dmodule6Module18loadCoreStdcConfigFZ16core_stdc_configCQCiQChQCc", "Module"],
+	["_D3dmd6escape11EscapeState17scopeInferFailureHiCQBu10rootobject10RootObject", "EscapeInfer" ],
 ];
 
 string cmangled(string s)
@@ -112,9 +121,9 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ7fdapplyPCQFs4func15FuncDeclaration")
+pragma(mangle, "_D3dmd12statementsem15applyAssocArrayFCQBl9statement16ForeachStatementCQCr10expression10ExpressionCQDt5mtype4TypeZ7fdapplyPCQEs4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype4TypeZ6fldeTyPCQFrQy12TypeDelegate")
+pragma(mangle, "_D3dmd12statementsem15applyAssocArrayFCQBl9statement16ForeachStatementCQCr10expression10ExpressionCQDt5mtype4TypeZ6fldeTyPCQErQy12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
 
 
@@ -254,8 +263,8 @@ void dmdSetupParams(const ref Options opts)
 
 	global._init();
 	target.os = Target.OS.Windows;
-	global.params.errorLimit = 0;
-	global.params.color = false;
+	global.params.v.errorLimit = 0;
+	global.params.v.color = false;
 //	global.params.link = true;
 	global.params.useUnitTests = opts.unittestOn;
 	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
@@ -278,18 +287,18 @@ void dmdSetupParams(const ref Options opts)
 	global.params.objfiles = Strings();
 	global.params.ddoc.files = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
-	target.is64bit = opts.x64;
+	target.isX86_64 = opts.x64;
 	target.omfobj = !opts.msvcrt;
 	target.cpu = CPU.baseline;
-	target.isLP64 = target.is64bit;
+	target.isLP64 = opts.x64;
 
 	string[] cli = opts.cmdline.split(' ');
 	foreach(opt; cli)
 	{
 		switch(opt)
 		{
-			case "-vtls": global.params.vtls = true; break;
-			case "-vgc":  global.params.vgc = true; break;
+			case "-vtls": global.params.v.tls = true; break;
+			case "-vgc":  global.params.v.gc = true; break;
 			// case "-d": // already covered by flags
 			// case "-de":
 			// case "-release":
@@ -301,13 +310,14 @@ void dmdSetupParams(const ref Options opts)
 			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
 			case "-dip1000":  global.params.useDIP25 = global.params.useDIP1000 = FeatureState.enabled; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
-			case "-revert=import": global.params.vfield = true; break;
-			case "-transition=field": global.params.vfield = true; break;
+			//case "-revert=import": global.params.vfield = true; break;
+			case "-revert=dip25": global.params.useDIP25 = FeatureState.disabled; break;
+			case "-transition=field": global.params.v.field = true; break;
 			//case "-transition=checkimports": global.params.check10378 = true; break;
-			case "-transition=complex": global.params.vcomplex = true; break;
+			case "-transition=complex": global.params.v.complex = true; break;
 //			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
 			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
-			case "-preview=fieldwise": global.params.fieldwise = true; break;
+			case "-preview=fieldwise": global.params.fieldwise = FeatureState.enabled; break;
 			case "-preview=intpromote": global.params.fix16997 = true; break;
 			case "-preview=dtorfields": global.params.dtorFields = FeatureState.enabled; break;
 //			case "-preview=markdown": global.params.markdown = true; break;
@@ -316,42 +326,46 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
 			case "-preview=in": global.params.previewIn = true; break;
 			case "-preview=inclusiveincontracts": global.params.inclusiveInContracts = true; break;
+			case "-preview=shortenedMethods": global.params.shortenedMethods = true; break;
+			case "-preview=fixImmutableConv": global.params.fixImmutableConv = true; break;
+			case "-preview=systemVariables": global.params.systemVariables = FeatureState.enabled; break;
 			default: break;
 		}
 	}
 	global.params.versionlevel = opts.versionLevel;
-	global.params.versionids = new Strings();
+	auto versionids = new Strings();
 	foreach(v; opts.versionIds)
-		global.params.versionids.push(toStringz(v));
+		versionids.push(toStringz(v));
 
 	global.versionids = new Identifiers();
-
 	// Add in command line versions
-	if (global.params.versionids)
-		foreach (charz; *global.params.versionids)
-		{
-			auto ident = charz[0 .. strlen(charz)];
-			if (VersionCondition.isReserved(ident))
-				VersionCondition.addPredefinedGlobalIdent(ident);
-			else
-				VersionCondition.addGlobalIdent(ident);
-		}
+	foreach (charz; *versionids)
+	{
+		global.versionids.push(new Identifier(charz));
+		auto ident = charz[0 .. strlen(charz)];
+		if (VersionCondition.isReserved(ident))
+			VersionCondition.addPredefinedGlobalIdent(ident);
+		else
+			VersionCondition.addGlobalIdent(ident);
+	}
 
 	if (opts.predefineDefaultVersions)
-		addDefaultVersionIdentifiers(global.params);
+		addDefaultVersionIdentifiers(global.params, target);
 
 	// always enable for tooltips
 	global.params.ddoc.doOutput = true;
 
-	global.params.debugids = new Strings();
 	global.params.debuglevel = opts.debugLevel;
+	auto debugids = new Strings();
 	foreach(d; opts.debugIds)
-		global.params.debugids.push(toStringz(d));
+		debugids.push(toStringz(d));
 
 	global.debugids = new Identifiers();
-	if (global.params.debugids)
-		foreach (charz; *global.params.debugids)
-			DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+	foreach (charz; *debugids)
+	{
+		global.debugids.push(new Identifier(charz));
+		DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+	}
 
 	global.path = new Strings();
 	foreach(i; opts.importDirs)
@@ -413,173 +427,4 @@ void dmdReinit()
 	dinterpret_init();
 
 	clearSemanticStatics();
-}
-
-// plain copy of dmd.mars.addDefaultVersionIdentifiers
-void addDefaultVersionIdentifiers(const ref Param params)
-{
-	VersionCondition.addPredefinedGlobalIdent("DigitalMars");
-	VersionCondition.addPredefinedGlobalIdent("LittleEndian");
-	VersionCondition.addPredefinedGlobalIdent("D_Version2");
-	VersionCondition.addPredefinedGlobalIdent("all");
-
-	target.addPredefinedGlobalIdentifiers();
-
-	if (params.ddoc.doOutput)
-		VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
-	if (params.cov)
-		VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-
-	if (driverParams.pic != PIC.fixed)
-		VersionCondition.addPredefinedGlobalIdent(driverParams.pic == PIC.pic ? "D_PIC" : "D_PIE");
-	if (params.useUnitTests)
-		VersionCondition.addPredefinedGlobalIdent("unittest");
-	if (params.useAssert == CHECKENABLE.on)
-		VersionCondition.addPredefinedGlobalIdent("assert");
-    if (params.useIn == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_PreConditions");
-    if (params.useOut == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_PostConditions");
-    if (params.useInvariants == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("D_Invariants");
-	if (params.useArrayBounds == CHECKENABLE.off)
-		VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
-	if (params.betterC)
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_BetterC");
-	}
-	else
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_ModuleInfo");
-		VersionCondition.addPredefinedGlobalIdent("D_Exceptions");
-		VersionCondition.addPredefinedGlobalIdent("D_TypeInfo");
-	}
-
-	VersionCondition.addPredefinedGlobalIdent("D_HardFloat");
-
-    if (params.tracegc)
-        VersionCondition.addPredefinedGlobalIdent("D_ProfileGC");
-
-    if (driverParams.optimize)
-        VersionCondition.addPredefinedGlobalIdent("D_Optimized");
-}
-
-/**
-* Add predefined global identifiers that are determied by the target
-*/
-private
-void addPredefinedGlobalIdentifiers(const ref Target tgt)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	if (tgt.cpu >= CPU.sse2)
-	{
-		predef("D_SIMD");
-		if (tgt.cpu >= CPU.avx)
-			predef("D_AVX");
-		if (tgt.cpu >= CPU.avx2)
-			predef("D_AVX2");
-	}
-
-	with (Target)
-	{
-		if (tgt.os & OS.Posix)
-			predef("Posix");
-		if (tgt.os & (OS.linux | OS.FreeBSD | OS.OpenBSD | OS.DragonFlyBSD | OS.Solaris))
-			predef("ELFv1");
-		switch (tgt.os)
-		{
-			case OS.none:         { predef("FreeStanding"); break; }
-			case OS.linux:        { predef("linux");        break; }
-			case OS.OpenBSD:      { predef("OpenBSD");      break; }
-			case OS.DragonFlyBSD: { predef("DragonFlyBSD"); break; }
-			case OS.Solaris:      { predef("Solaris");      break; }
-			case OS.Windows:
-				{
-					predef("Windows");
-					VersionCondition.addPredefinedGlobalIdent(tgt.is64bit ? "Win64" : "Win32");
-					break;
-				}
-			case OS.OSX:
-				{
-					predef("OSX");
-					// For legacy compatibility
-					predef("darwin");
-					break;
-				}
-			case OS.FreeBSD:
-				{
-					predef("FreeBSD");
-					switch (tgt.osMajor)
-					{
-						case 10: predef("FreeBSD_10");  break;
-						case 11: predef("FreeBSD_11"); break;
-						case 12: predef("FreeBSD_12"); break;
-						case 13: predef("FreeBSD_13"); break;
-						default: predef("FreeBSD_11"); break;
-					}
-					break;
-				}
-			default: assert(0);
-		}
-	}
-
-	addCRuntimePredefinedGlobalIdent(tgt.c);
-	addCppRuntimePredefinedGlobalIdent(tgt.cpp);
-
-	if (tgt.is64bit)
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
-		VersionCondition.addPredefinedGlobalIdent("X86_64");
-	}
-	else
-	{
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
-		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
-		VersionCondition.addPredefinedGlobalIdent("X86");
-	}
-	if (tgt.isLP64)
-		VersionCondition.addPredefinedGlobalIdent("D_LP64");
-	else if (tgt.is64bit)
-		VersionCondition.addPredefinedGlobalIdent("X32");
-}
-
-private
-void addCRuntimePredefinedGlobalIdent(const ref TargetC c)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	with (TargetC.Runtime) switch (c.runtime)
-	{
-		default:
-		case Unspecified: return;
-		case Bionic:      return predef("CRuntime_Bionic");
-		case DigitalMars: return predef("CRuntime_DigitalMars");
-		case Glibc:       return predef("CRuntime_Glibc");
-		case Microsoft:   return predef("CRuntime_Microsoft");
-		case Musl:        return predef("CRuntime_Musl");
-		case Newlib:      return predef("CRuntime_Newlib");
-		case UClibc:      return predef("CRuntime_UClibc");
-		case WASI:        return predef("CRuntime_WASI");
-	}
-}
-
-private
-void addCppRuntimePredefinedGlobalIdent(const ref TargetCPP cpp)
-{
-	import dmd.cond : VersionCondition;
-
-	alias predef = VersionCondition.addPredefinedGlobalIdent;
-	with (TargetCPP.Runtime) switch (cpp.runtime)
-	{
-		default:
-		case Unspecified: return;
-		case Clang:       return predef("CppRuntime_Clang");
-		case DigitalMars: return predef("CppRuntime_DigitalMars");
-		case Gcc:         return predef("CppRuntime_Gcc");
-		case Microsoft:   return predef("CppRuntime_Microsoft");
-		case Sun:         return predef("CppRuntime_Sun");
-	}
 }

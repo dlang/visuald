@@ -151,7 +151,7 @@ public:
 	// Base-implementation of GetNestedHierarchy handles the failure case. Any
 	//  node which will contain another hierarchy must over-ride this method.
 	//---------------------------------------------------------------------------
- 	int GetNestedHierarchy(in IID* riid, void **ppVsHierarchy, out VSITEMID pitemidNested)
+ 	int GetNestedHierarchy(const IID* riid, void **ppVsHierarchy, out VSITEMID pitemidNested)
 	{
 		return E_FAIL;
 	}
@@ -266,7 +266,7 @@ public:
 		return DISP_E_MEMBERNOTFOUND;
 	}
 
-	int SetProperty(VSHPROPID propid, in VARIANT var)
+	int SetProperty(VSHPROPID propid, const VARIANT var)
 	{
 		switch(propid)
 		{
@@ -307,7 +307,7 @@ public:
 		return S_OK;
 		//return E_NOTIMPL;
 	}
-	int SetEditLabel(in BSTR pEditLabel)
+	int SetEditLabel(const BSTR pEditLabel)
 	{
 		 return E_NOTIMPL;
 	}
@@ -494,7 +494,7 @@ public:
 	// IOleCommandTarget
 public:
 	int QueryStatus( 
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -504,10 +504,10 @@ public:
 	}
 
 	int Exec( 
-		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [unique][in] */ const GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [unique][in] */ const VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		//ATLTRACENOTIMPL(_T("CHierNode::IOleCommandTarget::Exec"));
@@ -532,8 +532,8 @@ public:
 		static class _ComTypeInfoHolder : ComTypeInfoHolder 
 		{
 			override int GetIDsOfNames( 
-				/* [size_is][in] */ in LPOLESTR *rgszNames,
-				/* [in] */ in UINT cNames,
+				/* [size_is][in] */ const LPOLESTR *rgszNames,
+				/* [in] */ const UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
 				//mixin(LogCallMix);
@@ -557,10 +557,10 @@ public:
 	//////////////////////////////////////////////////////////////
 
 	override int Invoke( 
-		/* [in] */ in DISPID dispIdMember,
-		/* [in] */ in IID* riid,
-		/* [in] */ in LCID lcid,
-		/* [in] */ in WORD wFlags,
+		/* [in] */ const DISPID dispIdMember,
+		/* [in] */ const IID* riid,
+		/* [in] */ const LCID lcid,
+		/* [in] */ const WORD wFlags,
 		/* [out][in] */ DISPPARAMS *pDispParams,
 		/* [out] */ VARIANT *pVarResult,
 		/* [out] */ EXCEPINFO *pExcepInfo,

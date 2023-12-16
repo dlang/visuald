@@ -222,7 +222,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 
 	IServiceProvider mSite;
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(SearchPane) (this, riid, pvObject))
 			return S_OK;
@@ -249,7 +249,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		return S_OK;
 	}
 
-	HRESULT CreatePaneWindow(in HWND hwndParent, in int x, in int y, in int cx, in int cy,
+	HRESULT CreatePaneWindow(const HWND hwndParent, const int x, const int y, const int cx, const int cy,
 	                         /+[out]+/ HWND *hwnd)
 	{
 		mixin(LogCallMix2);
@@ -548,7 +548,7 @@ private:
 		_wndFileList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
 	}
 
-	HRESULT _PrepareFileListForResults(in ItemArray puaResults)
+	HRESULT _PrepareFileListForResults(const ItemArray puaResults)
 	{
 		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
@@ -577,7 +577,7 @@ private:
 		return hr;
 	}
 
-	HRESULT _AddItemsToFileList(int iGroupId, in ItemArray pua)
+	HRESULT _AddItemsToFileList(int iGroupId, const ItemArray pua)
 	{
 		LVITEM lvi;
 		lvi.pszText = LPSTR_TEXTCALLBACK;
@@ -619,7 +619,7 @@ private:
 		return hr;
 	}
 
-	HRESULT _AddGroupToFileList(int iGroupId, in SolutionItemGroup psig)
+	HRESULT _AddGroupToFileList(int iGroupId, const SolutionItemGroup psig)
 	{
 		LVGROUP lvg;
 		lvg.cbSize = lvg.sizeof;
@@ -1558,7 +1558,7 @@ else
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, const NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLVDISPINFO *pnmlvdi = cast(NMLVDISPINFO *)pnmh;
 		if (pnmlvdi.item.mask & LVIF_TEXT)
@@ -2100,7 +2100,7 @@ class SolutionItem //: IUnknown
 	long GetSize() const { return 0; }
 	const(SysTime) GetModified() const { return _modifiedDate; }
 
-	//HRESULT GetItem(in IID* riid, void **ppv);
+	//HRESULT GetItem(const IID* riid, void **ppv);
 
 	Definition def;
 	SysTime _modifiedDate;

@@ -1343,10 +1343,17 @@ Version history
   * D files in VC projects failed to build in VS 2022 17.3 and 17.4, added separate versions of
     dbuild.17.x.dll linked against respective version of Microsoft.Build.CPPTasks.Common.dll
 
-2023-03-12 version 1.4.0
-  * dmdserver updated to frontend of DMD 2.103.0-beta1
-  * full installer now bundled with DMD 2.102.2 and LDC 1.31.0
+2023-12-16 version 1.4.0-beta2
+  * dmdserver:
+    - updated to frontend of DMD 2.106.0
+    - now slightly less dependent on D runtime by avoiding lowerings
+    - fixed some false memory pointer
+    - pass import paths from prerequisite projects to semantic analysis, too
+  * full installer now bundled with DMD 2.106.0 and LDC 1.35.0
   * fixed issue 23734: avoid exception by std.file.isDir when clicking a project folder that doesn't exist
-  * added separate version of Microsoft.Build.CPPTasks.Common for VS 17.5.
+  * added separate version of Microsoft.Build.CPPTasks.Common for VS 17.5 - 17.9
+  * updated dfmt library from upstream
   * improved message when dmd crashes
-  * "add imports from dependent projects" is now evaluated recursively
+  * "add imports from dependent projects" is now evaluated recursively and passed to semantic analysis
+  * added support for compiler option -preview=shortenedMethods
+  * fixed issue #264: VisualD doesn't run compiled executable, when I select "Compile and Run" option

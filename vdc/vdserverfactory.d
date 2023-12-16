@@ -58,14 +58,14 @@ class VDServerClassFactory : ComObject, IClassFactory
 	else debug    static immutable GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
 	else          static immutable GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IClassFactory) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		if(*riid == IVDServer.iid)
 		{
@@ -76,7 +76,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 		}
 		return E_NOINTERFACE;
 	}
-	override HRESULT LockServer(in BOOL fLock)
+	override HRESULT LockServer(const BOOL fLock)
 	{
 		if(fLock)
 		{

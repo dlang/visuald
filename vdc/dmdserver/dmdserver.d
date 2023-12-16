@@ -178,7 +178,7 @@ class DMDServer : ComObject, IVDServer
 		return super.Release();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 //		MessageBoxW(null, "Object1.QueryInterface"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
 		if(queryInterface!(IVDServer) (this, riid, pvObject))
@@ -1185,7 +1185,7 @@ unittest
 	}
 
 	checkTip(5, 9, "(local variable) `int xyz`");
-	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`...");
+	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int __param_0, int __param_1, int __param_2) @safe`...");
 	checkTip(7, 12, "(local variable) `int xyz`");
 
 	version(traceGC)

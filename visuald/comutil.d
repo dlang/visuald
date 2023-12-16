@@ -151,7 +151,7 @@ debug
 }
 
 extern (Windows):
-	override HRESULT QueryInterface(in IID* riid, void** ppv)
+	override HRESULT QueryInterface(const IID* riid, void** ppv)
 	{
 		HRESULT hr = super.QueryInterface(riid, ppv);
 		if (hr != S_OK)
@@ -254,7 +254,7 @@ struct INTERFACEDATA
 
 class DisposingDispatchObject : DisposingComObject, IDispatch
 {
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IDispatch) (this, riid, pvObject))
 			return S_OK;
@@ -271,8 +271,8 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 	}
 
 	override int GetTypeInfo(
-		/* [in] */ in UINT iTInfo,
-		/* [in] */ in LCID lcid,
+		/* [in] */ const UINT iTInfo,
+		/* [in] */ const LCID lcid,
 		/* [out] */ ITypeInfo *ppTInfo)
 	{
 		mixin(LogCallMix);
@@ -284,10 +284,10 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 	}
 
 	override int GetIDsOfNames(
-		/* [in] */ in IID* riid,
-		/* [size_is][in] */ in LPOLESTR *rgszNames,
-		/* [range][in] */ in UINT cNames,
-		/* [in] */ in LCID lcid,
+		/* [in] */ const IID* riid,
+		/* [size_is][in] */ const LPOLESTR *rgszNames,
+		/* [range][in] */ const UINT cNames,
+		/* [in] */ const LCID lcid,
 		/* [size_is][out] */ DISPID *rgDispId)
 	{
 		mixin(LogCallMix);
@@ -295,10 +295,10 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 	}
 
 	override int Invoke(
-		/* [in] */ in DISPID dispIdMember,
-		/* [in] */ in IID* riid,
-		/* [in] */ in LCID lcid,
-		/* [in] */ in WORD wFlags,
+		/* [in] */ const DISPID dispIdMember,
+		/* [in] */ const IID* riid,
+		/* [in] */ const LCID lcid,
+		/* [in] */ const WORD wFlags,
 		/* [out][in] */ DISPPARAMS *pDispParams,
 		/* [out] */ VARIANT *pVarResult,
 		/* [out] */ EXCEPINFO *pExcepInfo,
@@ -327,7 +327,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	{
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(ITypeInfo) (this, riid, pvObject))
 			return S_OK;
@@ -349,7 +349,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetFuncDesc(
-		/* [in] */ in UINT index,
+		/* [in] */ const UINT index,
 		/* [out] */ FUNCDESC **ppFuncDesc)
 	{
 		mixin(LogCallMix);
@@ -357,7 +357,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetVarDesc(
-		/* [in] */ in UINT index,
+		/* [in] */ const UINT index,
 		/* [out] */ VARDESC **ppVarDesc)
 	{
 		mixin(LogCallMix);
@@ -365,9 +365,9 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetNames(
-		/* [in] */ in MEMBERID memid,
+		/* [in] */ const MEMBERID memid,
 		/* [length_is][size_is][out] */ BSTR *rgBstrNames,
-		/* [in] */ in UINT cMaxNames,
+		/* [in] */ const UINT cMaxNames,
 		/* [out] */ UINT *pcNames)
 	{
 		mixin(LogCallMix);
@@ -375,7 +375,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetRefTypeOfImplType(
-		/* [in] */ in UINT index,
+		/* [in] */ const UINT index,
 		/* [out] */ HREFTYPE *pRefType)
 	{
 		mixin(LogCallMix);
@@ -383,7 +383,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetImplTypeFlags(
-		/* [in] */ in UINT index,
+		/* [in] */ const UINT index,
 		/* [out] */ INT *pImplTypeFlags)
 	{
 		mixin(LogCallMix);
@@ -391,8 +391,8 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetIDsOfNames(
-		/* [size_is][in] */ in LPOLESTR *rgszNames,
-		/* [in] */ in UINT cNames,
+		/* [size_is][in] */ const LPOLESTR *rgszNames,
+		/* [in] */ const UINT cNames,
 		/* [size_is][out] */ MEMBERID *pMemId)
 	{
 		mixin(LogCallMix);
@@ -400,9 +400,9 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int Invoke(
-		/* [in] */ in PVOID pvInstance,
-		/* [in] */ in MEMBERID memid,
-		/* [in] */ in WORD wFlags,
+		/* [in] */ const PVOID pvInstance,
+		/* [in] */ const MEMBERID memid,
+		/* [in] */ const WORD wFlags,
 		/* [out][in] */ DISPPARAMS *pDispParams,
 		/* [out] */ VARIANT *pVarResult,
 		/* [out] */ EXCEPINFO *pExcepInfo,
@@ -413,7 +413,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetDocumentation(
-		/* [in] */ in MEMBERID memid,
+		/* [in] */ const MEMBERID memid,
 		/* [out] */ BSTR *pBstrName,
 		/* [out] */ BSTR *pBstrDocString,
 		/* [out] */ DWORD *pdwHelpContext,
@@ -424,8 +424,8 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetDllEntry(
-		/* [in] */ in MEMBERID memid,
-		/* [in] */ in INVOKEKIND invKind,
+		/* [in] */ const MEMBERID memid,
+		/* [in] */ const INVOKEKIND invKind,
 		/* [out] */ BSTR *pBstrDllName,
 		/* [out] */ BSTR *pBstrName,
 		/* [out] */ WORD *pwOrdinal)
@@ -435,7 +435,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetRefTypeInfo(
-		/* [in] */ in HREFTYPE hRefType,
+		/* [in] */ const HREFTYPE hRefType,
 		/* [out] */ ITypeInfo* ppTInfo)
 	{
 		mixin(LogCallMix);
@@ -443,8 +443,8 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int AddressOfMember(
-		/* [in] */ in MEMBERID memid,
-		/* [in] */ in INVOKEKIND invKind,
+		/* [in] */ const MEMBERID memid,
+		/* [in] */ const INVOKEKIND invKind,
 		/* [out] */ PVOID *ppv)
 	{
 		mixin(LogCallMix);
@@ -453,7 +453,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 
 	override int CreateInstance(
 		/* [in] */ IUnknown pUnkOuter,
-		/* [in] */ in IID* riid,
+		/* [in] */ const IID* riid,
 		/* [iid_is][out] */ PVOID *ppvObj)
 	{
 		mixin(LogCallMix);
@@ -461,7 +461,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetMops(
-		/* [in] */ in MEMBERID memid,
+		/* [in] */ const MEMBERID memid,
 		/* [out] */ BSTR *pBstrMops)
 	{
 		mixin(LogCallMix2);
@@ -477,21 +477,21 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	/* [local] */ void ReleaseTypeAttr(
-		/* [in] */ in TYPEATTR *pTypeAttr)
+		/* [in] */ const TYPEATTR *pTypeAttr)
 	{
 		mixin(LogCallMix);
 		//return returnError(E_NOTIMPL);
 	}
 
 	/* [local] */ void ReleaseFuncDesc(
-		/* [in] */ in FUNCDESC *pFuncDesc)
+		/* [in] */ const FUNCDESC *pFuncDesc)
 	{
 		mixin(LogCallMix);
 		//return returnError(E_NOTIMPL);
 	}
 
 	/* [local] */ void ReleaseVarDesc(
-		/* [in] */ in VARDESC *pVarDesc)
+		/* [in] */ const VARDESC *pVarDesc)
 	{
 		mixin(LogCallMix);
 		//return returnError(E_NOTIMPL);

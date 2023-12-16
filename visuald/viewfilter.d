@@ -185,7 +185,7 @@ version(tip)
 		return true;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(ViewFilter) (this, riid, pvObject))
 			return S_OK;
@@ -201,8 +201,8 @@ version(tip)
 	}
 
 	// IOleCommandTarget //////////////////////////////////////
-	override int QueryStatus( /* [unique][in] */ in GUID *pguidCmdGroup,
-	                 /* [in] */ in uint cCmds,
+	override int QueryStatus( /* [unique][in] */ const GUID *pguidCmdGroup,
+	                 /* [in] */ const uint cCmds,
 	                 /* [out][in][size_is] */ OLECMD *prgCmds,
 	                 /* [unique][out][in] */ OLECMDTEXT *pCmdText)
 	{
@@ -223,10 +223,10 @@ version(tip)
 		return S_OK;
 	}
 
-	override int Exec( /* [unique][in] */ in GUID *pguidCmdGroup,
-	          /* [in] */ in uint nCmdID,
-	          /* [in] */ in uint nCmdexecopt,
-	          /* [unique][in] */ in VARIANT *pvaIn,
+	override int Exec( /* [unique][in] */ const GUID *pguidCmdGroup,
+	          /* [in] */ const uint nCmdID,
+	          /* [in] */ const uint nCmdexecopt,
+	          /* [unique][in] */ const VARIANT *pvaIn,
 	          /* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K && nCmdID == 1627 /*OutputPaneCombo*/)
@@ -727,7 +727,7 @@ version(tip)
 		mCodeWinMgr.mSource.DismissCompletor();
 	}
 
-	int QueryCommandStatus(in GUID *guidCmdGroup, uint cmdID)
+	int QueryCommandStatus(const GUID *guidCmdGroup, uint cmdID)
 	{
 		if(*guidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
@@ -1815,7 +1815,7 @@ else
 	}
 
 	// IVsTextViewFilter //////////////////////////////////////
-	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)
+	override int GetWordExtent(const int iLine, const CharIndex iIndex, const uint dwFlags, /* [out] */ TextSpan *pSpan)
 	{
 		mixin(LogCallMix);
 
@@ -1930,7 +1930,7 @@ version(none) // quick info tooltips not good enough yet
 		return resFwd;
 	}
 
-	override int GetPairExtents(in int iLine, in CharIndex iIndex, /* [out] */ TextSpan *pSpan)
+	override int GetPairExtents(const int iLine, const CharIndex iIndex, /* [out] */ TextSpan *pSpan)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
@@ -1958,15 +1958,15 @@ version(none) // quick info tooltips not good enough yet
 		return S_OK;
 	}
 
-	override int OnChangeScrollInfo(IVsTextView pView, in int iBar,
-	                       in int iMinUnit, in int iMaxUnits,
-	                       in int iVisibleUnits, in int iFirstVisibleUnit)
+	override int OnChangeScrollInfo(IVsTextView pView, const int iBar,
+	                       const int iMinUnit, const int iMaxUnits,
+	                       const int iVisibleUnits, const int iFirstVisibleUnit)
 	{
 		// mixin(LogCallMix);
 		return S_OK;
 	}
 
-	override int OnChangeCaretLine(IVsTextView pView, in int iNewLine, in int iOldLine)
+	override int OnChangeCaretLine(IVsTextView pView, const int iNewLine, const int iOldLine)
 	{
 		// mixin(LogCallMix);
 		return S_OK;
@@ -1979,7 +1979,7 @@ version(none) // quick info tooltips not good enough yet
 		return S_OK;
 	}
 
-	override int OnAfterSnippetsKeyBindingChange(in uint dwCmdGuid, in uint dwCmdId, in BOOL fBound)
+	override int OnAfterSnippetsKeyBindingChange(const uint dwCmdGuid, const uint dwCmdId, const BOOL fBound)
 	{
 		mixin(LogCallMix);
 		return S_OK;
@@ -2074,7 +2074,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 			mTipWindow.SetTextTipData(this);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTextTipData) (this, riid, pvObject))
 			return S_OK;
@@ -2120,7 +2120,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 	}
 
 	// NOTE: *pdwFontAttr will already have been memset-ed to zeroes, so you can set only the indices that are not normal
-    HRESULT GetTipFontInfo(in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
+    HRESULT GetTipFontInfo(const int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
 	{
 		// needs *pfGetFontInfo = TRUE; above
 		// 1 for bold

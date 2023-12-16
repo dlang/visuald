@@ -585,7 +585,7 @@ class VDInfoBarTextSpan : ComObject, IVsInfoBarTextSpan
 		message = msg;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBarTextSpan) (this, riid, pvObject))
 			return S_OK;
@@ -626,7 +626,7 @@ class VDInfoBarTextSpanCollection : ComObject, IVsInfoBarTextSpanCollection
 		textSpan = newCom!VDInfoBarTextSpan(msg);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBarTextSpanCollection) (this, riid, pvObject))
 			return S_OK;
@@ -641,7 +641,7 @@ class VDInfoBarTextSpanCollection : ComObject, IVsInfoBarTextSpanCollection
 	}
 
     // Gets the span stored at a specific index in the collection.
-    HRESULT GetSpan(in int index, IVsInfoBarTextSpan * span)
+    HRESULT GetSpan(const int index, IVsInfoBarTextSpan * span)
 	{
 		if (index != 0)
 			return E_FAIL;
@@ -660,7 +660,7 @@ class VDInfoBarActionItem : VDInfoBarTextSpan, IVsInfoBarActionItem
 		super(msg);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBarActionItem) (this, riid, pvObject))
 			return S_OK;
@@ -694,7 +694,7 @@ class VDInfoBarActionItemCollection : ComObject, IVsInfoBarActionItemCollection
 		action = newCom!VDInfoBarActionItem(0, msg);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBarActionItemCollection) (this, riid, pvObject))
 			return S_OK;
@@ -709,7 +709,7 @@ class VDInfoBarActionItemCollection : ComObject, IVsInfoBarActionItemCollection
 	}
 
     // Gets the span stored at a specific index in the collection.
-    HRESULT GetItem(in int index, IVsInfoBarActionItem * item)
+    HRESULT GetItem(const int index, IVsInfoBarActionItem * item)
 	{
 		if (index != 0)
 			return S_FALSE;
@@ -730,7 +730,7 @@ class VDInfoBar : ComObject, IVsInfoBar
 			actions = newCom!VDInfoBarActionItemCollection(action);
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBar) (this, riid, pvObject))
 			return S_OK;
@@ -779,7 +779,7 @@ class VDInfoBarUIEvents : ComObject, IVsInfoBarUIEvents
 		uiElement = ui;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsInfoBarUIEvents) (this, riid, pvObject))
 			return S_OK;

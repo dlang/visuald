@@ -121,7 +121,7 @@ class LanguageService : DisposingComObject,
 		return mVDServerClient;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLanguageInfo) (this, riid, pvObject))
 			return S_OK;
@@ -236,21 +236,21 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsLanguageDebugInfo //////////////////////////////////////
-	override HRESULT GetLanguageID(IVsTextBuffer pBuffer, in int iLine, in int iCol, GUID* pguidLanguageID)
+	override HRESULT GetLanguageID(IVsTextBuffer pBuffer, const int iLine, const int iCol, GUID* pguidLanguageID)
 	{
 		*pguidLanguageID = g_languageCLSID;
 		return S_OK;
 	}
 
 	// obsolete
-	override HRESULT GetLocationOfName(in LPCOLESTR pszName, BSTR* pbstrMkDoc, TextSpan* pspanLocation)
+	override HRESULT GetLocationOfName(const LPCOLESTR pszName, BSTR* pbstrMkDoc, TextSpan* pspanLocation)
 	{
 		mixin(LogCallMix);
 		*pbstrMkDoc = null;
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetNameOfLocation(IVsTextBuffer pBuffer, in int iLine, in int iCol, BSTR* pbstrName, int* piLineOffset)
+	override HRESULT GetNameOfLocation(IVsTextBuffer pBuffer, const int iLine, const int iCol, BSTR* pbstrName, int* piLineOffset)
 	{
 		mixin(LogCallMix);
 
@@ -271,7 +271,7 @@ class LanguageService : DisposingComObject,
 		return E_FAIL;
 	}
 
-	override HRESULT GetProximityExpressions(IVsTextBuffer pBuffer, in int iLine, in int iCol, in int cLines, IVsEnumBSTR* ppEnum)
+	override HRESULT GetProximityExpressions(IVsTextBuffer pBuffer, const int iLine, const int iCol, const int cLines, IVsEnumBSTR* ppEnum)
 	{
 		auto text = ComPtr!(IVsTextLines)(pBuffer);
 		if(!text)
@@ -284,19 +284,19 @@ class LanguageService : DisposingComObject,
 		return S_OK;
 	}
 
-	override HRESULT IsMappedLocation(IVsTextBuffer pBuffer, in int iLine, in int iCol)
+	override HRESULT IsMappedLocation(IVsTextBuffer pBuffer, const int iLine, const int iCol)
 	{
 		mixin(LogCallMix);
 		return S_FALSE;
 	}
 
-	override HRESULT ResolveName(in LPCOLESTR pszName, in uint dwFlags, IVsEnumDebugName* ppNames)
+	override HRESULT ResolveName(const LPCOLESTR pszName, const uint dwFlags, IVsEnumDebugName* ppNames)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
 
-	override HRESULT ValidateBreakpointLocation(IVsTextBuffer pBuffer, in int iLine, in int iCol, TextSpan* pCodeSpan)
+	override HRESULT ValidateBreakpointLocation(IVsTextBuffer pBuffer, const int iLine, const int iCol, TextSpan* pCodeSpan)
 	{
 		pCodeSpan.iStartLine = iLine;
 		pCodeSpan.iStartIndex = 0;
@@ -308,9 +308,9 @@ class LanguageService : DisposingComObject,
 	// IVsLanguageDebugInfo2 //////////////////////////////////////
 	HRESULT QueryCommonLanguageBlock(
 	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing a break point
-	            in  int iLine,                   //line for a break point
-	            in  int iCol,                    //column for a break point
-	            in  DWORD dwFlag,                //common language block being queried. see LANGUAGECOMMONBLOCK
+	            const  int iLine,                   //line for a break point
+	            const  int iCol,                    //column for a break point
+	            const  DWORD dwFlag,                //common language block being queried. see LANGUAGECOMMONBLOCK
 	            /+[out]+/ BOOL *pfInBlock)       //true if iLine and iCol is inside common language block;otherwise, false;
 	{
 		mixin(LogCallMix);
@@ -319,8 +319,8 @@ class LanguageService : DisposingComObject,
 
 	HRESULT ValidateInstructionpointLocation(
 	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing an instruction point(IP)
-	            in  int iLine,             //line for the existing IP
-	            in  int iCol,              //column for the existing IP
+	            const  int iLine,             //line for the existing IP
+	            const  int iCol,              //column for the existing IP
 	            /+[out]+/ TextSpan *pCodeSpan)   //new IP code span
 	{
 		mixin(LogCallMix);
@@ -329,8 +329,8 @@ class LanguageService : DisposingComObject,
 
 	HRESULT QueryCatchLineSpan(
 	            /+[in]+/  IVsTextBuffer pBuffer,       //code buffer containing a break point
-	            in  int iLine,                   //line for a break point
-	            in  int iCol,                    //column for a break point
+	            const  int iLine,                   //line for a break point
+	            const  int iCol,                    //column for a break point
 	            /+[out]+/ BOOL *pfIsInCatch,
 	            /+[out]+/ TextSpan *ptsCatchLine)
 	{
@@ -502,7 +502,7 @@ class LanguageService : DisposingComObject,
 		}
 	}
 
-	override HRESULT GetColorableItem(in int iIndex, IVsColorableItem* ppItem)
+	override HRESULT GetColorableItem(const int iIndex, IVsColorableItem* ppItem)
 	{
 		if(iIndex < 1 || iIndex > colorableItems.length)
 			return E_INVALIDARG;
@@ -525,14 +525,14 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IServiceProvider //////////////////////////////////////
-	override HRESULT QueryService(in GUID* guidService, in IID* riid, void ** ppvObject)
+	override HRESULT QueryService(const GUID* guidService, const IID* riid, void ** ppvObject)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
 
 	// IVsDebuggerEvents //////////////////////////////////////
-	override HRESULT OnModeChange(in DBGMODE dbgmodeNew)
+	override HRESULT OnModeChange(const DBGMODE dbgmodeNew)
 	{
 		mixin(LogCallMix2);
 		mDbgMode = dbgmodeNew;
@@ -540,7 +540,7 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsFormatFilterProvider //////////////////////////////////////
-	override HRESULT CurFileExtensionFormat(in BSTR bstrFileName, uint* pdwExtnIndex)
+	override HRESULT CurFileExtensionFormat(const BSTR bstrFileName, uint* pdwExtnIndex)
 	{
 		mixin(LogCallMix2);
 		string filename = to_string(bstrFileName);
@@ -561,7 +561,7 @@ class LanguageService : DisposingComObject,
 		return S_OK;
 	}
 
-	override HRESULT QueryInvalidEncoding(in uint Format, BSTR* pbstrMessage)
+	override HRESULT QueryInvalidEncoding(const uint Format, BSTR* pbstrMessage)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
@@ -575,7 +575,7 @@ class LanguageService : DisposingComObject,
 		return S_OK;
 	}
 
-	HRESULT UpdateSolution_Done(in BOOL   fSucceeded, in BOOL fModified, in BOOL fCancelCommand)
+	HRESULT UpdateSolution_Done(const BOOL   fSucceeded, const BOOL fModified, const BOOL fCancelCommand)
 	{
 		return S_OK;
 	}
@@ -1148,9 +1148,6 @@ class LanguageService : DisposingComObject,
 				i = normalizeDir(unquoteArgument(i));
 			makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
 
-			if (cfgopts.addDepImp)
-				foreach(dep; cfg.getImportsFromDependentProjects())
-					imp.addunique(dep);
 			string versions = cfg.getCompilerVersionIDs();
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
@@ -1225,7 +1222,7 @@ class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
 		mLangSvc = svc;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
 			return S_OK;
@@ -1238,7 +1235,7 @@ class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
 		return mLangSvc.UpdateSolution_Begin(pfCancelUpdate);
 	}
 
-	HRESULT UpdateSolution_Done(in BOOL   fSucceeded, in BOOL fModified, in BOOL fCancelCommand)
+	HRESULT UpdateSolution_Done(const BOOL   fSucceeded, const BOOL fModified, const BOOL fCancelCommand)
 	{
 		return mLangSvc.UpdateSolution_Done(fSucceeded, fModified, fCancelCommand);
 	}
@@ -1299,7 +1296,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 		mLangSvc = null;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCodeWindowManager) (this, riid, pvObject))
 			return S_OK;
@@ -1402,7 +1399,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		mWinMgr = mgr;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsDropdownBarClient) (this, riid, pvObject))
 			return S_OK;
@@ -1424,7 +1421,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	}
 
 	// called whenever info about a combo is needed; any of the out parameters are allowed to be passed in as NULL ptrs if not needed
-	HRESULT GetComboAttributes(in int iCombo,
+	HRESULT GetComboAttributes(const int iCombo,
 							   /+[out]+/ ULONG *pcEntries,
 							   /+[out]+/ ULONG *puEntryType,  // ORing of DROPDOWNENTRYTYPE enum
 							   /+[out]+/ HANDLE *phImageList)  // actually an HIMAGELIST
@@ -1449,7 +1446,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	}
 
 	// called for ENTRY_TEXT
-	HRESULT GetEntryText(in int iCombo, in int iIndex, /+[out]+/ WCHAR **ppszText)
+	HRESULT GetEntryText(const int iCombo, const int iIndex, /+[out]+/ WCHAR **ppszText)
 	{
 		size_t idx = getNodeIndex(iCombo, iIndex);
 		if (idx >= mNodes.length)
@@ -1460,14 +1457,14 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	}
 
 	// called for ENTRY_ATTR
-	HRESULT GetEntryAttributes(in int iCombo, in int iIndex, 
+	HRESULT GetEntryAttributes(const int iCombo, const int iIndex, 
 							   /+[out]+/ ULONG *pAttr) // ORing of DROPDOWNFONTATTR enum values
 	{
 		return E_NOTIMPL;
 	}
 
 	// called for ENTRY_IMAGE
-	HRESULT GetEntryImage(in int iCombo, in int iIndex, /+[out]+/ int *piImageIndex)
+	HRESULT GetEntryImage(const int iCombo, const int iIndex, /+[out]+/ int *piImageIndex)
 	{
 		size_t idx = getNodeIndex(iCombo, iIndex);
 		if (idx >= mNodes.length)
@@ -1477,12 +1474,12 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		return S_OK;
 	}
 
-	HRESULT OnItemSelected(in int iCombo, in int iIndex)
+	HRESULT OnItemSelected(const int iCombo, const int iIndex)
 	{
 		return E_NOTIMPL;
 	}
 
-	HRESULT OnItemChosen(in int iCombo, in int iIndex)
+	HRESULT OnItemChosen(const int iCombo, const int iIndex)
 	{
 		size_t idx = getNodeIndex(iCombo, iIndex);
 		if (idx >= mNodes.length)
@@ -1491,13 +1488,13 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		return NavigateTo(mWinMgr.mSource.mBuffer, mNodes[idx].begline, 0, mNodes[idx].begline, 0);
 	}
 
-	HRESULT OnComboGetFocus(in int iCombo)
+	HRESULT OnComboGetFocus(const int iCombo)
 	{
 		return E_NOTIMPL;
 	}
 
 	// GetComboTipText returns a tooltip for an entire combo
-	HRESULT GetComboTipText(in int iCombo,  /+[out]+/ BSTR *pbstrText)
+	HRESULT GetComboTipText(const int iCombo,  /+[out]+/ BSTR *pbstrText)
 	{
 		return E_NOTIMPL;
 	}
@@ -1678,7 +1675,7 @@ class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 		this.column = col;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCodeDefViewContext) (this, riid, pvObject))
 			return S_OK;
@@ -1690,22 +1687,22 @@ class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 		*pcItems = 1;
 		return S_OK;
 	}
-	override HRESULT GetCol(in ULONG iItem, ULONG* piCol)
+	override HRESULT GetCol(const ULONG iItem, ULONG* piCol)
 	{
 		*piCol = column;
 		return S_OK;
 	}
-	override HRESULT GetLine(in ULONG iItem, ULONG* piLine)
+	override HRESULT GetLine(const ULONG iItem, ULONG* piLine)
 	{
 		*piLine = line;
 		return S_OK;
 	}
-	override HRESULT GetFileName(in ULONG iItem, BSTR *pbstrFilename)
+	override HRESULT GetFileName(const ULONG iItem, BSTR *pbstrFilename)
 	{
 		*pbstrFilename = allocBSTR(filename);
 		return S_OK;
 	}
-	override HRESULT GetSymbolName(in ULONG iItem, BSTR *pbstrSymbolName)
+	override HRESULT GetSymbolName(const ULONG iItem, BSTR *pbstrSymbolName)
 	{
 		*pbstrSymbolName = allocBSTR(symbol);
 		return S_OK;
@@ -1939,7 +1936,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		}
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -1949,18 +1946,18 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 
 	// IVsUserDataEvents //////////////////////////////////////
-	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
+	override int OnUserDataChange(const GUID* riidKey, const VARIANT vtNewValue)
 	{
 		return mSource.OnUserDataChange(riidKey, vtNewValue);
 	}
 
 	// IVsTextLinesEvents //////////////////////////////////////
-	override int OnChangeLineText(in TextLineChange *pTextLineChange, in BOOL fLast)
+	override int OnChangeLineText(const TextLineChange *pTextLineChange, const BOOL fLast)
 	{
 		return mSource.OnChangeLineText(pTextLineChange, fLast);
 	}
 
-	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
+	override int OnChangeLineAttributes(const int iFirstLine, const int iLastLine)
 	{
 		return mSource.OnChangeLineAttributes(iFirstLine, iLastLine);
 	}
@@ -2053,7 +2050,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 		mColorizer = null;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -2089,13 +2086,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 	}
 
 	// IVsUserDataEvents //////////////////////////////////////
-	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
+	override int OnUserDataChange(const GUID* riidKey, const VARIANT vtNewValue)
 	{
 		return S_OK;
 	}
 
 	// IVsTextLinesEvents //////////////////////////////////////
-	override int OnChangeLineText(in TextLineChange *pTextLineChange, in BOOL fLast)
+	override int OnChangeLineText(const TextLineChange *pTextLineChange, const BOOL fLast)
 	{
 		mLastTextLineChange = *pTextLineChange;
 		mModificationCount++;
@@ -2130,7 +2127,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 		mLastSaveLineChangePos = 0;
 	}
 
-	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
+	override int OnChangeLineAttributes(const int iFirstLine, const int iLastLine)
 	{
 		return S_OK;
 	}
@@ -2204,14 +2201,14 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 
 
 	// Commands -- see MarkerCommandValues for meaning of iItem param
-	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem,
+	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, const int iItem,
 		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText,
 		/+[out]+/ DWORD* pcmdf)
 	{
 		return E_NOTIMPL;
 	}
 
-	override HRESULT ExecMarkerCommand(/+[in]+/ IVsTextMarker pMarker, in int iItem)
+	override HRESULT ExecMarkerCommand(/+[in]+/ IVsTextMarker pMarker, const int iItem)
 	{
 		return E_NOTIMPL;
 	}
@@ -2228,8 +2225,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 
 	// IVsHiddenTextClient ///////////////////////////////////////////////
 	HRESULT OnHiddenRegionChange(IVsHiddenRegion pHidReg,
-								 in HIDDEN_REGION_EVENT EventCode,     // HIDDENREGIONEVENT value
-								 in BOOL fBufferModifiable)
+								 const HIDDEN_REGION_EVENT EventCode,     // HIDDENREGIONEVENT value
+								 const BOOL fBufferModifiable)
 	{
 		return S_OK;
 	}
@@ -2283,13 +2280,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 		return S_OK;
 	}
 
-	HRESULT GetMarkerCommandInfo(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem,
+	HRESULT GetMarkerCommandInfo(/+[in]+/ IVsHiddenRegion pHidReg, const int iItem,
 									 /+[out, custom(uuid_IVsHiddenTextClient, "optional")]+/ BSTR * pbstrText,
 									 /+[out]+/ DWORD* pcmdf)
 	{
 		return E_NOTIMPL;
 	}
-	HRESULT ExecMarkerCommand(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem)
+	HRESULT ExecMarkerCommand(/+[in]+/ IVsHiddenRegion pHidReg, const int iItem)
 	{
 		return E_NOTIMPL;
 	}
@@ -2303,7 +2300,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 	destroy the hidden region by calling IVsHiddenRegion::Remove() or else reset its range so that
 	it is no longer hiding the hidden text.  It is OK to add/remove other regions when this is called.
 	*/
-	HRESULT MakeBaseSpanVisible(/+[in]+/ IVsHiddenRegion pHidReg, in TextSpan *pBaseSpan)
+	HRESULT MakeBaseSpanVisible(/+[in]+/ IVsHiddenRegion pHidReg, const TextSpan *pBaseSpan)
 	{
 		return E_NOTIMPL;
 	}
@@ -2414,7 +2411,7 @@ version(threadedOutlining)
 }
 	}
 
-	void CheckOutlining(in TextLineChange *pTextLineChange)
+	void CheckOutlining(const TextLineChange *pTextLineChange)
 	{
 version(threadedOutlining) {} else
 		mOutlineState = kOutlineStateDirty;
@@ -5154,7 +5151,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 		mPos = epe.mPos;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumBSTR) (this, riid, pvObject))
 			return S_OK;
@@ -5162,7 +5159,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 	}
 
 	// IVsEnumBSTR
-	override int Next(in ULONG celt, BSTR *rgelt, ULONG *pceltFetched)
+	override int Next(const ULONG celt, BSTR *rgelt, ULONG *pceltFetched)
 	{
 		if(mPos + celt > mExpressions.length)
 			return E_FAIL;
@@ -5177,7 +5174,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 		return S_OK;
 	}
 
-	override int Skip(in ULONG celt)
+	override int Skip(const ULONG celt)
 	{
 		mPos += celt;
 		return S_OK;
@@ -5226,10 +5223,10 @@ version(unittest)
 		mixin ImplementInterface!IVsTextLines;
 
 		HRESULT GetLineText(
-            in int       iStartLine,  // starting line
-            in CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
-            in int       iEndLine,    // ending line
-            in CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
+            const int       iStartLine,  // starting line
+            const CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
+            const int       iEndLine,    // ending line
+            const CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
             /+[out]+/ BSTR *    pbstrBuf)
 		{
 			if (iStartLine >= text.length)
@@ -5272,7 +5269,7 @@ version(unittest)
 			*piIndex = text.length > 0 ? text[$-1].length : -1;
 			return S_OK;
 		};
-		HRESULT GetLengthOfLine (in int iLine,
+		HRESULT GetLengthOfLine (const int iLine,
 		                         int *piLength)
 		{
 			if (iLine >= text.length)
@@ -5282,12 +5279,12 @@ version(unittest)
 		}
 
 		override HRESULT ReplaceLines (
-            in int       iStartLine,  // starting line
-            in CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
-            in int       iEndLine,    // ending line
-            in CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
-            in LPCWSTR   pszText,     // text to insert, if any
-            in int       iNewLen,     // # of chars to insert, if any
+            const int       iStartLine,  // starting line
+            const CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
+            const int       iEndLine,    // ending line
+            const CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
+            const LPCWSTR   pszText,     // text to insert, if any
+            const int       iNewLen,     // # of chars to insert, if any
             TextSpan *pChangedSpan)  // range of characters changed
 		{
 			assert(iStartLine == iEndLine);

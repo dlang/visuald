@@ -63,7 +63,7 @@ public:
 	// This function is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is called.
-	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, in BSTR cmdline, DWORD flags);
+	HRESULT ConfigureSemanticProject(const BSTR filename, const BSTR imp, const BSTR stringImp, const BSTR versionids, const BSTR debugids, const BSTR cmdline, DWORD flags);
 
 	// delete all semantic and parser information
 	HRESULT ClearSemanticProject();
@@ -81,7 +81,7 @@ public:
 	// ConfigureSemanticProject is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is invoked.
-	HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags);
+	HRESULT UpdateModule(const BSTR filename, const BSTR srcText, const DWORD flags);
 
 	// request tool tip text for a given text location
 	//
@@ -95,7 +95,7 @@ public:
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetTipResult
-	HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
+	HRESULT GetTip(const BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
 
 	// get the result of the previous GetTip
 	//
@@ -115,7 +115,7 @@ public:
 	//             with the current text
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetSemanticExpansionsResult
-	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
+	HRESULT GetSemanticExpansions(const BSTR filename, const BSTR tok, uint line, uint idx, const BSTR expr);
 
 	// get the result of the previous GetSemanticExpansions
 	//
@@ -127,7 +127,7 @@ public:
 	HRESULT GetSemanticExpansionsResult(BSTR* stringList);
 
 	// not used
-	HRESULT IsBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp);
+	HRESULT IsBinaryOperator(const BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp);
 
 	// return the parse errors found in the file
 	//
@@ -139,7 +139,7 @@ public:
 	// as erronous by underlining it in the editor
 	//
 	// return S_FALSE as long as the parsing is still running
-	HRESULT GetParseErrors(in BSTR filename, BSTR* errors);
+	HRESULT GetParseErrors(const BSTR filename, BSTR* errors);
 
 	// return the locations where "in" and "is" are used as binary operators
 	//
@@ -147,7 +147,7 @@ public:
 	// locs:       an array of pairs of DWORDs line,index that gives the text location of the "i"
 	//
 	// this method is called once after GetParseErrors returned successfully
-	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs);
+	HRESULT GetBinaryIsInLocations(const BSTR filename, VARIANT* locs);
 
 	// return the document outline, i.e. a simple description of the AST
 	//
@@ -158,7 +158,7 @@ public:
 	// format of each line: depth:line:endline:description
 	//
 	// this method might be called once after GetParseErrors returned successfully
-	HRESULT GetDocumentOutline(in BSTR filename, BSTR* stringList);
+	HRESULT GetDocumentOutline(const BSTR filename, BSTR* stringList);
 
 	// return a message to be displayed in the status line of the IDE
 	//
@@ -174,7 +174,7 @@ public:
 	// flags:      bit 0 - resolveTypes:   resolve field/alias identifier types
 	//
 	// this method is called once after GetParseErrors returned successfully
-	HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags);
+	HRESULT GetIdentifierTypes(const BSTR filename, int startLine, int endLine, int flags);
 
 	// return the identifier type information for the last request
 	//
@@ -194,7 +194,7 @@ public:
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetDefinitionResult
-	HRESULT GetDefinition(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex);
+	HRESULT GetDefinition(const BSTR filename, int startLine, int startIndex, int endLine, int endIndex);
 
 	// get the result of the previous GetDefinition
 	//
@@ -215,13 +215,13 @@ public:
 	//
 	// it is assumed that the reference finding is forwarded to some other thread
 	// and that the status can be polled by GetReferencesResult
-	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly);
+	HRESULT GetReferences(const BSTR filename, const BSTR tok, uint line, uint idx, const BSTR expr, const BOOL moduleOnly);
 	HRESULT GetReferencesResult(BSTR* stringList);
 
 	// set the comment tasks tokens used to populate the task list
 	//
 	// tasks:     \n separated list of identifiers (letter, digit, '_' or '@')
-	HRESULT ConfigureCommentTasks(in BSTR tasks);
+	HRESULT ConfigureCommentTasks(const BSTR tasks);
 
 	// return the comment tasks found in the file
 	//
@@ -232,7 +232,7 @@ public:
 	// the tasks will be inserted into the task list window
 	//
 	// return S_FALSE as long as the parsing is still running
-	HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks);
+	HRESULT GetCommentTasks(const BSTR filename, BSTR* tasks);
 
 	// return the locations of call arguments with parameter storage class ref, out or lazy
 	//
@@ -241,7 +241,7 @@ public:
 	//             location of the argument expression. type is 0/1/2 for ref/out/lazy
 	//
 	// this method is called once after GetParseErrors returned successfully
-	HRESULT GetParameterStorageLocs(in BSTR filename, VARIANT* locs);
+	HRESULT GetParameterStorageLocs(const BSTR filename, VARIANT* locs);
 }
 
 ///////////////////////////////////////////////////////////////////////

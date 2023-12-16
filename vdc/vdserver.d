@@ -118,7 +118,7 @@ class VDServer : ComObject, IVDServer
 		return super.Release();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 //		MessageBoxW(null, "Object1.QueryInterface"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
 		if(queryInterface!(IVDServer) (this, riid, pvObject))
@@ -166,8 +166,8 @@ class VDServer : ComObject, IVDServer
 			runTask(dg);
 	}
 
-	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids,
-											  in BSTR cmdline, DWORD flags)
+	override HRESULT ConfigureSemanticProject(const BSTR filename, const BSTR imp, const BSTR stringImp, const BSTR versionids, const BSTR debugids,
+											  const BSTR cmdline, DWORD flags)
 	{
 		string fname = to_string(filename);
 
@@ -228,7 +228,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
+	override HRESULT UpdateModule(const BSTR filename, const BSTR srcText, const DWORD flags)
 	{
 		string fname = to_string(filename);
 		string text  = to_string(srcText);
@@ -279,7 +279,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
+	override HRESULT GetTip(const BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 	{
 		string fname = to_string(filename);
 		ast.Module mod;
@@ -356,7 +356,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetDefinition(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	override HRESULT GetDefinition(const BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
 		string fname = to_string(filename);
 		ast.Module mod;
@@ -475,7 +475,7 @@ class VDServer : ComObject, IVDServer
 		return symbols.keys();
 	}
 
-	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
+	override HRESULT GetSemanticExpansions(const BSTR filename, const BSTR tok, uint line, uint idx, const BSTR expr)
 	{
 		string[] symbols;
 		string fname = to_string(filename);
@@ -524,7 +524,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT IsBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp)
+	override HRESULT IsBinaryOperator(const BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp)
 	{
 		if(!pIsOp)
 			return E_POINTER;
@@ -540,7 +540,7 @@ class VDServer : ComObject, IVDServer
 		return S_FALSE;
 	}
 
-	override HRESULT GetParseErrors(in BSTR filename, BSTR* errors)
+	override HRESULT GetParseErrors(const BSTR filename, BSTR* errors)
 	{
 		string fname = to_string(filename);
 
@@ -561,7 +561,7 @@ class VDServer : ComObject, IVDServer
 		return S_FALSE;
 	}
 
-	override HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags)
+	override HRESULT GetIdentifierTypes(const BSTR filename, int startLine, int endLine, int flags)
 	{
 		return E_NOTIMPL;
 	}
@@ -571,22 +571,22 @@ class VDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
-	override HRESULT ConfigureCommentTasks(in BSTR tasks)
+	override HRESULT ConfigureCommentTasks(const BSTR tasks)
 	{
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks)
+	override HRESULT GetCommentTasks(const BSTR filename, BSTR* tasks)
 	{
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetDocumentOutline(in BSTR filename, BSTR* outline)
+	override HRESULT GetDocumentOutline(const BSTR filename, BSTR* outline)
 	{
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
+	override HRESULT GetBinaryIsInLocations(const BSTR filename, VARIANT* locs)
 	{
 		// array of pairs of DWORD
 		int[] locData;
@@ -634,7 +634,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly)
+	override HRESULT GetReferences(const BSTR filename, const BSTR tok, uint line, uint idx, const BSTR expr, const BOOL moduleOnly)
 	{
 		return E_NOTIMPL;
 	}
@@ -644,7 +644,7 @@ class VDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
-	override HRESULT GetParameterStorageLocs(in BSTR filename, VARIANT* locs)
+	override HRESULT GetParameterStorageLocs(const BSTR filename, VARIANT* locs)
 	{
 		return E_NOTIMPL;
 	}

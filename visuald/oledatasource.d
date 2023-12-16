@@ -20,7 +20,7 @@ import visuald.logutil;
 
 extern(Windows)
 {
-	void ReleaseStgMedium(in STGMEDIUM* medium);
+	void ReleaseStgMedium(const STGMEDIUM* medium);
 }
 
 struct VX_DATACACHE_ENTRY
@@ -43,7 +43,7 @@ class OleDataSource : DComObject, IDataObject
 		Empty();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -221,7 +221,7 @@ class OleDataSource : DComObject, IDataObject
 
 	/////////////////////////////////////////////////////////////////////////////
 	// OleDataSource cache implementation
-	VX_DATACACHE_ENTRY* Lookup(in FORMATETC* lpFormatEtc, DATADIR nDataDir)
+	VX_DATACACHE_ENTRY* Lookup(const FORMATETC* lpFormatEtc, DATADIR nDataDir)
 	{
 		VX_DATACACHE_ENTRY* pLast = null;
 		// look for suitable match to lpFormatEtc in cache
@@ -260,7 +260,7 @@ class OleDataSource : DComObject, IDataObject
 
 	/////////////////////////////////////////////////////////////////////////////
 	// OleDataSource overidable default implementation
-	BOOL OnRenderGlobalData(in FORMATETC* lpFormatEtc, HGLOBAL* phGlobal)
+	BOOL OnRenderGlobalData(const FORMATETC* lpFormatEtc, HGLOBAL* phGlobal)
 	{
 		return FALSE;   // default does nothing
 	}
@@ -274,7 +274,7 @@ class OleDataSource : DComObject, IDataObject
 	+/
 
 	//---------------------------------------------------------------------------
-	BOOL OnRenderData(in FORMATETC* lpFormatEtc, STGMEDIUM* lpStgMedium)
+	BOOL OnRenderData(const FORMATETC* lpFormatEtc, STGMEDIUM* lpStgMedium)
 	{
 		// attempt TYMED_HGLOBAL as prefered format
 		if (lpFormatEtc.tymed & TYMED_HGLOBAL)
@@ -345,13 +345,13 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	BOOL OnSetData(in FORMATETC* lpFormatEtc, in STGMEDIUM* lpStgMedium, BOOL bRelease)
+	BOOL OnSetData(const FORMATETC* lpFormatEtc, const STGMEDIUM* lpStgMedium, BOOL bRelease)
 	{
 		return FALSE;   // default does nothing
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT GetData(/* [unique][in] */ in FORMATETC *pformatetcIn,
+	override HRESULT GetData(/* [unique][in] */ const FORMATETC *pformatetcIn,
 					/* [out] */ STGMEDIUM *pmedium)
 	{
 		mixin(LogCallMix2);
@@ -382,7 +382,7 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT GetDataHere(/* [unique][in] */ in FORMATETC *pformatetc,
+	override HRESULT GetDataHere(/* [unique][in] */ const FORMATETC *pformatetc,
 	                             /* [out][in] */ STGMEDIUM *pmedium)
 	{
 		mixin(LogCallMix2);
@@ -416,7 +416,7 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT QueryGetData(/* [unique][in] */ in FORMATETC *pformatetc)
+	override HRESULT QueryGetData(/* [unique][in] */ const FORMATETC *pformatetc)
 	{
 		mixin(LogCallMix2);
 
@@ -430,7 +430,7 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT GetCanonicalFormatEtc(/* [unique][in] */ in FORMATETC *pformatectIn,
+	override HRESULT GetCanonicalFormatEtc(/* [unique][in] */ const FORMATETC *pformatectIn,
 	                                       /* [out] */ FORMATETC *pformatetcOut)
 	{
 		mixin(LogCallMix2);
@@ -441,9 +441,9 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT SetData(/* [unique][in] */ in FORMATETC *pformatetc,
-	                         /* [unique][in] */ in STGMEDIUM *pmedium,
-	                         /* [in] */ in BOOL fRelease)
+	override HRESULT SetData(/* [unique][in] */ const FORMATETC *pformatetc,
+	                         /* [unique][in] */ const STGMEDIUM *pmedium,
+	                         /* [in] */ const BOOL fRelease)
 	{
 		mixin(LogCallMix2);
 
@@ -465,7 +465,7 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT EnumFormatEtc(/* [in] */ in DWORD dwDirection,
+	override HRESULT EnumFormatEtc(/* [in] */ const DWORD dwDirection,
 						  /* [out] */ IEnumFORMATETC *ppenumFormatEtc)
 	{
 		mixin(LogCallMix2);
@@ -479,8 +479,8 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT DAdvise(/* [in] */ in FORMATETC *pformatetc,
-	                         /* [in] */ in DWORD advf,
+	override HRESULT DAdvise(/* [in] */ const FORMATETC *pformatetc,
+	                         /* [in] */ const DWORD advf,
 	                         /* [unique][in] */ IAdviseSink pAdvSink,
 	                         /* [out] */ DWORD *pdwConnection)
 	{
@@ -497,7 +497,7 @@ class OleDataSource : DComObject, IDataObject
 	}
 
 	//---------------------------------------------------------------------------
-	override HRESULT DUnadvise(/* [in] */ in DWORD dwConnection)
+	override HRESULT DUnadvise(/* [in] */ const DWORD dwConnection)
 	{
 		mixin(LogCallMix2);
 
@@ -529,7 +529,7 @@ class CEnumFormatEtc : DComObject, IEnumFORMATETC
 		mPos = 0;
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IEnumFORMATETC) (this, riid, pvObject))
 			return S_OK;
@@ -547,7 +547,7 @@ class CEnumFormatEtc : DComObject, IEnumFORMATETC
 		return false;
 	}
 	
-	override HRESULT Next(in ULONG celt,
+	override HRESULT Next(const ULONG celt,
 	    /+[out, size_is(celt), length_is(*pceltFetched )]+/ FORMATETC *rgelt,
 	    /+[out]+/ ULONG *pceltFetched)
 	{
@@ -562,7 +562,7 @@ class CEnumFormatEtc : DComObject, IEnumFORMATETC
 		return i < celt ? S_FALSE : S_OK;
 	}
 
-	override HRESULT Skip(in ULONG celt)
+	override HRESULT Skip(const ULONG celt)
 	{
 		for(uint i = 0; i < celt; i++)
 			if(findValid())

@@ -57,6 +57,7 @@ C newCom(C, T...)(T arguments) if(is(C : ComObject) && T.length > 0)
 
 class ComObject : IUnknown
 {
+	version(none)
 	@disable new(size_t size)
 	{
 		assert(false); // should not be called because we don't have enough type info
@@ -65,7 +66,7 @@ class ComObject : IUnknown
 	}
 
 extern (Windows):
-	override HRESULT QueryInterface(in IID* riid, void** ppv)
+	override HRESULT QueryInterface(const IID* riid, void** ppv)
 	{
 		if (*riid == IID_IUnknown)
 		{

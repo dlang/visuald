@@ -137,7 +137,7 @@ class CppWizardPane : DisposingComObject, IVsWindowPane
 		_ReadStateFromRegistry();
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsWindowPane) (this, riid, pvObject))
 			return S_OK;
@@ -162,7 +162,7 @@ class CppWizardPane : DisposingComObject, IVsWindowPane
 		return S_OK;
 	}
 
-	HRESULT CreatePaneWindow(in HWND hwndParent, in int x, in int y, in int cx, in int cy,
+	HRESULT CreatePaneWindow(const HWND hwndParent, const int x, const int y, const int cx, const int cy,
 	                         /+[out]+/ HWND *hwnd)
 	{
 		mixin(LogCallMix2);

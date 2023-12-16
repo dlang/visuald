@@ -213,14 +213,14 @@ class ClassFactory : DComObject, IClassFactory
 {
 	this() {}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -251,7 +251,7 @@ class ClassFactory : DComObject, IClassFactory
 		return S_FALSE;
 	}
 
-	override HRESULT LockServer(in BOOL fLock)
+	override HRESULT LockServer(const BOOL fLock)
 	{
 		if(fLock)
 			InterlockedIncrement(&g_dllRefCount);
@@ -292,7 +292,7 @@ class Package : DisposingComObject,
 	{
 	}
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsPackage) (this, riid, pvObject))
 			return S_OK;
@@ -397,18 +397,18 @@ class Package : DisposingComObject,
 		return S_OK;
 	}
 
-	override int CreateTool(in GUID* rguidPersistenceSlot)
+	override int CreateTool(const GUID* rguidPersistenceSlot)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
-	override int GetAutomationObject(in wchar* pszPropName, IDispatch* ppDisp)
+	override int GetAutomationObject(const wchar* pszPropName, IDispatch* ppDisp)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
 
-	override int GetPropertyPage(in GUID* rguidPage, VSPROPSHEETPAGE* ppage)
+	override int GetPropertyPage(const GUID* rguidPage, VSPROPSHEETPAGE* ppage)
 	{
 		mixin(LogCallMix2);
 
@@ -473,7 +473,7 @@ class Package : DisposingComObject,
 		*pfCanClose = 1;
 		return S_OK;
 	}
-	override int ResetDefaults(in uint grfFlags)
+	override int ResetDefaults(const uint grfFlags)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
@@ -561,7 +561,7 @@ version(none)
 	}
 
 	// IServiceProvider
-	override int QueryService(in GUID* guidService, in IID* riid, void ** ppvObject)
+	override int QueryService(const GUID* guidService, const IID* riid, void ** ppvObject)
 	{
 		mixin(LogCallMix);
 
@@ -608,7 +608,7 @@ version(none)
 	}
 
 	// IOleCommandTarget //////////////////////////////////////
-	override int QueryStatus(in GUID *pguidCmdGroup, in uint cCmds,
+	override int QueryStatus(const GUID *pguidCmdGroup, const uint cCmds,
 	                         OLECMD *prgCmds, OLECMDTEXT *pCmdText)
 	{
 		mixin(LogCallMix);
@@ -642,10 +642,10 @@ version(none)
 		return S_OK;
 	}
 
-	override int Exec( /* [unique][in] */ in GUID *pguidCmdGroup,
-	          /* [in] */ in uint nCmdID,
-	          /* [in] */ in uint nCmdexecopt,
-	          /* [unique][in] */ in VARIANT *pvaIn,
+	override int Exec( /* [unique][in] */ const GUID *pguidCmdGroup,
+	          /* [in] */ const uint nCmdID,
+	          /* [in] */ const uint nCmdexecopt,
+	          /* [unique][in] */ const VARIANT *pvaIn,
 	          /* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		if(g_commandSetCLSID != *pguidCmdGroup)
@@ -890,7 +890,7 @@ version(none)
 	}
 
 	// IOleComponent Methods
-	BOOL FDoIdle(in OLEIDLEF grfidlef)
+	BOOL FDoIdle(const OLEIDLEF grfidlef)
 	{
 		if(mWantsUpdateLibInfos)
 		{
@@ -914,37 +914,37 @@ version(none)
 	{
 		return FALSE;
 	}
-	void OnEnterState(in OLECSTATE uStateID, in BOOL fEnter)
+	void OnEnterState(const OLECSTATE uStateID, const BOOL fEnter)
 	{
 	}
-	void OnAppActivate(in BOOL fActive, in DWORD dwOtherThreadID)
+	void OnAppActivate(const BOOL fActive, const DWORD dwOtherThreadID)
 	{
 	}
 	void OnLoseActivation()
 	{
 	}
 	void OnActivationChange(/+[in]+/ IOleComponent pic,
-							in BOOL fSameComponent,
-							in const( OLECRINFO)*pcrinfo,
-							in BOOL fHostIsActivating,
-							in const( OLECHOSTINFO)*pchostinfo,
-							in DWORD dwReserved)
+							const BOOL fSameComponent,
+							const const( OLECRINFO)*pcrinfo,
+							const BOOL fHostIsActivating,
+							const const( OLECHOSTINFO)*pchostinfo,
+							const DWORD dwReserved)
 	{
 	}
-	BOOL FReserved1(in DWORD dwReserved, in UINT message, in WPARAM wParam, in LPARAM lParam)
+	BOOL FReserved1(const DWORD dwReserved, const UINT message, const WPARAM wParam, const LPARAM lParam)
 	{
 		return TRUE;
 	}
 
-	BOOL FContinueMessageLoop(in OLELOOP uReason, in void *pvLoopData, in MSG *pMsgPeeked)
+	BOOL FContinueMessageLoop(const OLELOOP uReason, const void *pvLoopData, const MSG *pMsgPeeked)
 	{
 		return 1;
 	}
-	BOOL FQueryTerminate( in BOOL fPromptUser)
+	BOOL FQueryTerminate( const BOOL fPromptUser)
 	{
 		return 1;
 	}
-	HWND HwndGetWindow(in OLECWINDOW dwWhich, in DWORD dwReserved)
+	HWND HwndGetWindow(const OLECWINDOW dwWhich, const DWORD dwReserved)
 	{
 		return null;
 	}
@@ -959,7 +959,7 @@ version(none)
 		mixin(LogCallMix);
 		return pPersistence.SavePackageUserOpts(this, slnPersistenceOpts.ptr);
 	}
-	HRESULT LoadUserOptions(IVsSolutionPersistence pPersistence, in VSLOADUSEROPTS grfLoadOpts)
+	HRESULT LoadUserOptions(IVsSolutionPersistence pPersistence, const VSLOADUSEROPTS grfLoadOpts)
 	{
 		mixin(LogCallMix);
 		return pPersistence.LoadPackageUserOpts(this, slnPersistenceOpts.ptr);
@@ -1052,7 +1052,7 @@ version(none)
 		return S_OK;
 	}
 
-	HRESULT WriteUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
+	HRESULT WriteUserOptions(IStream pOptionsStream, const LPCOLESTR pszKey)
 	{
 		mixin(LogCallMix);
 
@@ -1128,7 +1128,7 @@ version(none)
 		return S_OK;
 	}
 
-	HRESULT ReadUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
+	HRESULT ReadUserOptions(IStream pOptionsStream, const LPCOLESTR pszKey)
 	{
  		mixin(LogCallMix);
 		auto srpSolution = queryService!(IVsSolution);
@@ -1245,7 +1245,7 @@ version(none)
 		mixin(LogCallMix);
 		return pPersistence.SavePackageSolutionProps(false, pHierarchy, this, slnPersistenceKey.ptr);
 	}
-	override HRESULT WriteSolutionProps(IVsHierarchy pHierarchy, in LPCOLESTR pszKey, IPropertyBag pPropBag)
+	override HRESULT WriteSolutionProps(IVsHierarchy pHierarchy, const LPCOLESTR pszKey, IPropertyBag pPropBag)
 	{
 		mixin(LogCallMix);
 		Project prj = qi_cast!Project(pHierarchy);
@@ -1263,9 +1263,9 @@ version(none)
 		}
 		return S_OK;
 	}
-	override HRESULT ReadSolutionProps(IVsHierarchy pHierarchy, in LPCOLESTR pszProjectName,
-									   in LPCOLESTR pszProjectMk, in LPCOLESTR pszKey,
-									   in BOOL fPreLoad, /+[in]+/ IPropertyBag pPropBag)
+	override HRESULT ReadSolutionProps(IVsHierarchy pHierarchy, const LPCOLESTR pszProjectName,
+									   const LPCOLESTR pszProjectMk, const LPCOLESTR pszKey,
+									   const BOOL fPreLoad, /+[in]+/ IPropertyBag pPropBag)
 	{
 		mixin(LogCallMix);
 		if(slnPersistenceKey == to_wstring(pszKey))
@@ -1281,8 +1281,8 @@ version(none)
 		}
 		return S_OK;
 	}
-	override HRESULT OnProjectLoadFailure(IVsHierarchy pStubHierarchy, in LPCOLESTR pszProjectName,
-										  in LPCOLESTR pszProjectMk, in LPCOLESTR pszKey)
+	override HRESULT OnProjectLoadFailure(IVsHierarchy pStubHierarchy, const LPCOLESTR pszProjectName,
+										  const LPCOLESTR pszProjectMk, const LPCOLESTR pszKey)
 	{
 		mixin(LogCallMix);
 		return S_OK;
@@ -2921,14 +2921,14 @@ class GlobalOptions
 ///////////////////////////////////////////////////////////////////////
 class WizardFactory : DComObject, IClassFactory
 {
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, const IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -2937,7 +2937,7 @@ class WizardFactory : DComObject, IClassFactory
 		return wiz.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT LockServer(in BOOL fLock)
+	override HRESULT LockServer(const BOOL fLock)
 	{
 		if(fLock)
 			InterlockedIncrement(&g_dllRefCount);
@@ -2951,7 +2951,7 @@ class WizardFactory : DComObject, IClassFactory
 
 class ItemWizard : DisposingDispatchObject, dte.IDTWizard
 {
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(dte.IDTWizard) (this, riid, pvObject))
 			return S_OK;
@@ -2967,9 +2967,9 @@ class ItemWizard : DisposingDispatchObject, dte.IDTWizard
 	}
 
 	override HRESULT Execute(/+[in]+/ IDispatch Application,
-							 in int hwndOwner,
-							 in SAFEARRAY* ContextParams,
-							 in SAFEARRAY* CustomParams,
+							 const int hwndOwner,
+							 const SAFEARRAY* ContextParams,
+							 const SAFEARRAY* CustomParams,
 							 /+[in, out]+/ dte.wizardResult* retval)
 	{
 		mixin(LogCallMix);

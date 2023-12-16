@@ -77,6 +77,9 @@ namespace dbuild
 		public bool PreviewMarkdown { get { return opts.PreviewMarkdown; } set { opts.PreviewMarkdown = value; } }
 		public bool PreviewIn { get { return opts.PreviewIn; } set { opts.PreviewIn = value; } }
 		public bool PreviewInclusiveInContracts { get { return opts.PreviewInclusiveInContracts; } set { opts.PreviewInclusiveInContracts = value; } }
+		public bool PreviewShortenedMethods { get { return opts.PreviewShortenedMethods; } set { opts.PreviewShortenedMethods = value; } }
+		public bool PreviewFixImmutableConv { get { return opts.PreviewFixImmutableConv; } set { opts.PreviewFixImmutableConv = value; } }
+		public bool PreviewSystemVariables { get { return opts.PreviewSystemVariables; } set { opts.PreviewSystemVariables = value; } }
 		public bool TransitionVMarkdown { get { return opts.TransitionVMarkdown; } set { opts.TransitionVMarkdown = value; } }
 		public bool TransitionField { get { return opts.TransitionField; } set { opts.TransitionField = value; } }
 		public bool TransitionCheckImports { get { return opts.TransitionCheckImports; } set { opts.TransitionCheckImports = value; } }

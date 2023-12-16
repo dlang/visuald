@@ -173,7 +173,7 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 {
 	IServiceProvider mSite;
 
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(const IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsWindowPane) (this, riid, pvObject))
 			return S_OK;
@@ -198,7 +198,7 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 		return S_OK;
 	}
 
-	HRESULT CreatePaneWindow(in HWND hwndParent, in int x, in int y, in int cx, in int cy,
+	HRESULT CreatePaneWindow(const HWND hwndParent, const int x, const int y, const int cx, const int cy,
 	                         /+[out]+/ HWND *hwnd)
 	{
 		mixin(LogCallMix2);
@@ -436,7 +436,7 @@ private:
 		_wndFuncList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
 	}
 
-	HRESULT _PrepareFileListForResults(in ItemArray puaResults)
+	HRESULT _PrepareFileListForResults(const ItemArray puaResults)
 	{
 		_wndFuncList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFuncList.SendMessage(LVM_REMOVEALLGROUPS);
@@ -465,7 +465,7 @@ private:
 		return hr;
 	}
 
-	HRESULT _AddItemsToFileList(int iGroupId, in ItemArray pua)
+	HRESULT _AddItemsToFileList(int iGroupId, const ItemArray pua)
 	{
 		LVITEM lvi;
 		lvi.pszText = LPSTR_TEXTCALLBACK;
@@ -507,7 +507,7 @@ private:
 		return hr;
 	}
 
-	HRESULT _AddGroupToFileList(int iGroupId, in ProfileItemGroup psig)
+	HRESULT _AddGroupToFileList(int iGroupId, const ProfileItemGroup psig)
 	{
 		LVGROUP lvg;
 		lvg.cbSize = lvg.sizeof;
@@ -1420,7 +1420,7 @@ else
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, const NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLVDISPINFO *pnmlvdi = cast(NMLVDISPINFO *)pnmh;
 		if (pnmlvdi.item.mask & LVIF_TEXT)

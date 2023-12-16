@@ -13,6 +13,7 @@
 
   <PropertyGroup>
     <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(DBuildVersion).dll</DbuildCompileDDLLPath>
+    <!-- using Microsoft.Build.CPPTasks.Common.Base.dll doesn't work because it does not mix with the non-base-version ? -->
     <CPPTaskPath Condition="'$(CPPTaskPath)' == ''">$(_VCTargetsPathForToolset)\Microsoft.Build.CPPTasks.Common.dll</CPPTaskPath>
   </PropertyGroup>
 
@@ -376,10 +377,15 @@
     
   </Target>
 
+  <Target Name="Versioned_ComputeLinkImportLibraryOutputsForClean"
+          DependsOnTargets="ComputeLinkImportLibraryOutputsForClean"
+          Condition="'$(DBuildVersion)' != '17.9'">
+  </Target>
+
   <!-- changing attributes on link options must be applied to all object files (including C++), so we insert
        $(PatchLinkInputTargets) as a dependency into the link chain to guarantee no object files are added later -->
   <Target Name="_Link"
-          DependsOnTargets="$(BeforeLinkTargets);$(ComputeLinkInputsTargets);ComputeManifestInputsTargets;ManifestResourceCompile;PrepareResourceNames;MakeDirsForLink;DoLinkOutputFilesMatch;PreLinkEvent;$(PatchLinkInputTargets);Link;ComputeLinkImportLibraryOutputsForClean;$(AfterLinkTargets)"
+          DependsOnTargets="$(BeforeLinkTargets);$(ComputeLinkInputsTargets);ComputeManifestInputsTargets;ManifestResourceCompile;PrepareResourceNames;MakeDirsForLink;DoLinkOutputFilesMatch;PreLinkEvent;$(PatchLinkInputTargets);Link;Versioned_ComputeLinkImportLibraryOutputsForClean;$(AfterLinkTargets)"
           Condition="'$(LinkCompiled)' == 'true'">
   </Target>
 </Project>

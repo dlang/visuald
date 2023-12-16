@@ -1246,6 +1246,10 @@ string[] GetImportPaths(Config cfg)
 	foreach(ref i; imports)
 		i = makeDirnameCanonical(unquoteArgument(i), projectpath);
 
+	if (opt.addDepImp)
+		foreach(dep; cfg.getImportsFromDependentProjects())
+			imports.addunique(makeDirnameCanonical(dep, projectpath));
+
 	addunique(imports, projectpath);
 	return imports;
 }
