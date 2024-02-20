@@ -8,13 +8,13 @@
     <Description xml:space="preserve">Extension to provide support for the D programming language</Description>
   </Metadata>
   <Installation InstalledByMsi="true" AllUsers="true" SystemComponent="false">
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.VSWinExpress" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Premium" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Ultimate" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Pro" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.IntegratedShell" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Enterprise" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Community" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.VSWinExpress" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.Premium" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.Ultimate" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.Pro" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.IntegratedShell" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.Enterprise" />
+    <InstallationTarget Version="[12.0,18.0)" Id="Microsoft.VisualStudio.Community" />
   </Installation>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" Path="visuald.pkgdef" />

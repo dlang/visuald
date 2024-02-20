@@ -80,7 +80,12 @@
     !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}${VERSION_BETA}${VERSION_BUILD}"
   !endif
   
-  !echo "VERSION = ${VERSION}"
+;  !define MUI_ICON "Extensions\vdlogo.ico"
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "Extensions\vdlogo.bmp"
+  !define MUI_HEADERIMAGE_RIGHT
+  !define MUI_HEADERIMAGE_BITMAP_STRETCH AspectFitHeight
+
   !define AUTHOR "Rainer Schuetze"
   !define APPNAME "VisualD"
   !define LONG_APPNAME "Visual D"
@@ -690,7 +695,7 @@ ${MementoSection} "Install in VS 2022" SecVS2022
 
   GetFullPathName $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "16" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "17" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
