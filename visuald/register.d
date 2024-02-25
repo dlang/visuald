@@ -534,7 +534,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	else if (ver == 16)
 		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
 	else if (ver == 17)
-		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.17.0.dll"w;
 
 	wstring vdext15Path;
 	if (ver >= 15)

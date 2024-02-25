@@ -517,6 +517,8 @@ version(none)
 
 		mOptions.initFromRegistry();
 
+		mOptions.checkTemplateCache();
+
 		// debug dumpFontsAndColors();
 
 		//register with ComponentManager for Idle processing
@@ -1916,6 +1918,43 @@ class GlobalOptions
 		}
 		if(baseInstallDir.empty)
 			baseInstallDir = "c:\\D";
+	}
+
+	bool checkTemplateCache()
+	{
+		bool rc = true;
+		try
+		{
+			if(!getRegistryRoot())
+				return false;
+			if (regUserRoot.toUpper.startsWith("SOFTWARE\\"w))
+			{
+				auto localpath = "$(LOCALAPPDATA)" ~ to!string(regUserRoot[8..$]);
+				localpath = replaceGlobalMacros(localpath);
+				if(isExistingDir(localpath))
+				{
+					string[] toRemove;
+					foreach (string fname; dirEntries(localpath, SpanMode.shallow))
+					{
+						if (globMatch(baseName(fname), "NpdProjectTemplateCache*"))
+						{
+							auto content = cast(ubyte[])std.file.read(fname);
+							if (find(content, cast(ubyte[])"\"Visual D\"").empty)
+								toRemove ~= fname;
+						}
+					}
+					foreach (string fname; toRemove)
+						std.file.remove(fname);
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			writeToBuildOutputPane(e.msg);
+			rc = false;
+		}
+
+		return rc;
 	}
 
 	bool initFromRegistry(bool restoreDefaults = false)

@@ -1771,7 +1771,7 @@
     <File path="dmd\compiler\src\dmd\common\file.d" />
     <File path="dmd\compiler\src\dmd\common\int128.d" />
     <File path="dmd\compiler\src\dmd\common\outbuffer.d" />
-    <File path="dmd\compiler\src\dmd\common\string.d" />
+    <File path="dmd\compiler\src\dmd\common\smallbuffer.d" />
    </Folder>
    <Folder name="root">
     <File path="dmd\compiler\src\dmd\root\aav.d" />

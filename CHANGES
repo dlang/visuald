@@ -1357,3 +1357,13 @@ Version history
   * "add imports from dependent projects" is now evaluated recursively and passed to semantic analysis
   * added support for compiler option -preview=shortenedMethods
   * fixed issue #264: VisualD doesn't run compiled executable, when I select "Compile and Run" option
+
+2024-02-25 version 1.4.0-rc1
+  * dmdserver: updated to frontend of DMD 2.107.0
+  * full installer now bundled with DMD 2.107.0 and LDC 1.36.0
+  * mago: fix crash due to changed return values from IDiaSession in VS2022, probably fixes
+    issue #261
+  * fixed issue #269: avoid BOM in response file if system codepage is UTF-8
+  * project template cache now removed if Visual D does not find itself in it. Workaround for
+    issue #256
+  * fixed some version inaccuracies in installation files

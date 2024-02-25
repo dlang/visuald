@@ -327,7 +327,12 @@ namespace dbuild
                 if (Compiler == "LDC")
                     return new UTF8Encoding(false);
                 else
-                    return System.Text.Encoding.GetEncoding(GetACP());
+                {
+                    int cp = GetACP();
+                    if (cp == 65001)
+                        return new UTF8Encoding(false); // no BOM
+                    return System.Text.Encoding.GetEncoding(cp);
+                }
             }
         }
 

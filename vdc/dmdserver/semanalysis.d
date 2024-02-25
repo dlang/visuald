@@ -422,7 +422,7 @@ void do_unittests()
 		import dmd.hdrgen;
 		auto buf = OutBuffer();
 		buf.doindent = 1;
-		moduleToBuffer(buf, mod);
+		moduleToBuffer(buf, false, mod);
 
 		OutputDebugStringA(buf.peekChars);
 	}
