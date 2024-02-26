@@ -375,7 +375,7 @@ class ConditionalCode
 
 	void convertMultipleElseIf()
 	{
-		assert("not implemented");
+		assert(!"not implemented");
 	}
 
 	void convertMultipleOpenElseIf()

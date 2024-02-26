@@ -1179,9 +1179,9 @@ TipData tipForDeclaration(Declaration decl)
 		auto fntype = decl.type ? decl.type.isTypeFunction() : null;
 
 		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
-			functionToBufferFull(fntype, buf, decl.getIdent(), &hgs, td);
+			functionToBufferFull(fntype, buf, decl.getIdent(), hgs, td);
 		else if (fntype)
-			functionToBufferWithIdent(fntype, buf, decl.toPrettyChars(true), &hgs, func.isStatic);
+			functionToBufferWithIdent(fntype, buf, decl.toPrettyChars(true), hgs, func.isStatic);
 		else
 			buf.writestring(decl.toPrettyChars(true));
 		auto res = buf.extractSlice(); // take ownership
@@ -2524,7 +2524,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 
 				case EXP.dotVariable:
 				case EXP.dotIdentifier:
-					flags |= SearchLocalsOnly;
+					flags |= SearchOpt.localsOnly;
 					if (recursed)
 						if (auto dve = e.isDotVarExp())
 							if (dve.varloc.filename)  // skip compiler generated idents (alias this)
@@ -2534,7 +2534,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 					return getType(e1, true);
 
 				case EXP.dot:
-					flags |= SearchLocalsOnly;
+					flags |= SearchOpt.localsOnly;
 					return (cast(DotExp)e).e1.type;
 				default:
 					return recursed ? e.type : null;
@@ -2593,9 +2593,9 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			{
 				if (!sym)
 					return;
-				int sflags = SearchLocalsOnly;
+				int sflags = SearchOpt.localsOnly;
 				if (sym.getModule() == mod)
-					sflags |= IgnoreSymbolVisibility;
+					sflags |= SearchOpt.ignoreVisibility;
 				searchScope(sym, sflags);
 			}
 			// base classes
@@ -2638,14 +2638,14 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				}
 			}
 
-			if (flags & SearchLocalsOnly)
+			if (flags & SearchOpt.localsOnly)
 				break;
 
 			// imported modules
 			size_t cnt = sd.importedScopes ? sd.importedScopes.dim : 0;
 			for (size_t i = 0; i < cnt; i++)
 			{
-				if ((flags & IgnorePrivateImports) && sd.visibilities[i] == Visibility.Kind.private_)
+				if ((flags & SearchOpt.ignorePrivateImports) && sd.visibilities[i] == Visibility.Kind.private_)
 					continue;
 				auto ss = (*sd.importedScopes)[i].isScopeDsymbol();
 				if (!ss)
@@ -2654,17 +2654,17 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				int sflags = 0;
 				if (ss.isModule())
 				{
-					if (flags & SearchLocalsOnly)
+					if (flags & SearchOpt.localsOnly)
 						continue;
-					sflags |= IgnorePrivateImports;
+					sflags |= SearchOpt.ignorePrivateImports;
 				}
 				else // mixin template
 				{
-					if (flags & SearchImportsOnly)
+					if (flags & SearchOpt.importsOnly)
 						continue;
-					sflags |= SearchLocalsOnly;
+					sflags |= SearchOpt.localsOnly;
 				}
-				searchScope(ss, sflags | IgnorePrivateImports);
+				searchScope(ss, sflags | SearchOpt.ignorePrivateImports);
 			}
 		}
 	}

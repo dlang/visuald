@@ -335,7 +335,6 @@ static const wstring[] regMiscProjects =
 	"{8C3FFDCC-9A63-43F2-9A3E-C45FB2ABF450}"w, // VC-Windows;WinRT-Common;VC-Native
 	"{dc073cad-303e-4838-9969-278c87bd53eb}"w, // VC-Windows;WinRT-Native-Phone-6.3;WinRT-Common
 	"{F8BBB05E-FBD0-4B36-8C17-0B3F79AD4F01}"w, // VC-Android
-	"{F8BBB05E-FBD0-4B36-8C17-0B3F79AD4F01}"w, // VC-Android
 	"{fae12128-4bbf-454a-b96c-e83e7ad6a783}"w, // VC-Windows;CodeSharing-Native;WinRT-Common
 	"{fe0b9df8-a7c2-4687-a235-316c1aca78d3}"w, // VC-Windows;WinRT-Native-UAP;WinRT-Common
 ];
@@ -535,7 +534,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	else if (ver == 16)
 		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
 	else if (ver == 17)
-		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.17.0.dll"w;
 
 	wstring vdext15Path;
 	if (ver >= 15)
