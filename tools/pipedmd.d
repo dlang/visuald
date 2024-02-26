@@ -617,8 +617,10 @@ string findExeInPath(string exe)
 
 	foreach(p; paths)
 	{
-		if (p.length > 0 && p[0] == '"' && p[$-1] == '"') // remove quotes
-			p = p[1 .. $-1];
+		p = strip(p, '"');
+		if (p.length == 0)
+			continue;
+		
 		p = std.path.buildPath(p, exe);
 		if(std.file.exists(p))
 			return p;
