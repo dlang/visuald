@@ -1351,7 +1351,7 @@ Version history
     - pass import paths from prerequisite projects to semantic analysis, too
   * full installer now bundled with DMD 2.106.0 and LDC 1.35.0
   * fixed issue 23734: avoid exception by std.file.isDir when clicking a project folder that doesn't exist
-  * added separate version of Microsoft.Build.CPPTasks.Common for VS 17.5 - 17.9
+  * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.5 - 17.9
   * updated dfmt library from upstream
   * improved message when dmd crashes
   * "add imports from dependent projects" is now evaluated recursively and passed to semantic analysis
@@ -1367,3 +1367,7 @@ Version history
   * project template cache now removed if Visual D does not find itself in it. Workaround for
     issue #256
   * fixed some version inaccuracies in installation files
+
+2024-07-29 version 1.4.0-rc2
+  * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.10 - 17.11
+  * fixed detecting dmd update after 2.108

@@ -274,10 +274,11 @@ void winHttpGet(DownloadRequest* req)
 			debug(UPDATE) writeln("Header: ", header);
 
 			auto lines = header.splitLines();
-			if (lines.length == 0 || !lines[0].startsWith("HTTP/"))
+			auto firstline = lines.length == 0 ? ""w : strip(lines[0]);
+			if (!firstline.startsWith("HTTP/"))
 				throw new Exception("no HTTP header");
-			if (!lines[0].endsWith(" OK"))
-				throw new Exception(to!string(lines[0]));
+			if (!firstline.endsWith(" OK") && !firstline.endsWith(" 200"))
+				throw new Exception("unexpected answer: " ~ to!string(firstline));
 
 			foreach(ln; lines)
 				if (ln.startsWith("Content-Length:"))
