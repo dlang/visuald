@@ -1078,7 +1078,7 @@ void do_unittests()
 	checkTip(m, 24,  3, "(enum) `source.TOK`");
 	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m, 30, 25, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = cast(ushort)1u`");
 	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
 
 	IdTypePos[][string] exp2 = [
@@ -1698,16 +1698,16 @@ void do_unittests()
 	m = checkErrors(source, "");
 	checkTip(m,  2, 18, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  2, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m,  2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = cast(ushort)1u`");
 	checkTip(m,  5, 4, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  5, 19, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m,  5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = cast(ushort)1u`");
 	checkTip(m,  6, 8, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  6, 23, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m,  6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = cast(ushort)1u`");
 	checkTip(m,  8, 18, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  8, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m,  8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = 2u`");
+	checkTip(m,  8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = cast(ushort)2u`");
 	checkTip(m, 11, 18, "(field) `ulong int[].length`");
 	checkTip(m, 11, 32, "(field) `ulong int[int].length`");
 	checkTip(m, 12, 18, "(field) `int* int[].ptr`");
