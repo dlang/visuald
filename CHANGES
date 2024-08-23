@@ -1369,5 +1369,7 @@ Version history
   * fixed some version inaccuracies in installation files
 
 2024-07-29 version 1.4.0-rc2
+  * updated to frontend of DMD 2.110.0-beta1
+  * full installer now bundled with DMD 2.109.1 and LDC 1.39.0
   * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.10 - 17.11
   * fixed detecting dmd update after 2.108
