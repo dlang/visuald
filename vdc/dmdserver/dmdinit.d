@@ -9,6 +9,7 @@
 module vdc.dmdserver.dmdinit;
 
 import dmd.arraytypes;
+import dmd.astenums;
 import dmd.builtin;
 import dmd.cond;
 import dmd.compiler;
@@ -45,7 +46,10 @@ alias EscapeInfer = RootObject[int];
 enum string[2][] dmdStatics =
 [
 	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
-	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
+	// < 2.110
+	// ["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
+	// 2.110
+	["_D3dmd7dstruct15search_toStringFCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
 	// 2.103
 	["_D3dmd7dmodule6Module11loadStdMathFZ8std_mathCQBsQBrQBm", "Module"],
 	["_D3dmd7dmodule6Module14loadCoreAtomicFZ11core_atomicCQBzQByQBt", "Module"],
@@ -62,9 +66,13 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt7globals3LocPSQCk6dscope5ScopeZ11visitAArrayMFCQDrQCp10TypeAArrayZ5fhashCQEr4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd5lexer13TimeStampInfo8initdoneb", "bool"],
 	// 2.103
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
+	// 2.110
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ11visitAArrayMFCQFcQEi10TypeAArrayZ8fd_aaLenCQGf4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ8noMemberMFQEdQDsQDdCQFh10identifier10IdentifieriZ4nesti", "int"],
@@ -288,7 +296,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.ddoc.files = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
 	target.isX86_64 = opts.x64;
-	target.omfobj = !opts.msvcrt;
+	//target.omfobj = !opts.msvcrt;
 	target.cpu = CPU.baseline;
 	target.isLP64 = opts.x64;
 
@@ -337,7 +345,7 @@ void dmdSetupParams(const ref Options opts)
 	foreach(v; opts.versionIds)
 		versionids.push(toStringz(v));
 
-	global.versionids = new Identifiers();
+	global.versionids.setDim(0);
 	// Add in command line versions
 	foreach (charz; *versionids)
 	{
@@ -360,18 +368,18 @@ void dmdSetupParams(const ref Options opts)
 	foreach(d; opts.debugIds)
 		debugids.push(toStringz(d));
 
-	global.debugids = new Identifiers();
+	global.debugids.setDim(0);
 	foreach (charz; *debugids)
 	{
 		global.debugids.push(new Identifier(charz));
 		DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
 	}
 
-	global.path = new Strings();
+	global.path.setDim(0);
 	foreach(i; opts.importDirs)
 		global.path.push(toStringz(i));
 
-	global.filePath = new Strings();
+	global.filePath.setDim(0);
 	foreach(i; opts.stringImportDirs)
 		global.filePath.push(toStringz(i));
 }

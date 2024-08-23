@@ -1768,7 +1768,9 @@
   <Folder name="dmd">
    <Folder name="common">
     <File path="dmd\compiler\src\dmd\common\bitfields.d" />
+    <File path="dmd\compiler\src\dmd\common\charactertables.d" />
     <File path="dmd\compiler\src\dmd\common\file.d" />
+    <File path="dmd\compiler\src\dmd\common\identifiertables.d" />
     <File path="dmd\compiler\src\dmd\common\int128.d" />
     <File path="dmd\compiler\src\dmd\common\outbuffer.d" />
     <File path="dmd\compiler\src\dmd\common\smallbuffer.d" />
@@ -1809,6 +1811,8 @@
    <File path="dmd\compiler\src\dmd\astenums.d" />
    <File path="dmd\compiler\src\dmd\asttypename.d" tool="None" />
    <File path="dmd\compiler\src\dmd\attrib.d" />
+   <File path="dmd\compiler\src\dmd\attribsem.d" />
+   <File path="dmd\compiler\src\dmd\basicmangle.d" />
    <File path="dmd\compiler\src\dmd\blockexit.d" />
    <File path="dmd\compiler\src\dmd\boostlicense.txt" />
    <File path="dmd\compiler\src\dmd\builtin.d" />
@@ -1848,6 +1852,7 @@
    <File path="dmd\compiler\src\dmd\e2ir.d" tool="None" />
    <File path="dmd\compiler\src\dmd\eh.d" tool="None" />
    <File path="dmd\compiler\src\dmd\entity.d" />
+   <File path="dmd\compiler\src\dmd\enumsem.d" />
    <File path="dmd\compiler\src\dmd\errors.d" />
    <File path="dmd\compiler\src\dmd\errorsink.d" />
    <File path="dmd\compiler\src\dmd\escape.d" />
@@ -1857,11 +1862,12 @@
    <File path="dmd\compiler\src\dmd\foreachvar.d" />
    <File path="dmd\compiler\src\dmd\frontend.d" tool="None" />
    <File path="dmd\compiler\src\dmd\func.d" />
+   <File path="dmd\compiler\src\dmd\funcsem.d" />
    <File path="dmd\compiler\src\dmd\globals.d" />
    <File path="dmd\compiler\src\dmd\glue.d" tool="None" />
    <File path="dmd\compiler\src\dmd\gluelayer.d" />
    <File path="dmd\compiler\src\dmd\hdrgen.d" />
-   <File path="dmd\compiler\src\dmd\iasm.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\iasm.d" />
    <File path="dmd\compiler\src\dmd\iasmdmd.d" tool="None" />
    <File path="dmd\compiler\src\dmd\iasmgcc.d" tool="None" />
    <File path="dmd\compiler\src\dmd\id.d" />
@@ -1899,6 +1905,7 @@
    <File path="dmd\compiler\src\dmd\parsetimevisitor.d" />
    <File path="dmd\compiler\src\dmd\permissivevisitor.d" />
    <File path="dmd\compiler\src\dmd\postordervisitor.d" />
+   <File path="dmd\compiler\src\dmd\pragmasem.d" />
    <File path="dmd\compiler\src\dmd\printast.d" />
    <File path="dmd\compiler\src\dmd\root\region.d" />
    <File path="dmd\compiler\src\dmd\rootobject.d" />
@@ -1921,6 +1928,7 @@
    <File path="dmd\compiler\src\dmd\strictvisitor.d" />
    <File path="dmd\compiler\src\dmd\target.d" />
    <File path="dmd\compiler\src\dmd\templateparamsem.d" />
+   <File path="dmd\compiler\src\dmd\templatesem.d" />
    <File path="dmd\compiler\src\dmd\tocsym.d" tool="None" />
    <File path="dmd\compiler\src\dmd\toctype.d" tool="None" />
    <File path="dmd\compiler\src\dmd\tocvdebug.d" tool="None" />

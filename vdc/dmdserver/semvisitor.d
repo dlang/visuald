@@ -50,8 +50,10 @@ import dmd.statement;
 import dmd.staticassert;
 import dmd.target;
 import dmd.tokens;
+import dmd.typesem;
 import dmd.visitor;
 
+import dmd.common.charactertables;
 import dmd.common.outbuffer;
 import dmd.root.file;
 import dmd.root.filename;
@@ -1448,7 +1450,7 @@ static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 			size_t pos = p;
 			if (utf_decodeChar(str, pos, dch) !is null)
 				break;
-			if (!isUniAlpha(dch))
+			if (!isAnyIdentifierCharacter(dch))
 				break;
 			p = pos;
 		}
