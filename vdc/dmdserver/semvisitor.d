@@ -712,6 +712,20 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
+	bool matchDotIdentifier(ref const Loc dotloc, ref const Loc loc, Identifier ident)
+	{
+		if (!dotloc.filename)
+			return matchIdentifier(loc, ident);
+		if (ident)
+			if (loc.filename is filename)
+				if (dotloc.linnum < startLine ||
+					(dotloc.linnum == startLine && dotloc.charnum < startIndex))
+					if ((loc.linnum == endLine && loc.charnum + ident.toString().length >= endIndex) ||
+						loc.linnum > endLine)
+						return true;
+		return false;
+	}
+
 	extern(D) bool visitPackages(Module mod, IdentifierAtLoc[] packages)
 	{
 		if (!mod || !packages)
@@ -934,7 +948,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (!found)
 			if (de.ident)
-				if (matchIdentifier(de.identloc, de.ident))
+				if (matchDotIdentifier(de.dotloc, de.identloc, de.ident))
 				{
 					if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
 						foundResolved(de.resolvedTo);
@@ -2472,7 +2486,7 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 	{
 		if (!found && de.ident)
 		{
-			if (matchIdentifier(de.identloc, de.ident))
+			if (matchDotIdentifier(de.dotloc, de.identloc, de.ident))
 			{
 				if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
 					foundResolved(de.resolvedTo);

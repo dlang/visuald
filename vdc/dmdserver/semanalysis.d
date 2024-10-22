@@ -949,6 +949,34 @@ void do_unittests()
 
 	source =
 	q{                                   // Line 1
+		struct Options
+		{
+			uint restartMemThreshold;
+		}
+
+		class DMDServer
+		{
+			Options mOptions;
+
+			int UpdateModule()
+			{
+				if (mOptions.restartMemThreshold) // Line 13
+				{
+					mOptions.
+				}
+				mOptions.
+					mOpt
+				return 0;
+			}
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  13, 20, "", [ "restartMemThreshold" ] ~ structProperties);
+	checkExpansions(m,  15, 15, "", [ "restartMemThreshold" ] ~ structProperties);
+	checkExpansions(m,  17, 14, "", [ "restartMemThreshold" ] ~ structProperties);
+
+	source =
+	q{                                   // Line 1
 		struct S
 		{
 			int fun(int par) { return par; }

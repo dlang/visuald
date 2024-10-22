@@ -38,7 +38,7 @@ import std.array;
 import std.exception;
 import std.algorithm;
 
-import core.demangle;
+static import core.demangle;
 import core.thread;
 import core.stdc.time;
 import core.stdc.string;
