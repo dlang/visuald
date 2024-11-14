@@ -461,8 +461,9 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					bool addlinks = (flags & 8) != 0;
+					bool addsize = (flags & 16) != 0;
 					if (auto m = ensureAnalyzed(md))
-						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks);
+						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks, addsize);
 					else
 						txt = "analyzing...";
 				}

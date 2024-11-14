@@ -48,7 +48,7 @@
     <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) == 0">16.0</DBuildVersion>
     <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) != 0">16.1</DBuildVersion>
     <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) &lt; 11">17.$(MSBuildVersion_Minor)</DBuildVersion>
-    <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) &gt;= 11">17.11</DBuildVersion>
+    <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) &gt;= 12">17.12</DBuildVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DBuildVersion)' == ''">

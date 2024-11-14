@@ -379,6 +379,28 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <TargetVer>17.11</TargetVer>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v17_12|AnyCPU'">
+    <OutputPath>bin\Release-v17_12\</OutputPath>
+    <DefineConstants>TRACE;TOOLS_V17</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>17.12</TargetVer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v17_12|AnyCPU'">
+    <OutputPath>bin\Debug-v17_12\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TOOLS_V17</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>17.12</TargetVer>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -424,7 +446,7 @@
     <TargetFrameworkVersion Condition=" '$(TargetVer)' == '16.0' or '$(TargetVer)' == '16.1' ">v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkVersion Condition=" '$(TargetVer)' == '17' or '$(TargetVer)' == '17.0' or '$(TargetVer)' == '17.1' or '$(TargetVer)' == '17.2' or '$(TargetVer)' == '17.3'
        or '$(TargetVer)' == '17.4' or '$(TargetVer)' == '17.5' or '$(TargetVer)' == '17.6' or '$(TargetVer)' == '17.7' or '$(TargetVer)' == '17.8' or '$(TargetVer)' == '17.9'
-       or '$(TargetVer)' == '17.10' or '$(TargetVer)' == '17.11'">v4.7.2</TargetFrameworkVersion>
+       or '$(TargetVer)' == '17.10' or '$(TargetVer)' == '17.11' or '$(TargetVer)' == '17.12'">v4.7.2</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
@@ -657,7 +679,7 @@
   <!-- VS2022 -->
   <ItemGroup Condition="'$(TargetVer)' == '17' or '$(TargetVer)' == '17.0' or '$(TargetVer)' == '17.1' or '$(TargetVer)' == '17.2' or '$(TargetVer)' == '17.3'
                    or '$(TargetVer)' == '17.4' or '$(TargetVer)' == '17.5' or '$(TargetVer)' == '17.6' or '$(TargetVer)' == '17.7' or '$(TargetVer)' == '17.8'
-                   or '$(TargetVer)' == '17.9' or '$(TargetVer)' == '17.10' or '$(TargetVer)' == '17.11'">
+                   or '$(TargetVer)' == '17.9' or '$(TargetVer)' == '17.10' or '$(TargetVer)' == '17.11' or '$(TargetVer)' == '17.12'">
     <Reference Include="Microsoft.Build">
       <HintPath>assemblies\v17\Microsoft.Build.dll</HintPath>
     </Reference>
@@ -743,6 +765,11 @@
   <ItemGroup Condition="'$(TargetVer)' == '17.11'">
     <Reference Include="Microsoft.Build.CPPTasks.Common">
       <HintPath>assemblies\v17_11\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetVer)' == '17.12'">
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v17_12\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

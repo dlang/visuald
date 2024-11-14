@@ -92,6 +92,7 @@ public:
 	// flags:      2 - quote code for highlighting
 	// flags:      4 - return all overloads (rather than the current best match)
 	// flags:      8 - add links to symbols as #<name,file,lline,col>#
+	// flags:     16 - add size and alignment info
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetTipResult

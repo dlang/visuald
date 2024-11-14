@@ -125,7 +125,7 @@ $(H2 Debugger Customization)
 
 $(P Starting with Visual D 1.0 the display of structs and classes can be customized in the mago expression evaluator
 for the Concord debugger engine (when using dmd as the compiler). This is done by enabling
-"Call struct/class methods __debug[Overview|Expanded|Visualizer]" in the global mago Debugging options for mago
+"Call struct/class methods __debug[Overview|Expanded|StringView]" in the global mago Debugging options for mago
 and adding some extra methods or fields to the declaration of the struct or class:)
 
 $(UL
