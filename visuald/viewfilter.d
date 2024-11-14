@@ -1614,6 +1614,9 @@ else
 	extern(D)
 	void GotoDefinitionCallBack(uint request, string fname, sdk.vsi.sdk_shared.TextSpan span)
 	{
+		if (!mCodeWinMgr || !mCodeWinMgr.mSource) // if view removed before callback called
+			return;
+
 		bool extrn = fname.startsWith("EXTERN:");
 		if (extrn)
 			fname = fname[7..$];
@@ -1659,6 +1662,9 @@ else
 	extern(D)
 	void FindReferencesCallBack(uint request, string filename, string tok, int line, int idx, string[] exps)
 	{
+		if (!mCodeWinMgr || !mCodeWinMgr.mSource) // if view removed before callback called
+			return;
+
 		if(IVsFindSymbol fs = queryService!(IVsObjectSearch, IVsFindSymbol))
 		{
 			scope(exit) release(fs);

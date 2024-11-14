@@ -1026,7 +1026,8 @@ class LanguageService : DisposingComObject,
 			{
 				ConfigureSemanticProject(src);
 				int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2 | 8;
-
+				if (Package.GetGlobalOptions().showSizeAndAlign)
+					flags |= 16;
 				mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
 			}
 			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
@@ -1075,6 +1076,8 @@ class LanguageService : DisposingComObject,
 		int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
 		if (overloads)
 			flags |= 4;
+		if (Package.GetGlobalOptions().showSizeAndAlign)
+			flags |= 16;
 		return vdServerClient.GetTip(src.GetFileName(), pSpan, flags, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)

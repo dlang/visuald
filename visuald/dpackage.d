@@ -1609,6 +1609,7 @@ class GlobalOptions
 	byte expandTrigger;
 	bool showTypeInTooltip;
 	bool showValueInTooltip;
+	bool showSizeAndAlign;
 	bool semanticHighlighting;
 	bool semanticResolveFields;
 	bool semanticGotoDef = true;
@@ -2047,6 +2048,7 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true);  // changed default
 			showValueInTooltip  = getBoolOpt("showValueInTooltip2", true); // changed default
+			showSizeAndAlign    = getBoolOpt("showSizeAndAlign", true);
 			semanticHighlighting  = getBoolOpt("semanticHighlighting", true);
 			semanticResolveFields = getBoolOpt("semanticResolveFields2", true); // changed default
 			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
@@ -2326,6 +2328,7 @@ class GlobalOptions
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
 			keyToolOpts.Set("showValueInTooltip2", showValueInTooltip);
+			keyToolOpts.Set("showSizeAndAlign",    showSizeAndAlign);
 			keyToolOpts.Set("semanticHighlighting",  semanticHighlighting);
 			keyToolOpts.Set("semanticResolveFields2", semanticResolveFields);
 			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
@@ -2522,7 +2525,8 @@ class GlobalOptions
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 
-			string envArch = x64 ? "Environment64" : mscoff ? "Environment32mscoff" : "Environment32";
+			string envArch = x64 ? "Environment64" :
+				mscoff && Package.s_instance.getInstalledVersionFloat(CheckProduct.DMD) < 2.110 ? "Environment32mscoff" : "Environment32";
 			if(auto pEnv = envArch in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 

@@ -24,6 +24,10 @@ import std.process;
 import std.utf;
 static import std.file;
 
+import stdext.string : decodeDmdString;
+
+pragma(lib, "user32");
+
 // version = pipeLink; // define to forward arguments to link.exe and demangle its output
 version = MSLinkFormat;
 

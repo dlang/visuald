@@ -545,6 +545,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		visitExpression(stmt.condition);
 		visit(cast(Statement)stmt);
+		if (stmt.cases)
+			foreach(s; *stmt.cases)
+				visitStatement(s);
 	}
 
 	override void visit(CaseStatement stmt)
@@ -708,6 +711,20 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (loc.filename is filename)
 				if (loc.linnum == startLine && loc.linnum == endLine)
 					if (loc.charnum <= startIndex && loc.charnum + ident.toString().length >= endIndex)
+						return true;
+		return false;
+	}
+
+	bool matchDotIdentifier(ref const Loc dotloc, ref const Loc loc, Identifier ident)
+	{
+		if (!dotloc.filename)
+			return matchIdentifier(loc, ident);
+		if (ident)
+			if (loc.filename is filename)
+				if (dotloc.linnum < startLine ||
+					(dotloc.linnum == startLine && dotloc.charnum < startIndex))
+					if ((loc.linnum == endLine && loc.charnum + ident.toString().length >= endIndex) ||
+						loc.linnum > endLine)
 						return true;
 		return false;
 	}
@@ -934,7 +951,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (!found)
 			if (de.ident)
-				if (matchIdentifier(de.identloc, de.ident))
+				if (matchDotIdentifier(de.dotloc, de.identloc, de.ident))
 				{
 					if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
 						foundResolved(de.resolvedTo);
@@ -1142,6 +1159,7 @@ struct TipData
 	string kind;
 	string code;
 	string doc;
+	string sna; // size and aligmment
 }
 
 string tipForObject(RootObject obj)
@@ -1158,17 +1176,23 @@ string tipForObject(RootObject obj)
 		txt ~= "\n\n";
 	if (tip.doc.length)
 		txt ~= strip(tip.doc);
+	if (tip.sna.length)
+		txt ~= "\n" ~ strip(tip.sna);
 	return txt;
 }
 
-TipData tipForAlias(Dsymbol sym, string kind, string txt)
+TipData tipForAlias(Dsymbol sym, Type t, string kind, string txt)
 {
-	TipData tip = tipDataForObject(sym);
-	if (tip.kind.length)
+	TipData tip;
+	if (sym)
+		tip = tipDataForObject(sym);
+	else if (t)
+		tip = tipDataForObject(t);
+	if (sym && tip.kind.length)
 		kind = "alias " ~ tip.kind;
 	if (tip.code.length)
 		txt ~= " = " ~ tip.code;
-	return TipData(kind, txt);
+	return TipData(kind, txt, "", tip.sna);
 }
 
 TipData tipForDeclaration(Declaration decl)
@@ -1213,8 +1237,18 @@ TipData tipForDeclaration(Declaration decl)
 	}
 	else if (decl.storage_class & STC.manifest)
 		kind = "constant";
-	else if (decl.isAliasDeclaration())
+	else if (auto ad = decl.isAliasDeclaration())
+	{
 		kind = "alias";
+		txt = to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+		return tipForAlias(ad.aliassym, ad.type, kind, txt);
+	}
+	else if (auto aa = decl.isAliasAssign())
+	{
+		kind = "alias";
+		txt = to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+		return tipForAlias(aa.aliassym, aa.type, kind, txt);
+	}
 	else if (decl.isField())
 		kind = "field";
 	else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
@@ -1243,13 +1277,16 @@ TipData tipForDeclaration(Declaration decl)
 		if (auto var = decl.isVarDeclaration())
 			if (var._init)
 				txt ~= " = " ~ toString(var._init);
-	if (auto ad = decl.isAliasDeclaration())
-		if (ad.aliassym)
-			return tipForAlias(ad.aliassym, kind, txt);
-	if (auto aa = decl.isAliasAssign())
-		if (aa.aliassym)
-			return tipForAlias(aa.aliassym, kind, txt);
 	return TipData(kind, txt);
+}
+
+bool showSizeAndAlignment = false;
+
+string tipSizeAndAlignment(Type t)
+{
+	if (auto cd = t.isClassHandle())
+		return "Size: " ~ to!string(cd.structsize) ~ ", Alignment: " ~ to!string(cd.alignsize);
+	return "Size: " ~ to!string(t.size()) ~ ", Alignment: " ~ to!string(t.alignsize());
 }
 
 TipData tipForType(Type t)
@@ -1268,7 +1305,10 @@ TipData tipForType(Type t)
 	if (auto sym = typeSymbol(t))
 		if (sym.comment)
 			doc = sym.comment.to!string;
-	return TipData(kind, txt, doc);
+	string sna;
+	if (showSizeAndAlignment)
+		sna = tipSizeAndAlignment(t);
+	return TipData(kind, txt, doc, sna);
 }
 
 TipData tipForDotIdExp(DotIdExp die)
@@ -1398,6 +1438,10 @@ TipData tipDataForObject(RootObject obj)
 			tip.code = s.toPrettyChars(true).to!string;
 			doc = docForSymbol(s);
 		}
+		if (showSizeAndAlignment)
+			if (auto aggr = s.isAggregateDeclaration())
+				if (auto t = aggr.type)
+					tip.sna = tipSizeAndAlignment(t);
 	}
 	else if (auto p = obj.isParameter())
 	{
@@ -1472,12 +1516,14 @@ static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 	return lnkbuf.extractChars();
 }
 
-string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex, bool addlinks)
+string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex, bool addlinks, bool addsize)
 {
 	auto old = Dsymbol.prettyPrintSymbolHandler;
 	if (addlinks)
 		Dsymbol.prettyPrintSymbolHandler = toDelegate(&printSymbolWithLink);
 	scope(exit) Dsymbol.prettyPrintSymbolHandler = old;
+	showSizeAndAlignment = addsize;
+	scope(exit) showSizeAndAlignment = false; // tips also used by findExpansions
 
 	auto filename = mod.srcfile.toChars();
 	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
@@ -2402,15 +2448,9 @@ shared static this()
 	structProps      = initSymbolProperties (7);
 }
 
-void addSymbolProperties(ref string[] expansions, RootObject sym, string tok)
+void addSymbolProperties(ref string[] expansions, RootObject sym, Type t, string tok)
 {
-	bool hasThis = false;
-	Type t = sym.isType();
-	if (auto e = sym.isExpression())
-	{
-		t = e.type;
-		hasThis = true;
-	}
+	bool hasThis = sym && sym.isExpression();
 	if (!t)
 		return;
 
@@ -2472,7 +2512,7 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 	{
 		if (!found && de.ident)
 		{
-			if (matchIdentifier(de.identloc, de.ident))
+			if (matchDotIdentifier(de.dotloc, de.identloc, de.ident))
 			{
 				if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
 					foundResolved(de.resolvedTo);
@@ -2678,7 +2718,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
 
 	if (type)
-		addSymbolProperties(idlist, type, tok);
+		addSymbolProperties(idlist, fdv.found, type, tok);
 
 	return idlist;
 }

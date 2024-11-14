@@ -3,6 +3,8 @@ import std.utf;
 import std.windows.charset;
 import core.sys.windows.winuser;
 
+pragma(lib, "user32");
+
 void main(string[] argv)
 {
 	int cp = GetKBCodePage();

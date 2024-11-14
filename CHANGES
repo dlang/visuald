@@ -1373,3 +1373,16 @@ Version history
   * full installer now bundled with DMD 2.109.1 and LDC 1.39.0
   * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.10 - 17.11
   * fixed detecting dmd update after 2.108
+
+2024-10-20 version 1.4.0-rc3
+  * fixed issue #282: mago now (mostly) calls __debug* methods asynchronously
+  * fixed issue #279: mago: display void[] as ubyte[] in the debugger
+  * fixed issue #281: mago: dereference pointer with '.' for arrays, too
+  * mago: fixed switching GC for funtion evaluation and adapted it to dmd 2.109
+  * updated to build with dmd-2.110
+  * fixed completion for fields/members of class/struct fields
+  * fixed crash if source window closed before semantic analysis callback completed
+  * dmdserver: log communication with Visual D to %TEMP%/dmdserver if that folder exists
+  * dmdserver: improve completion for member variables, code in switch statement
+  * dmdseerver: added option to display type size and alignment in tool tip
+  * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.12

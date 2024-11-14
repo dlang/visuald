@@ -3015,6 +3015,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddTitleLine("Tooltips");
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tooltip"));
 		AddControl("", mShowValueInTooltip = new CheckBox(mCanvas, "Show value of constant expressions in tooltip"));
+		AddControl("", mShowSizeAndAlign = new CheckBox(mCanvas, "Show size and alignment of types in tooltip"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -3034,6 +3035,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mSortExpMode.setEnabled(useDParser);
 		mShowParamStorage.setVisible(!useDParser);
 		mShowValueInTooltip.setEnabled(mShowTypeInTooltip.isChecked());
+		mShowSizeAndAlign.setEnabled(!useDParser);
 		mDmdServerMemThres.setEnabled(!useDParser);
 	}
 
@@ -3046,6 +3048,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mShowValueInTooltip.setChecked(opts.showValueInTooltip);
+		mShowSizeAndAlign.setChecked(opts.showSizeAndAlign);
 		//mSemanticGotoDef.setChecked(opts.semanticGotoDef);
 		version(DParserOption) mUseDmdParser.setChecked(!opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
@@ -3069,6 +3072,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger);
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
 		changes += changeOption(mShowValueInTooltip.isChecked(), opts.showValueInTooltip, refopts.showValueInTooltip);
+		changes += changeOption(mShowSizeAndAlign.isChecked(), opts.showSizeAndAlign, refopts.showSizeAndAlign);
 		//changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
 		version(DParserOption) changes += changeOption(!mUseDmdParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
@@ -3092,6 +3096,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
 	CheckBox mShowValueInTooltip;
+	CheckBox mShowSizeAndAlign;
 	//CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDmdParser;
 	CheckBox mShowParamStorage;
@@ -3174,7 +3179,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mRecombineTuples   = new CheckBox(mCanvas, "Rebuild tuples from compiler generated fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
-		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|Visualizer]"));
+		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|StringView]"));
 		AddControl("", mCallDebuggerRange = new CheckBox(mCanvas, "Call range methods to show elements in overview/expansion"));
 		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
 		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));

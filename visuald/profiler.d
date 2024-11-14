@@ -37,7 +37,7 @@ import std.algorithm;
 import std.file;
 import std.path;
 
-import core.demangle;
+import core.demangle : demangle;
 
 private IVsWindowFrame sWindowFrame;
 private	ProfilePane sProfilePane;

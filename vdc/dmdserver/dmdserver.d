@@ -57,6 +57,7 @@ import stdext.path;
 
 //import std.stdio;
 import std.ascii;
+import std.file;
 import std.parallelism;
 import std.path;
 import std.string;
@@ -76,8 +77,8 @@ import core.stdc.wchar_;
 
 version (traceGC) import tracegc;
 
-debug version = DebugServer;
-//debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
+version = DebugServer;
+// debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
 
 shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with DMD
 shared(Object) gOptSync = new Object; // no multi-instances/multi-threading with DMD
@@ -96,10 +97,11 @@ version(DebugServer)
 	version(vdlog) debug import visuald.logutil;
 	import core.stdc.stdio : fprintf, fopen, fputc, fflush, FILE;
 	__gshared FILE* dbgfh;
+	__gshared bool dbgfh_failed;
 
 	void dbglog(const(char)[] s)
 	{
-		debug
+		version(none) //debug
 		{
 			version(vdlog)
 				logCall("DMDServer: ", s);
@@ -109,7 +111,22 @@ version(DebugServer)
 		else
 		{
 			if(!dbgfh)
-				dbgfh = fopen("c:/tmp/dmdserver.log", "w");
+			{
+				if(!dbgfh_failed)
+				{
+					uint pid = sdk.win32.winbase.GetCurrentProcessId();
+					char[260] tpath;
+					auto len = sdk.win32.winbase.GetTempPathA(260, tpath.ptr);
+					sprintf(tpath.ptr + len, "dmdserver\\dmdserver-%d.log", pid);
+					dbgfh = fopen(tpath.ptr, "w");
+				}
+				if(!dbgfh)
+				{
+					dbgfh_failed = true;
+					return;
+				}
+				fprintf(dbgfh, "================================================\n");
+			}
 
 			SysTime now = Clock.currTime();
 			uint tid = sdk.win32.winbase.GetCurrentThreadId();
@@ -158,6 +175,7 @@ class DMDServer : ComObject, IVDServer
 		version(unittest) {} else
 			version(SingleThread) mTid = spawn(&taskLoop, thisTid);
 		dmdInit();
+		dbglog("Server started");
 	}
 
 	override ULONG Release()
@@ -216,7 +234,7 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(Throwable e)
 			{
-				version(DebugCmd) dbglog ("taskLoop exception: " ~ e.toString());
+				version(DebugServer) if(dbgfh) dbglog("taskLoop exception: " ~ e.toString());
 			}
 		}
 		prioritySend(tid, "done");
@@ -308,7 +326,7 @@ class DMDServer : ComObject, IVDServer
 		}
 		catch(Exception e)
 		{
-			version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ e.toString());
+			version(DebugServer) if(dbgfh) dbglog("UpdateModule.doParse: exception " ~ e.toString());
 		}
 		catch(OutOfMemoryError oom)
 		{
@@ -316,7 +334,7 @@ class DMDServer : ComObject, IVDServer
 		}
 		catch(Throwable t)
 		{
-			version(DebugServer) dbglog("UpdateModule.doParse: error " ~ t.toString());
+			version(DebugServer) if(dbgfh) dbglog("UpdateModule.doParse: error " ~ t.toString());
 			if (t.msg != "cancel malloc" && t.msg != "fatal error") // fatal() is a non-fatal error
 				exit(37); // terminate the server and let it be restarted
 		}
@@ -378,7 +396,7 @@ class DMDServer : ComObject, IVDServer
 
 		void doParse()
 		{
-			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
+			version(DebugServer) if(dbgfh) dbglog("    doParse: " ~ firstLine(text));
 
 			synchronized(gErrorSync)
 			{
@@ -392,7 +410,7 @@ class DMDServer : ComObject, IVDServer
 			if(flags & 1)
 				writeReadyMessage();
 		}
-		version(DebugServer) dbglog("  scheduleParse: " ~ firstLine(text));
+		version(DebugServer) if(dbgfh) dbglog("  scheduleParse: " ~ firstLine(text));
 		schedule(&doParse);
 		return S_OK;
 	}
@@ -408,8 +426,7 @@ class DMDServer : ComObject, IVDServer
 				if (md.state == ModuleState.Done)
 				{
 					string err = md.parseErrors ~ md.analyzeErrors;
-					version(DebugServer)
-						dbglog("GetParseErrors: " ~ err);
+					version(DebugServer) if(dbgfh) dbglog("GetParseErrors: " ~ err);
 
 					*errors = allocBSTR(err);
 					return S_OK;
@@ -444,8 +461,9 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					bool addlinks = (flags & 8) != 0;
+					bool addsize = (flags & 16) != 0;
 					if (auto m = ensureAnalyzed(md))
-						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks);
+						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks, addsize);
 					else
 						txt = "analyzing...";
 				}
@@ -455,14 +473,14 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetTip: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("GetTip: exception " ~ t.toString());
 					txt = "exception: " ~ t.msg;
 				}
 			}
 			mLastTip = txt;
 			mSemanticTipRunning = false;
 		}
-		version(DebugServer) dbglog("  schedule GetTip: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog("  schedule GetTip: " ~ fname);
 		mSemanticTipRunning = true;
 		schedule(&_getTip);
 
@@ -477,7 +495,7 @@ class DMDServer : ComObject, IVDServer
 			return S_OK;
 		}
 
-		version(DebugServer) dbglog("GetTipResult: " ~ mLastTip);
+		version(DebugServer) if(dbgfh) dbglog("GetTipResult: " ~ mLastTip);
 		writeReadyMessage();
 		startLine  = mTipSpan.start.line;
 		startIndex = mTipSpan.start.index;
@@ -522,13 +540,13 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetDefinition: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("GetDefinition: exception " ~ t.toString());
 				}
 			}
 			mLastDefFile = deffilename;
 			mSemanticDefinitionRunning = false;
 		}
-		version(DebugServer) dbglog("  schedule GetDefinition: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog("  schedule GetDefinition: " ~ fname);
 		mSemanticDefinitionRunning = true;
 		schedule(&_getDefinition);
 
@@ -543,7 +561,7 @@ class DMDServer : ComObject, IVDServer
 			return S_OK;
 		}
 
-		version(DebugServer) dbglog("GetDefinitionResult: " ~ mLastDefFile);
+		version(DebugServer) if(dbgfh) dbglog("GetDefinitionResult: " ~ mLastDefFile);
 		writeReadyMessage();
 		startLine  = mDefSpan.end.line;
 		startIndex = mDefSpan.end.index - 1;
@@ -581,12 +599,12 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
-				version(DebugServer) dbglog("calcExpansions: exception " ~ t.toString());
+				version(DebugServer) if(dbgfh) dbglog("calcExpansions: exception " ~ t.toString());
 			}
 			mSemanticExpansionsRunning = false;
 			mLastSymbols = symbols;
 		}
-		version(DebugServer) dbglog("  schedule GetSemanticExpansions: " ~ fname ~ "(" ~ to!string(line) ~ "," ~ to!string(idx) ~ "): " ~ stok);
+		version(DebugServer) if(dbgfh) dbglog("  schedule GetSemanticExpansions: " ~ fname ~ "(" ~ to!string(line) ~ "," ~ to!string(idx) ~ "): " ~ stok);
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
 		schedule(&_calcExpansions);
@@ -607,7 +625,7 @@ class DMDServer : ComObject, IVDServer
 		}
 		*stringList = allocBSTR(slist.data);
 
-		version(DebugServer) dbglog("GetSemanticExpansionsResult: " ~ slist.data);
+		version(DebugServer) if(dbgfh) dbglog("GetSemanticExpansionsResult: " ~ slist.data);
 		writeReadyMessage();
 		return S_OK;
 	}
@@ -739,13 +757,13 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetReferences: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("GetReferences: exception " ~ t.toString());
 				}
 			}
 			mLastReferences = references;
 			mSemanticGetReferencesRunning = false;
 		}
-		version(DebugServer) dbglog("  schedule GetReferences: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog("  schedule GetReferences: " ~ fname);
 		mSemanticGetReferencesRunning = true;
 		schedule(&_getReferences);
 
@@ -759,6 +777,7 @@ class DMDServer : ComObject, IVDServer
 			*stringList = allocBSTR("__pending__");
 			return S_OK;
 		}
+		version(DebugServer) if(dbgfh) dbglog("GetReferencesResult: " ~ firstLine(mLastReferences) ~ "...");
 		*stringList = allocBSTR(mLastReferences);
 		return S_OK;
 	}
@@ -801,13 +820,13 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetIdentifierTypes: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypes: exception " ~ t.toString());
 				}
 			}
 			mLastIdentifierTypes = identiferTypes;
 			mSemanticIdentifierTypesRunning = false;
 		}
-		version(DebugServer) dbglog("  schedule GetIdentifierTypes: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog("  schedule GetIdentifierTypes: " ~ fname);
 		mSemanticIdentifierTypesRunning = true;
 		schedule(&_getIdentifierTypes);
 
@@ -821,6 +840,7 @@ class DMDServer : ComObject, IVDServer
 			*types = allocBSTR("__pending__");
 			return S_OK;
 		}
+		version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypesResult: " ~ firstLine(mLastReferences) ~ "...");
 		*types = allocBSTR(mLastIdentifierTypes);
 		return S_OK;
 	}

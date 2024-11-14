@@ -329,9 +329,9 @@ void do_unittests()
 		return m;
 	}
 
-	void checkTip(Module analyzedModule, int line, int col, string expected_tip, bool addlinks = false)
+	void checkTip(Module analyzedModule, int line, int col, string expected_tip, bool addlinks = false, bool addSize = false)
 	{
-		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks);
+		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks, addSize);
 		if (expected_tip.endsWith("..."))
 			assert_equal(tip[0..min($, expected_tip.length-3)], expected_tip[0..$-3]);
 		else
@@ -548,6 +548,7 @@ void do_unittests()
 	m = checkErrors(source, "");
 
 	checkTip(m,  2, 10, "(struct) `source.S`");
+	checkTip(m,  2, 10, "(struct) `source.S`\nSize: 4, Alignment: 4", false, true);
 	checkTip(m,  4,  8, "(field) `int source.S.field1`");
 	checkTip(m,  6,  8, "`int source.S.fun(int par)`");
 	checkTip(m,  6, 16, "(parameter) `int par`");
@@ -949,6 +950,78 @@ void do_unittests()
 
 	source =
 	q{                                   // Line 1
+		struct Options
+		{
+			uint restartMemThreshold;
+		}
+
+		class DMDServer
+		{
+			Options mOptions;
+
+			int UpdateModule()
+			{
+				if (mOptions.restartMemThreshold) // Line 13
+				{
+					mOptions.
+				}
+				mOptions.
+					mOpt
+				return 0;
+			}
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  13, 20, "", [ "restartMemThreshold" ] ~ structProperties);
+	checkExpansions(m,  15, 15, "", [ "restartMemThreshold" ] ~ structProperties);
+	checkExpansions(m,  17, 14, "", [ "restartMemThreshold" ] ~ structProperties);
+
+	source =
+	q{                                   // Line 1
+		void fun()
+		{
+			const(char)[] str = "Hello D World!\n";
+			size_t a;                    // Line 5
+			a = str.len;
+			auto b = str.
+			size_t x = 3;
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  6, 12, "len", [ "length" ]);
+	checkExpansions(m,  7, 17, "l", [ "length" ]);
+
+	source =
+	q{                                   // Line 1
+		enum { val_1, val_2, val_3 }
+		int fun(int i)
+		{
+			switch(i) {                  // Line 5
+				case val_1: return val_3;
+				default: break;
+			}
+			/+
+			switch(i) {
+				case val_1: return val_3;
+				case val_: return val_2; // Line 10
+				case val_
+			}
+			switch(i) {
+				case val_1, val_2: return val_3;
+				case val_3 .. 100:       // Line 15
+			}
+			+/
+			return val_;
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  6, 10, "val_", [ "val_1", "val_2", "val_3" ]);
+	checkExpansions(m,  10, 10, "val_", [ "val_1", "val_2", "val_3" ]);
+	checkExpansions(m,  14, 17, "val_", [ "val_1", "val_2", "val_3" ]);
+	checkExpansions(m,  15, 10, "val_", [ "val_1", "val_2", "val_3" ]);
+
+	source =
+	q{                                   // Line 1
 		struct S
 		{
 			int fun(int par) { return par; }
@@ -1073,6 +1146,7 @@ void do_unittests()
 	checkTip(m, 21, 11, "(enum) `source.TOK`");
 	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
 	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
+	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc\nSize: 16, Alignment: 8", false, true); // x64 only
 	checkTip(m, 24, 19, "(thread local global) `source.TOK[source.Base] source.mapBaseTOK`");
 	checkTip(m, 24,  7, "(class) `source.Base`");
 	checkTip(m, 24,  3, "(enum) `source.TOK`");
@@ -1160,6 +1234,7 @@ void do_unittests()
 		alias ETint = ET!int;
 		enum Enum { En1, En2 }
 		alias En1 = Enum.En1;
+		alias T1 = size_t;
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
@@ -1171,6 +1246,7 @@ void do_unittests()
 	checkTip(m,  4, 14, "(constant) `int source.EE = 3`");
 	checkTip(m,  5,  9, "(alias constant) `source.ET!int = int source.EE = 3`");
 	checkTip(m,  6,  9, "(alias constant) `source.ETint = int source.EE = 3`");
+	checkTip(m,  9,  9, "(alias) `source.T1 = ulong`");
 
 	checkReferences(m, 7, 15, [TextPos(7,15), TextPos(8, 20)]); // En1
 
@@ -1186,6 +1262,8 @@ void do_unittests()
 		"En1":              [ IdTypePos(TypeReferenceKind.EnumValue),
 		                      IdTypePos(TypeReferenceKind.Alias, 8, 9),
 		                      IdTypePos(TypeReferenceKind.EnumValue, 8, 20) ],
+		"T1":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		"size_t":           [ IdTypePos(TypeReferenceKind.Alias) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
@@ -1814,7 +1892,7 @@ void do_unittests()
 	checkDefinition(m, 5, 19, "shell.d", 4, 18); // VSITEMID_NIL
 	checkDefinition(m, 7, 3, "shell.d", 5, 10); // shell_struct
 	checkTip(m, 7, 3, "(struct) `shell.shell_struct`");
-	checkTip(m, 8, 3, "(alias) `shell.original source.renamed`");
+	checkTip(m, 8, 3, "(alias) `source.renamed = shell.original`");
 	checkDefinition(m, 2, 38, "shell.d", 5, 10); // shell_struct in import
 	checkDefinition(m, 2, 56, "shell.d", 6, 9); // original in import
 	checkDefinition(m, 2, 66, "shell.d", 7, 8); // tmplFun in import
