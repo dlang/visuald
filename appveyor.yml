@@ -30,7 +30,7 @@ environment:
 
 # cache relative to C:\projects\visuald
 cache:
-  - C:\projects\cache\dmd2105_2.7z
+  - C:\projects\cache\dmd2109_1.7z
   - C:\projects\cache\cd851.zip
   - C:\projects\cache\VisualD-v0.50.1.exe
   - C:\projects\cache\binutils-2.25.tar.gz
@@ -55,10 +55,10 @@ install:
   # Download & extract D compiler
   - ps: |
         If ($Env:D_COMPILER -eq 'dmd') {
-            If (-not (Test-Path 'cache\dmd2105_2.7z')) {
-                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.105.2/dmd.2.105.2.windows.7z' -FileName 'cache\dmd2105_2.7z'
+            If (-not (Test-Path 'cache\dmd2109_1.7z')) {
+                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.109.1/dmd.2.109.1.windows.7z' -FileName 'cache\dmd2109_1.7z'
             }
-            7z x cache\dmd2105_2.7z > $null
+            7z x cache\dmd2109_1.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
         } ElseIf ($Env:D_COMPILER -eq 'dmd-nightly') {
             Start-FileDownload 'http://nightlies.dlang.org/dmd-nightly/dmd.master.windows.7z' -FileName 'dmd2.7z'
