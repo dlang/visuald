@@ -143,17 +143,17 @@ build_script:
   # can build dbuild15 and dparser only with VS2017
   - if     "%VS%"=="15" nuget restore vdc\abothe\VDServer.sln
   - if     "%VS%"=="15" nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" install_vs_only_vs2017
-  - if not "%VS%"=="15" nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" install_vs_no_vs2017
+  - if not "%VS%"=="15" nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" appveyor
 
 after_build:
   # publish as artifact
   - cd c:\projects
   - 7z a logs_and_symbols.7z -r visuald\bin\*.pdb visuald\bin\*.html
-  - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%-vs%VS%.exe)
-  - copy %BUILD_EXE% %ARTIFACT%
+  # - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%-vs%VS%.exe)
+  # - copy %BUILD_EXE% %ARTIFACT%
+  #       Push-AppveyorArtifact $Env:ARTIFACT
   - ps: |
         echo 'Creating artifacts...'
-        Push-AppveyorArtifact $Env:ARTIFACT
         Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
         Push-AppveyorArtifact logs_and_symbols.7z
 

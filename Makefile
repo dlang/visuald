@@ -248,6 +248,8 @@ install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
 
 d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
 
+appveyor: d_modules cv2pdb_vs16 mago_vs16 magogc
+
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
 	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" "/DCONFIG_DMDSERVER=$(CONFIG_DMDSERVER)" $(NSIS_ARGS) visuald.nsi
