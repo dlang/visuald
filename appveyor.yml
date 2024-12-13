@@ -15,9 +15,12 @@ skip_tags: true
 
 environment:
   matrix:
-    - os: Visual Studio 2017
-      VS: 15
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - os: Visual Studio 2019
+      VS: 16
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#    - os: Visual Studio 2017
+#      VS: 15
+#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 #    - os: Visual Studio 2015
 #      VS: 14
 #      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -76,18 +79,20 @@ install:
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        If (-not (Test-Path 'cache\VisualD-v0.50.1.exe')) {
-            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.50.1/VisualD-v0.50.1.exe' -FileName 'cache\VisualD-v0.50.1.exe'
+        If (-not (Test-Path 'cache\VisualD-v1.3.1.exe')) {
+            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v1.3.1/VisualD-v1.3.1.exe' -FileName 'cache\VisualD-v1.3.1.exe'
         }
-  - cache\VisualD-v0.50.1.exe /S
+  - cache\VisualD-v1.3.1.exe /S
   # configure DMD path
   - reg add "HKLM\SOFTWARE\DMD" /v InstallationFolder /t REG_SZ /d c:\projects /reg:32 /f
   # disable link dependencies monitoring, fails on AppVeyor server
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v optlinkDeps /t REG_DWORD /d 0 /reg:32 /f
   # Set environment variables
   - set PATH=c:\projects\dm\bin;%PATH%
-  - if not "%VS%" == "15" call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
-  - if     "%VS%" == "15" call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+  - if "%VS%" == "12" call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
+  - if "%VS%" == "14" call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
+  - if "%VS%" == "15" call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+  - if "%VS%" == "16" call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
   # Print environment info
   - set
   - msbuild /version
