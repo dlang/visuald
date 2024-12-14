@@ -1386,3 +1386,9 @@ Version history
   * dmdserver: improve completion for member variables, code in switch statement
   * dmdseerver: added option to display type size and alignment in tool tip
   * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.12
+
+2024-12-07 version 1.4.0-rc4
+  * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.13
+  * mago: fixed display of tuples (currently only with LDC)
+  * mago: do not hide __param_.. function arguments as compiler generated symbols
+  * fixed building with VS 2022

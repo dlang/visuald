@@ -176,7 +176,10 @@ dbuild17_11:
 dbuild17_12:
 	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_12;Platform=AnyCPU /t:Rebuild
 
-dbuild17_all: dbuild17_0 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4 dbuild17_5 dbuild17_6 dbuild17_7 dbuild17_8 dbuild17_9 dbuild17_10 dbuild17_11 dbuild17_12
+dbuild17_13:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_13;Platform=AnyCPU /t:Rebuild
+
+dbuild17_all: dbuild17_0 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4 dbuild17_5 dbuild17_6 dbuild17_7 dbuild17_8 dbuild17_9 dbuild17_10 dbuild17_11 dbuild17_12 dbuild17_13
 
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
@@ -193,8 +196,13 @@ mago_vs16:
 	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v142              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
+mago_vs17:
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v143            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v143              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v143" /target:Expression\MagoNatCC MagoDbg_2010.sln
+
 magocc_x64:
-	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=x64;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=x64;PlatformToolset=v143" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
 magogc:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoGC" magodbg_2010.sln
@@ -215,6 +223,11 @@ cv2pdb_vs16:
 	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142 src\dviewhelper\dviewhelper.vcxproj
 	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142 src\dumplines.vcxproj
 
+cv2pdb_vs17:
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v143 src\cv2pdb.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v143 src\dviewhelper\dviewhelper.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v143 src\dumplines.vcxproj
+
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
 # no space after Release, it will be part of environment variable
@@ -223,7 +236,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 magocc_x64 magogc dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules fake_dparser cv2pdb_vs17 mago_vs17 magocc_x64 magogc dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
@@ -234,6 +247,8 @@ install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs
 install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
 
 d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
+
+appveyor: d_modules cv2pdb_vs16 mago_vs16 magogc
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

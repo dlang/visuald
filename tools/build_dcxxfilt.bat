@@ -3,9 +3,11 @@ rem unpack and configure binutils 2.25+
 rem don't use spaces in path names!
 
 setlocal
-if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\d\dmd-2.087.0
+call "%VCINSTALLDIR%\Auxiliary\Build\vcvars32.bat"
+
+if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\d\dmd-2.109.1
 set DMD=%DMDINSTALLDIR%\windows\bin\dmd
-if "%BINUTILS%" == "" set BINUTILS=c:\s\cpp\cxxfilt
+if "%BINUTILS%" == "" set BINUTILS=c:\s\d\visuald\cxxfilt
 
 if "%CONFIG%" == "" set CONFIG=Debug
 

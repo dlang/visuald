@@ -1620,11 +1620,31 @@ call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.succe
    <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Debug|x64" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Debug COFF32|x64" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Debug COFF32|Win32" />
    <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Release COFF32|x64" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Release COFF32|Win32" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Release LDC|Win32" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Release LDC|x64" />
   </File>
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
