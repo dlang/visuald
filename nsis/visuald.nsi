@@ -85,6 +85,7 @@
   !define MUI_HEADERIMAGE_BITMAP "Extensions\vdlogo.bmp"
   !define MUI_HEADERIMAGE_RIGHT
   !define MUI_HEADERIMAGE_BITMAP_STRETCH AspectFitHeight
+  !define MUI_COMPONENTSPAGE_SMALLDESC
 
   !define AUTHOR "Rainer Schuetze"
   !define APPNAME "VisualD"
@@ -680,39 +681,16 @@ ${MementoSectionEnd}
 ;--------------------------------
 ${MementoSection} "Install in VS 2022" SecVS2022
 
-  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2022_REGISTRY_KEY}'
-  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2022_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
-  ;${RegisterWin32Exception} ${VS2022_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+  Push 1
+  Call InstallForVS2022
 
-  Call DetectVS2022_InstallationFolder
-  WriteRegStr HKLM "Software\${APPNAME}" "VS2022InstallDir" $1
+${MementoSectionEnd}
 
-  StrCpy $1 "$1Common7\IDE\"
-  RMDir /r '$1${EXTENSION_DIR_APP}'
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2022_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
-  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+;--------------------------------
+${MementoSection} "Install in VS 2022" SecVS2022_2
 
-  ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
-  ${File} ..\nsis\Extensions\ vdlogo.ico
-  ${AddItem} "$1${EXTENSION_DIR}"
-
-  GetFullPathName $0 $INSTDIR
-  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "17" NoBackup
-  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
-
-  !ifdef MAGO
-    ${SetOutPath} "$1..\Packages\Debugger"
-    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
-    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
-  !endif
-
-  ${SetOutPath} "$1\PublicAssemblies"
-  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
-
-  push $1
-  Call VSConfigurationChanged
+  Push 2
+  Call InstallForVS2022
 
 ${MementoSectionEnd}
 
@@ -783,6 +761,11 @@ SectionGroup Components
 ${MementoSection} "MSBuild integration" SecMSBuild
 
 !ifdef VS2022
+  SectionGetFlags ${SecVS2022} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2022
+
+  Push 1
   Call DetectVS2022_InstallationFolder
   StrCmp $1 "" NoVS2022
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
@@ -793,8 +776,24 @@ ${MementoSection} "MSBuild integration" SecMSBuild
 
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.17.0.xml'
     ${AddItem} "$INSTDIR\msbuild\general_d.17.0.xml"
-
   NoVS2022:
+
+  SectionGetFlags ${SecVS2022_2} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2022_2
+
+  Push 2
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" NoVS2022_2
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterIcons} "17.0"
+
+    !define V170_GENERAL_XML_2 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170_GENERAL_XML_2};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general2_d.17.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general2_d.17.0.xml"
+  NoVS2022_2:
 
   Call DetectVS2022BuildTools_InstallationFolder
   StrCmp $1 "" NoVS2022BT
@@ -1056,10 +1055,10 @@ SectionEnd
 !endif  
 !ifdef MAGO
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
-  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
+  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/projects/mago_debugger"
 !endif  
 !ifdef MSBUILD
-  LangString DESC_SecMSBuild ${LANG_ENGLISH} "MSBuild integration into VC++ projects in VS 2013/15/17/19"
+  LangString DESC_SecMSBuild ${LANG_ENGLISH} "MSBuild integration into VC++ projects in VS 2013/15/17/19/22"
 !endif  
 
   ;Assign language strings to sections
@@ -1083,6 +1082,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022} $(DESC_SecVS2022)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_2} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022BT} $(DESC_SecVS2022BT)
@@ -1357,6 +1357,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2013
     SectionSetFlags ${SecVS2013} ${SF_RO}
+    SectionSetText ${SecVS2013} ""
   Installed_VS2013:
 
   ; detect VS2015
@@ -1364,6 +1365,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2015
     SectionSetFlags ${SecVS2015} ${SF_RO}
+    SectionSetText ${SecVS2015} ""
   Installed_VS2015:
 
   ; detect VS2017
@@ -1402,10 +1404,25 @@ Function .onInit
 !ifdef VS2022
   ; detect VS2022
   ClearErrors
+  Push 1
   Call DetectVS2022_InstallationFolder
   StrCmp $1 "" 0 Installed_VS2022
     SectionSetFlags ${SecVS2022} ${SF_RO}
+    goto Done_VS2022
   Installed_VS2022:
+    SectionSetText ${SecVS2022} "Install in $2"
+  Done_VS2022:
+
+  ClearErrors
+  Push 2
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2022_2
+    SectionSetFlags ${SecVS2022_2} ${SF_RO}
+    SectionSetText ${SecVS2022_2} ""
+    goto Done_VS2022_2
+  Installed_VS2022_2:
+    SectionSetText ${SecVS2022_2} "Install in $2"
+  Done_VS2022_2:
 
   ; detect VS2022 Build Tools
   ClearErrors
@@ -1879,7 +1896,9 @@ FunctionEnd
 !endif
 
 !ifdef VS2022
+; expects index of installation to be pushed as an argument, return folder in $1, display name in $2
 Function DetectVS2022_InstallationFolder
+  Exch $4
 
   StrCpy $0 0
   loop:
@@ -1899,11 +1918,16 @@ Function DetectVS2022_InstallationFolder
         ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
         StrCmp $3 "2022" IsVS2022 NotVS2022
         IsVS2022:
-            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            ReadRegStr $3 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
             IfErrors NoInstallLocation
-                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
-                StrCpy $1 "$2\\"
-                return
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$3$\n$\nMore?" IDYES 0 IDNO done
+                IntOp $4 $4 - 1
+                IntCmp $4 0 idxZero idxNotZero idxNotZero
+                idxZero:
+                    StrCpy $1 "$3\\"
+                    Pop $4
+                    return
+                idxNotZero:
             NoInstallLocation:
         NotVS2022:
     NoDisplayName:
@@ -1911,6 +1935,7 @@ Function DetectVS2022_InstallationFolder
     Goto loop
   done:
   StrCpy $1 ""
+  Pop $4
 
 FunctionEnd
 
@@ -1937,4 +1962,48 @@ Function DetectVS2022BuildTools_InstallationFolder
   StrCpy $1 ""
 
 FunctionEnd
-!endif
+
+Function InstallForVS2022
+
+  Exch $1 ; argument Index
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2022_REGISTRY_KEY}'
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2022_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;${RegisterWin32Exception} ${VS2022_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  Push $1
+  Call DetectVS2022_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2022InstallDir" $1
+
+  StrCpy $1 "$1Common7\IDE\"
+  RMDir /r '$1${EXTENSION_DIR_APP}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2022_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
+
+  GetFullPathName $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "17" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+
+  !ifdef MAGO
+    ${SetOutPath} "$1..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
+  !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
+  push $1
+  Call VSConfigurationChanged
+
+  pop $1
+
+FunctionEnd
+
+!endif ; VS2022
