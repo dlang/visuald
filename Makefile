@@ -42,6 +42,7 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
 # CONFIG  = Release LDC
 CONFIG  = Release COFF32
 CONFIG_X64 = Release COFF32
+CONFIG_ARM64 = Release LDC ARM
 CONFIG_DMDSERVER = Release COFF32
 
 ##############################################################
@@ -62,6 +63,9 @@ visuald_vs:
 
 visuald_vs_x64:
 	devenv /Project "visuald"   /Build "$(CONFIG_X64)|x64" visuald_vs10.sln
+
+visuald_vs_arm64:
+	devenv /Project "visuald"   /Build "$(CONFIG_ARM64)|x64" visuald_vs10.sln
 
 visuald_test:
 	devenv /Project "visuald"   /Build "TestDebug|Win32" visuald_vs10.sln
@@ -204,9 +208,16 @@ mago_vs17:
 magocc_x64:
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=x64;PlatformToolset=v143" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
+magocc_arm64:
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=ARM64;PlatformToolset=v143" /target:Expression\MagoNatCC MagoDbg_2010.sln
+
 magogc:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoGC" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoGC" magodbg_2010.sln
+
+magogc_ldc:
+	cd ..\..\mago && devenv /Build "Release|Win32"/Project "MagoGC" /projectconfig "Release LDC|Win32" magodbg_2010.sln
+	cd ..\..\mago && devenv /Build "Release|x64"  /Project "MagoGC" /projectconfig "Release LDC|x64"   magodbg_2010.sln
 
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -236,7 +247,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules fake_dparser cv2pdb_vs17 mago_vs17 magocc_x64 magogc dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules fake_dparser cv2pdb_vs17 mago_vs17 magocc_x64 magocc_arm64 magogc magogc_ldc dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
@@ -246,7 +257,7 @@ install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs
 
 install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
 
-d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
+d_modules: prerequisites visuald_vs visuald_vs_x64 visuald_vs_arm64 vdserver dmdserver
 
 appveyor: d_modules cv2pdb_vs16 mago_vs16 magogc
 

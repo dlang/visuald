@@ -1393,6 +1393,10 @@ Version history
   * mago: do not hide __param_.. function arguments as compiler generated symbols
   * fixed building with VS 2022
 
-2022-01-03 version 1.4.0-rc5
+2025-01-03 version 1.4.0-rc5
   * fix selection of dbuild.dll for VS 17.12
   * installer now supports 2 parallel installations of VS 2022
+
+2025-03-02 version 1.4.0-rc6
+  * now works with Visual Studio for Windows on ARM64
+  * installer now supports 4 parallel installations of VS 2022

@@ -191,6 +191,8 @@ template _shared(T)
 
 	void send(Tid id)
 	{
+		version(DebugCmd) dbglog(to!string(cast(void*)this) ~ " send: " ~ to!string(mRequest) ~ " " ~ mCommand);
+
 		.send(id, cast(size_t) cast(void*) this);
 //		.send(id, cast(shared)this);
 //		.send(id, this);
