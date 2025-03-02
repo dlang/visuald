@@ -348,3 +348,51 @@ FunctionEnd
 !insertmacro RFF ""
 !insertmacro RFF "un."
 
+; StrCount adapted from https://nsis.sourceforge.io/StrCount
+!define StrCount "!insertmacro StrCount"
+
+!macro StrCount str look
+  Push ${str}
+  Push ${look}
+  Call StrCount
+!macroend
+
+Function StrCount
+  ;takes the following parameters by the stack:
+  ; string to lookup
+  ; string where to search
+  ;returns count on top of stack
+
+  Exch $1	;Stack = ($1 str)
+  Exch	;Stack = (str $1)
+  Exch $0	;Stack = ($0 $1)
+  Push $3
+  Push $4
+  Push $5	
+  Push $6	;Stack = ($6 $5 $4 $3 $0 $1)
+
+  StrLen $4 $1 
+  StrCpy $5 0
+  StrCpy $6 0
+
+  ;now $0=str, $1=look, $3=tmp str, $4=lookup len, $5=index, $6=count
+
+  loop:
+    StrCpy $3 $0 $4 $5
+    StrCmp $3 "" end
+    StrCmp $3 $1 count ignore
+    count:
+    IntOp $6 $6 + 1	;count++
+    ignore:
+    IntOp $5 $5 + 1 ;index++
+    goto loop
+  end:
+ 
+  Exch 5	;Stack = ($1 $5 $4 $3 $0 $6)
+  Pop $1
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $0	;Stack = ($6)
+  Exch $6	;count is on top stack
+FunctionEnd

@@ -99,6 +99,9 @@
 !ifndef CONFIG_X64
   !define CONFIG_X64  "Release COFF32"
 !endif
+!ifndef CONFIG_ARM64
+  !define CONFIG_ARM64  "Release LDC ARM"
+!endif
 !ifndef CONFIG_DMDSERVER
   !define CONFIG_DMDSERVER  "Release"
 !endif
@@ -292,6 +295,8 @@ Section "Visual Studio package" SecPackage
 !ifdef VS2022
   ${SetOutPath} "$INSTDIR\x64"
   ${File} "..\bin\${CONFIG_X64}\x64\" ${DLLNAME}
+  ${SetOutPath} "$INSTDIR\arm64"
+  ${File} "..\bin\${CONFIG_ARM64}\" ${DLLNAME}
 !endif
 
   ${SetOutPath} "$INSTDIR"
@@ -695,6 +700,22 @@ ${MementoSection} "Install in VS 2022" SecVS2022_2
 ${MementoSectionEnd}
 
 ;--------------------------------
+${MementoSection} "Install in VS 2022" SecVS2022_3
+
+  Push 3
+  Call InstallForVS2022
+
+${MementoSectionEnd}
+
+;--------------------------------
+${MementoSection} "Install in VS 2022" SecVS2022_4
+
+  Push 4
+  Call InstallForVS2022
+
+${MementoSectionEnd}
+
+;--------------------------------
 ${MementoSection} "Install in VS 2022 Build Tools" SecVS2022BT
 
   Call DetectVS2022BuildTools_InstallationFolder
@@ -795,6 +816,44 @@ ${MementoSection} "MSBuild integration" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general2_d.17.0.xml"
   NoVS2022_2:
 
+  SectionGetFlags ${SecVS2022_3} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2022_3
+
+  Push 3
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" NoVS2022_3
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterIcons} "17.0"
+
+    !define V170_GENERAL_XML_3 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170_GENERAL_XML_3};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general3_d.17.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general3_d.17.0.xml"
+  NoVS2022_3:
+
+  SectionGetFlags ${SecVS2022_4} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2022_4
+
+  Push 4
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" NoVS2022_4
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterIcons} "17.0"
+
+    !define V170_GENERAL_XML_4 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170_GENERAL_XML_4};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general4_d.17.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general4_d.17.0.xml"
+  NoVS2022_4:
+
+  SectionGetFlags ${SecVS2022BT} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2022BT
+
   Call DetectVS2022BuildTools_InstallationFolder
   StrCmp $1 "" NoVS2022BT
     ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
@@ -811,6 +870,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
 !endif
 
 !ifdef VS2019
+  SectionGetFlags ${SecVS2019} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2019
+
   Call DetectVS2019_InstallationFolder
   StrCmp $1 "" NoVS2019
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "x64"
@@ -823,6 +886,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"
 
   NoVS2019:
+
+  SectionGetFlags ${SecVS2019BT} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2019BT
 
   Call DetectVS2019BuildTools_InstallationFolder
   StrCmp $1 "" NoVS2019BT
@@ -839,6 +906,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
 
 !endif
 
+  SectionGetFlags ${SecVS2017BT} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2017BT
+
   Call DetectVS2017BuildTools_InstallationFolder
   StrCmp $1 "" NoVS2017BT
     ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
@@ -851,6 +922,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.15bt.0.xml"
 
   NoVS2017BT:
+
+  SectionGetFlags ${SecVS2017} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2017
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017
@@ -865,6 +940,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
 
   NoVS2017:
 
+  SectionGetFlags ${SecVS2015} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoMSBuild14
+
   ReadRegStr $1 HKLM "SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0" MSBuildToolsRoot
   IfErrors NoMSBuild14
     ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V140" "x64"
@@ -877,6 +956,10 @@ ${MementoSection} "MSBuild integration" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.14.0.xml"
 
   NoMSBuild14:
+
+  SectionGetFlags ${SecVS2013} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoMSBuild12
 
   ReadRegStr $1 HKLM "SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0" MSBuildToolsRoot
   IfErrors NoMSBuild12
@@ -964,6 +1047,8 @@ ${MementoSection} "mago" SecMago
   ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoRemote.exe
   ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoGC64.dll
   ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoGC32.dll
+  ${File} "${MAGO_SOURCE}\bin\x64\Release LDC\" MagoGC64_LDC.dll
+  ${File} "${MAGO_SOURCE}\bin\Win32\Release LDC\" MagoGC32_LDC.dll
   ${File} ${MAGO_SOURCE}\ LICENSE.TXT
   ${File} ${MAGO_SOURCE}\ NOTICE.TXT
 
@@ -1083,6 +1168,8 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_2} $(DESC_SecVS2022)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_3} $(DESC_SecVS2022)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_4} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022BT} $(DESC_SecVS2022BT)
@@ -1423,6 +1510,28 @@ Function .onInit
   Installed_VS2022_2:
     SectionSetText ${SecVS2022_2} "Install in $2"
   Done_VS2022_2:
+
+  ClearErrors
+  Push 3
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2022_3
+    SectionSetFlags ${SecVS2022_3} ${SF_RO}
+    SectionSetText ${SecVS2022_3} ""
+    goto Done_VS2022_3
+  Installed_VS2022_3:
+    SectionSetText ${SecVS2022_3} "Install in $2"
+  Done_VS2022_3:
+
+  ClearErrors
+  Push 4
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2022_4
+    SectionSetFlags ${SecVS2022_4} ${SF_RO}
+    SectionSetText ${SecVS2022_4} ""
+    goto Done_VS2022_4
+  Installed_VS2022_4:
+    SectionSetText ${SecVS2022_4} "Install in $2"
+  Done_VS2022_4:
 
   ; detect VS2022 Build Tools
   ClearErrors
@@ -1911,13 +2020,10 @@ Function DetectVS2022_InstallationFolder
         StrCpy $3 $2 14
         ; MessageBox MB_YESNO|MB_ICONQUESTION "Visual Studio in: '$3'$\n$\nMore?" IDYES 0 IDNO done
         StrCmp $3 "Visual Studio " 0 NotVS2022
-        StrCpy $3 $2 12 -12
-        ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 Preview in: '$3'$\n$\nMore?" IDYES 0 IDNO done
-        StrCmp $3 "2022 Preview" IsVS2022
-        StrCpy $3 $2 4 -4
-        ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
-        StrCmp $3 "2022" IsVS2022 NotVS2022
-        IsVS2022:
+        ${StrCount} $2 "2022"
+        Pop $3
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 count '$3'$\n$\nMore?" IDYES 0 IDNO done
+        IntCmp $3 0 NotVS2022 NotVS2022 0
             ReadRegStr $3 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
             IfErrors NoInstallLocation
                 ; MessageBox MB_YESNO|MB_ICONQUESTION "$3$\n$\nMore?" IDYES 0 IDNO done
@@ -1991,9 +2097,12 @@ Function InstallForVS2022
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
-    ${SetOutPath} "$1..\Packages\Debugger"
+    ${SetOutPath} "$1..\Packages\Debugger\x64"
     ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
+    ${SetOutPath} "$1..\Packages\Debugger\arm64"
+    ${File} ${MAGO_SOURCE}\bin\ARM64\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\ARM64\Release\ MagoNatCC.vsdconfig
   !endif
 
   ${SetOutPath} "$1\PublicAssemblies"

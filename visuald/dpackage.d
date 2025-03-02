@@ -1815,6 +1815,8 @@ class GlobalOptions
 			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
 			VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
 			// InstallDir is ../Common7/IDE/
+			if (VSInstallDir.empty)
+				VSInstallDir = DevEnvDir;
 			VSInstallDir = normalizeDir(VSInstallDir);
 			VSInstallDir = dirName(dirName(VSInstallDir));
 		}

@@ -466,8 +466,9 @@ alias void WriteULongPtrRelease;
 alias void WriteULongPtrNoFence;
 alias void WriteULongPtrRaw;
 
-version(GNU) extern(C) DWORD __readfsdword (DWORD Offset) { assert(0); }
-else         extern(C) DWORD __readfsdword (DWORD Offset) { asm { naked; mov EAX,[ESP+4]; mov EAX, FS:[EAX]; } }
+     version(GNU)     extern(C) DWORD __readfsdword (DWORD Offset) { assert(0); }
+else version(AArch64) extern(C) DWORD __readfsdword (DWORD Offset) { assert(0); }
+else                  extern(C) DWORD __readfsdword (DWORD Offset) { asm { naked; mov EAX,[ESP+4]; mov EAX, FS:[EAX]; } }
 
 enum TRUE = 1;
 public import sdk.win32.winbase;

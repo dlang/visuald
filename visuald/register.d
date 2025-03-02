@@ -32,7 +32,7 @@ import visuald.comutil;
 extern(Windows)
 HRESULT VSDllRegisterServerUser(const wchar* strRegRoot)
 {
-	return VSDllRegisterServerInternal(strRegRoot, true);
+	return VSDllRegisterServerInternal(strRegRoot, true, null);
 }
 
 // Unregisters COM objects normally and unregisters VS Packages from the specified VS registry hive under HKCU
@@ -46,7 +46,7 @@ HRESULT VSDllUnregisterServerUser(const wchar* strRegRoot)
 extern(Windows)
 HRESULT VSDllRegisterServer(const wchar* strRegRoot)
 {
-	return VSDllRegisterServerInternal(strRegRoot, false);
+	return VSDllRegisterServerInternal(strRegRoot, false, null);
 }
 
 // Unregisters COM objects normally and unregisters VS Packages from the specified VS registry hive
@@ -83,7 +83,7 @@ HRESULT WriteExtensionPackageDefinition(const wchar* args)
 	string fname = to!string(wargs[idx + 1 .. $]);
 	try
 	{
-		HRESULT rc = VSDllRegisterServerInternal(registryRoot.ptr, false);
+		HRESULT rc = VSDllRegisterServerInternal(registryRoot.ptr, false, fname);
 		if(rc != S_OK)
 			return rc;
 
@@ -511,7 +511,36 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	return hr;
 }
 
-HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
+bool isInArm64VS(string pkgdefname)
+{
+	string fname = pkgdefname;
+	while (!fname.empty)
+	{
+		string dname = dirName(fname);
+		if (dname == fname)
+			break;
+		string devenv = buildPath(dname, "devenv.exe");
+		if (std.file.exists(devenv))
+		{
+			auto data = std.file.read(devenv, 4096);
+			if (data.length >= IMAGE_DOS_HEADER.sizeof)
+			{
+				auto dos = cast(IMAGE_DOS_HEADER*) data.ptr;
+				if (dos.e_magic == IMAGE_DOS_SIGNATURE && data.length >= dos.e_lfanew + IMAGE_NT_HEADERS64.sizeof)
+				{
+					auto nt = cast(IMAGE_NT_HEADERS64*) (data.ptr + dos.e_lfanew);
+					if (nt.Signature == IMAGE_NT_SIGNATURE)
+						return nt.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64;
+				}
+			}
+			return false;
+		}
+		fname = dname;
+	}
+	return false;
+}
+
+HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu, in string pkgdefname)
 {
 	HKEY    keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
@@ -522,7 +551,10 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 
 	float ver = guessVSVersion(registrationRoot);
 	if (ver >= 17)
-		dllPath = buildPath(instPath, "x64"w, baseName(dllPath)); // 32-bit DLL used to register 64-bit DLL
+	{
+		auto arch = isInArm64VS(pkgdefname) ? "arm64"w : "x64"w;
+		dllPath = buildPath(instPath, arch, baseName(dllPath)); // 32-bit DLL used to register 64-bit DLL
+	}
 
 	wstring dbuildPath;
 	if (ver == 12)
