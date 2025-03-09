@@ -147,6 +147,8 @@ class idl2d
 			"dpa_dsa.h",
 			// Win SDK 10.0.18362.0
 			"fileapifromapp.h",
+			// Win SDK 10.0.26100.0
+			// "intsafe.h",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -580,6 +582,9 @@ class idl2d
 		case "GetLastError":
 		case "MF_END": // defined twice in winuser.h, but said to be obsolete
 		case "__int3264":
+		case "INT128_MIN":
+		case "INT128_MAX":
+		case "UINT128_MAX":
 			return 1;
 
 		case "_NO_SCRIPT_GUIDS": // used in activdbg.h, disable to avoid duplicate GUID definitions
@@ -1282,6 +1287,11 @@ version(all)
 			replaceTokenSequence(tokens, "__VARIANT_NAME_4", "", true);
 		}
 
+		if(currentModule == "winbase")
+		{
+			replaceTokenSequence(tokens, "#define CopyVolatileMemory$defs\n$defines\n#define ZeroDeviceMemory RtlZeroDeviceMemory\n", "", false);
+		}
+
 		if(currentModule == "windef")
 		{
 			// avoid removal of #define TRUE 1
@@ -1329,6 +1339,8 @@ version(all)
 								 "/+ $* +/", true);
 			replaceTokenSequence(tokens, "FORCEINLINE PVOID ReadPointerAcquire $code WritePointerRaw($args) { $code2 }",
 								 "/+ $* +/", true);
+			// win 10.0.26100.0: unused definitions before declaration
+			replaceTokenSequence(tokens, "#define __NtCurrentTebAddr$def_more\n$defines\n#endif", "#endif", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1431,6 +1443,11 @@ version(all)
 		if(currentModule == "vsshell160")
 		{
 			replaceTokenSequence(tokens, "#ifndef INTEROPLIB\n[in] $ifcode\n#else\n$elsecode\n#endif", "[in] $ifcode", false);
+		}
+		if(currentModule == "textmgr120")
+		{
+			// duplicate #define
+			replaceTokenSequence(tokens, "#define MAX_FILE_TYPE 24", "", false);
 		}
 
 		for(TokenIterator tokIt = tokens.begin(); tokIt != tokens.end; )
@@ -1983,6 +2000,7 @@ version(all) {
 		replaceTokenSequence(tokens, "__deref_out_xcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__deref_opt_out_bcount_full($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__deref_inout_ecount_z($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Deref_out_range_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_bcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_bcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_ecount($args)", "/+$*+/", true);
@@ -2045,6 +2063,8 @@ version(all) {
 		replaceTokenSequence(tokens, "_Outptr_opt_result_bytebuffer_all_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Outptr_opt_result_buffer_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Releases_exclusive_lock_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Releases_nonreentrant_lock_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Acquires_nonreentrant_lock_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Releases_shared_lock_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Acquires_exclusive_lock_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Acquires_shared_lock_($args)", "/+$*+/", true);

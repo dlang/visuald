@@ -1846,6 +1846,9 @@ else
 		if(!src.GetTipSpan(pSpan))
 			return resFwd;
 
+		IVsDebugger srpVsDebugger = queryService!(IVsDebugger);
+		scope(exit) release(srpVsDebugger);
+
 		// retrieve last identifier in span
 		int startIdx, endIdx;
 		if(src.GetWordExtent(pSpan.iEndLine, pSpan.iEndIndex - 1, WORDEXT_CURRENT, startIdx, endIdx))
@@ -1877,10 +1880,8 @@ else
 
 		// when implementing IVsTextViewFilter, VS2010 will no longer ask the debugger
 		//  for tooltips, so we have to do it ourselves
-		if(IVsDebugger srpVsDebugger = queryService!(IVsDebugger))
+		if(srpVsDebugger)
 		{
-			scope(exit) release(srpVsDebugger);
-
 			HRESULT hr = srpVsDebugger.GetDataTipValue(src.mBuffer, pSpan, null, pbstrText);
 			if(hr == 0x45001) // always returned when debugger active, so no other tooltips then
 			{
@@ -1915,7 +1916,21 @@ version(none) // quick info tooltips not good enough yet
 		}
 		*pbstrText = allocBSTR(msg);
 }
-		if(Package.GetGlobalOptions().showTypeInTooltip && !Package.GetGlobalOptions().usesQuickInfoTooltips())
+		auto opts = Package.GetGlobalOptions();
+		if (opts.isVS2022OrLater() && srpVsDebugger)
+		{
+			// VS 2022 shows both the text here and the one from QuickInfo, but none if this
+			//  one is empty. Without forwarding directly here, some hovering is necessary
+			//  to show the tooltip
+			DBGMODE mode;
+			if (srpVsDebugger.GetMode(&mode) == S_OK && (mode & ~DBGMODE_EncMask) != DBGMODE_Design)
+			{
+				*pbstrText = allocBSTR("QuickInfo:");
+				*pSpan = mTipSpan;
+				return S_OK;
+			}
+		}
+		if(opts.showTypeInTooltip && !opts.usesQuickInfoTooltips())
 		{
 			if(mPendingSpan == span && mTipRequest == mPendingRequest)
 			{

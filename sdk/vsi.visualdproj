@@ -2748,6 +2748,7 @@
    <File path="vsi\msdbg1710.d" />
    <File path="vsi\msdbg1711.d" />
    <File path="vsi\msdbg1712.d" />
+   <File path="vsi\msdbg1713.d" />
    <File path="vsi\msdbg172.d" />
    <File path="vsi\msdbg173.d" />
    <File path="vsi\msdbg174.d" />
@@ -2773,6 +2774,11 @@
    <File path="vsi\textmgr110.d" />
    <File path="vsi\textmgr120.d" />
    <File path="vsi\textmgr121.d" />
+   <File path="vsi\textmgr142.d" />
+   <File path="vsi\textmgr150.d" />
+   <File path="vsi\textmgr151.d" />
+   <File path="vsi\textmgr160.d" />
+   <File path="vsi\textmgr1713.d" />
    <File path="vsi\textmgr2.d" />
    <File path="vsi\textmgr90.d" />
    <File path="vsi\textmgr91.d" />
