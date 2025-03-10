@@ -1401,7 +1401,7 @@ Version history
   * now works with Visual Studio for Windows on ARM64
   * installer now supports 4 parallel installations of VS 2022
 
-2025-03-02 version 1.4.0
+2025-03-09 version 1.4.0
   * added separate version of dbuild.dll linked against Microsoft.Build.CPPTasks.Common for VS 17.14
   * mago: fixed showing intellisense information in tool tip while debugging in VS2022
   * mago: expression evaluator now resolves identifiers of named enumerator types

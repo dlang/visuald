@@ -1444,9 +1444,9 @@ version(all)
 		{
 			replaceTokenSequence(tokens, "#ifndef INTEROPLIB\n[in] $ifcode\n#else\n$elsecode\n#endif", "[in] $ifcode", false);
 		}
-		if(currentModule == "textmgr120")
+		if(currentModule.startsWith("textmgr"))
 		{
-			// duplicate #define
+			// declaration in textmgr.idl is in enum
 			replaceTokenSequence(tokens, "#define MAX_FILE_TYPE 24", "", false);
 		}
 
