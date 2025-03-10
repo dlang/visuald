@@ -251,7 +251,9 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules fake_dparser cv2pdb_vs17 mago_vs17 magocc_x64 magocc_arm64 magogc magogc_ldc dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules visuald_vs_arm64 fake_dparser cv2pdb_vs17 \
+	mago_vs17 magocc_x64 magocc_arm64 magogc magogc_ldc \
+	dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
@@ -261,7 +263,7 @@ install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs
 
 install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
 
-d_modules: prerequisites visuald_vs visuald_vs_x64 visuald_vs_arm64 vdserver dmdserver
+d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
 
 appveyor: d_modules cv2pdb_vs16 mago_vs16 magogc
 
