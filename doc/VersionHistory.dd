@@ -1,5 +1,55 @@
 Ddoc
 
+$(H2 2025-03-14 Version 1.4.0)
+ $(UL
+  $(LI fixed msbuild integration for VS 2022 17.5 - 17.14)
+  $(LI now works with Visual Studio for Windows on ARM64)
+  $(LI dmdserver:
+   $(UL
+    $(LI updated to frontend of DMD 2.110.0)
+    $(LI now slightly less dependent on D runtime by avoiding lowerings)
+    $(LI fixed some false pointers causing memory leaks)
+    $(LI pass import paths from prerequisite projects to semantic analysis, too)
+    $(LI log communication with Visual D to %TEMP%/dmdserver if that folder exists)
+    $(LI improve completion for member variables, code in switch statement)
+    $(LI fixed completion for fields/members of class/struct fields)
+    $(LI added option to display type size and alignment in tool tip)
+  ))
+  $(LI mago debugger extension:
+   $(UL
+    $(LI fix crash due to changed return values from IDiaSession in VS2022, probably fixes issue #261)
+    $(LI fixed issue #282: now (mostly) calls __debug* methods asynchronously)
+    $(LI fixed issue #279: display void[] as ubyte[] in the debugger)
+    $(LI fixed issue #281: dereference pointer with '.' for arrays, too)
+    $(LI fixed switching GC for funtion evaluation and adapted it to dmd 2.109)
+    $(LI fixed display of tuples (currently only with LDC))
+    $(LI do not hide __param_.. function arguments as compiler generated symbols)
+    $(LI fixed showing intellisense information in tool tip while debugging in VS2022)
+    $(LI expression evaluator now resolves identifiers of named enumerator types)
+  ))
+  $(LI language service:
+   $(UL
+    $(LI fixed issue 23734: avoid exception by std.file.isDir when clicking a project folder that doesn't exist)
+    $(LI updated dfmt library from upstream)
+    $(LI improved message when dmd crashes)
+    $(LI "add imports from dependent projects" is now evaluated recursively and passed to semantic analysis)
+    $(LI added support for compiler option -preview=shortenedMethods)
+    $(LI fixed issue #264: VisualD doesn't run compiled executable, when I select "Compile and Run" option)
+    $(LI fixed issue #269: avoid BOM in response file if system codepage is UTF-8)
+    $(LI fixed detecting dmd update after 2.108)
+    $(LI updated to build with dmd-2.110)
+    $(LI fixed crash if source window closed before semantic analysis callback completed)
+    $(LI fixed building with VS 2022)
+  ))
+  $(LI installer:
+   $(UL
+    $(LI full installer now bundled with DMD 2.110.0 and LDC 1.40.0)
+    $(LI installer now supports 4 parallel installations of VS 2022)
+    $(LI project template cache now removed if Visual D does not find itself in it. Workaround for issue #256)
+    $(LI fixed some version inaccuracies in installation files)
+  ))
+ )
+
 $(H2 2022-09-10 Version 1.3.1)
  $(UL
   $(LI full installer now bundled with DMD 2.100.2 and LDC 1.30.0)
