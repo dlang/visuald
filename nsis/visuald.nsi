@@ -2098,6 +2098,8 @@ Function InstallForVS2022
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
+    ; remove old DLL, now in x64\
+    Delete "$1..\Packages\Debugger\MagoNatCC.dll"
     ${SetOutPath} "$1..\Packages\Debugger\x64"
     ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
     ${SetOutPath} "$1..\Packages\Debugger\arm64"
