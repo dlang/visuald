@@ -183,7 +183,11 @@ dbuild17_12:
 dbuild17_13:
 	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_13;Platform=AnyCPU /t:Rebuild
 
-dbuild17_all: dbuild17_0 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4 dbuild17_5 dbuild17_6 dbuild17_7 dbuild17_8 dbuild17_9 dbuild17_10 dbuild17_11 dbuild17_12 dbuild17_13
+dbuild17_14:
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_14;Platform=AnyCPU /t:Rebuild
+
+dbuild17_all: dbuild17_0 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4 dbuild17_5 dbuild17_6 dbuild17_7 \
+              dbuild17_8 dbuild17_9 dbuild17_10 dbuild17_11 dbuild17_12 dbuild17_13 dbuild17_14
 
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
@@ -247,7 +251,9 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules fake_dparser cv2pdb_vs17 mago_vs17 magocc_x64 magocc_arm64 magogc magogc_ldc dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules visuald_vs_arm64 fake_dparser cv2pdb_vs17 \
+	mago_vs17 magocc_x64 magocc_arm64 magogc magogc_ldc \
+	dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
@@ -257,7 +263,7 @@ install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs
 
 install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
 
-d_modules: prerequisites visuald_vs visuald_vs_x64 visuald_vs_arm64 vdserver dmdserver
+d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
 
 appveyor: d_modules cv2pdb_vs16 mago_vs16 magogc
 

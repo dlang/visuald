@@ -673,6 +673,14 @@ string fixNumber(string num)
 		return num[0..$-1];
 	if(endsWith(num, "L"))
 		return num[0..$-1];
+	if(endsWith(num, "ui8"))
+		return num[0..$-3];
+	if(endsWith(num, "ui16") || endsWith(num, "ui32"))
+		return num[0..$-4];
+	if(endsWith(num, "i8"))
+		return num[0..$-2];
+	if(endsWith(num, "i16") || endsWith(num, "i32"))
+		return num[0..$-3];
 	return num;
 }
 

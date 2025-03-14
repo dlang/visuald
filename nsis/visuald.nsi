@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.109.1"
+!define DMD_VERSION "2.110.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.39.0"
+!define LDC_VERSION "1.40.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -354,6 +354,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release-v17_11\ dbuild.17.11.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_12\ dbuild.17.12.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_13\ dbuild.17.13.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_14\ dbuild.17.14.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
@@ -2097,12 +2098,14 @@ Function InstallForVS2022
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
+    ; remove old DLL, now in x64\
+    Delete "$1..\Packages\Debugger\MagoNatCC.dll"
     ${SetOutPath} "$1..\Packages\Debugger\x64"
     ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
-    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
     ${SetOutPath} "$1..\Packages\Debugger\arm64"
     ${File} ${MAGO_SOURCE}\bin\ARM64\Release\ MagoNatCC.dll
-    ${File} ${MAGO_SOURCE}\bin\ARM64\Release\ MagoNatCC.vsdconfig
+    ${SetOutPath} "$1..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
   !endif
 
   ${SetOutPath} "$1\PublicAssemblies"

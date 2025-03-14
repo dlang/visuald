@@ -4,7 +4,7 @@
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2019 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2025 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
@@ -61,20 +61,7 @@ Major Features
   - disassembly view synchronized with source code
   
 * Supported Visual Studio versions
-  - VS 2008 - VS 2019, Community, Professional or Enterprise versions
-  
-  Express versions of Visual Studio do not support this 
-  kind of extensions. If you need to use these old version, use the Visual Studio Shell instead:
-  - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
-  - VS 2010 Shell: no longer available
-  - VS 2012 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=30670
-                 + http://www.microsoft.com/en-us/download/details.aspx?id=30663
-
-  If you are using the Visual Studio Shell 2008 or 2010, it misses one file,
-  that is needed for the conversion of the debug information by cv2pdb. This 
-  is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
-  from a standard installation, the Visual C Express edition or the Windows SDK.
-  You might also find it installed by other Microsoft products. 
+  - VS 2008 - VS 2022, Community, Professional or Enterprise versions
   
 * Includes tools to
   - convert some idl/h files of the Windows SDK to D

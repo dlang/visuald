@@ -87,6 +87,8 @@ alias DWORD OLE_COLOR;
 alias bool boolean;
 alias ulong uint64;
 
+enum DWORD_MAX =       0xffffffffU; // instead of intsafe.d
+
 version(sdk) {}
 else {
 	alias double DOUBLE;
