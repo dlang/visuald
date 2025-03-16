@@ -25,6 +25,7 @@ import dmd.semantic2;
 import dmd.semantic3;
 
 import std.algorithm;
+import std.path;
 import std.conv;
 
 // debug version = traceGC;
@@ -235,17 +236,21 @@ string[] guessImportPaths()
 {
 	import std.file;
 
+	string druntime = std.path.dirName(__FILE_FULL_PATH__) ~ r"\dmd\druntime\src";
+	assert(std.file.exists(druntime ~ r"\object.d"));
+	return [ druntime, r"c:\s\d\dlang\phobos" ]; // must have version matching compiler and runtime
+
 	foreach(patch; '0'..'3')
 	{
 		string path = r"c:\D\dmd-" ~ to!string(__VERSION__)[0..1] ~ "." ~ to!string(__VERSION__)[1..$] ~ "." ~ patch;
 		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
-			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+			return [ druntime, path ~ r"\src\phobos" ];
 		path ~= "-beta.1";
 		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
-			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+			return [ druntime, path ~ r"\src\phobos" ];
 		path = path[0..$-7] ~ "-rc.1";
 		if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
-			return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+			return [ druntime, path ~ r"\src\phobos" ];
 	}
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
 		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
@@ -346,7 +351,7 @@ void do_unittests()
 		assert_equal(col, expected_col);
 	}
 
-	void checkBinaryIsInLocations(string src, Loc[] locs)
+	void checkBinaryIsInLocations(string src, SourceLoc[] locs)
 	{
 		initErrorMessages(filename);
 		Module parsedModule = createModuleFromText(filename, src);
@@ -456,7 +461,7 @@ void do_unittests()
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
-	checkDefinition(m, 2, 14, opts.importDirs[1] ~ r"\std\stdio.d", 0, 0); // std.stdio
+	checkDefinition(m, 2, 14, opts.importDirs[1] ~ r"\std\stdio.d", 0, 1); // std.stdio
 
 	//checkTypeIdentifiers(source);
 
@@ -491,9 +496,9 @@ void do_unittests()
 			return cpu_vendor ~ " " ~ processor;
 		}
 	};
-	checkBinaryIsInLocations(source, [Loc(null, 6, 17), Loc(null, 7, 23),
-									  Loc(null, 10, 25), Loc(null, 11, 26),
-									  Loc(null, 15, 18), Loc(null, 17, 15)]);
+	checkBinaryIsInLocations(source, [SourceLoc(null, 6, 17), SourceLoc(null, 7, 23),
+									  SourceLoc(null, 10, 25), SourceLoc(null, 11, 26),
+									  SourceLoc(null, 15, 18), SourceLoc(null, 17, 15)]);
 
 	m = checkErrors(source, "");
 
@@ -784,7 +789,7 @@ void do_unittests()
 			return f10063(p);
 		}
 	};
-	m = checkErrors(source, "8,16,8,17:Error: cannot implicitly convert expression `f10063(cast(inout(void*))p)` of type `inout(void)*` to `immutable(void)*`\n");
+	m = checkErrors(source, "8,16,8,17:Error: return value `f10063(cast(inout(void*))p)` of type `inout(void)*` does not match return type `immutable(void)*`, and cannot be implicitly converted\n");
 	checkExpansions(m,  8,  11, "f1", [ "f10063" ]);
 
 	source =

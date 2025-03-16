@@ -54,7 +54,11 @@ enum string[2][] dmdStatics =
 	["_D3dmd7dmodule6Module11loadStdMathFZ8std_mathCQBsQBrQBm", "Module"],
 	["_D3dmd7dmodule6Module14loadCoreAtomicFZ11core_atomicCQBzQByQBt", "Module"],
 	
-	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
+	// up to 2.110
+//	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
+	// 2.111
+	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifierEQEw8astenums3STCZ2stCQFr7dsymbol12DsymbolTable", "DsymbolTable"],
+
 	// 2.091
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ4fcmpCQEo4func15FuncDeclaration", "FuncDeclaration"],
@@ -70,9 +74,13 @@ enum string[2][] dmdStatics =
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
 	// 2.110
-	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
-	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ3feqCQEq4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ4fcmpCQEr4func15FuncDeclaration", "FuncDeclaration"],
+//	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeKxSQBt8location3LocPSQCl6dscope5ScopeZ11visitAArrayMFCQDsQCq10TypeAArrayZ5fhashCQEs4func15FuncDeclaration", "FuncDeclaration"],
+	// 2.111
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeSQBr8location3LocPSQCj6dscope5ScopeZ11visitAArrayMFCQDqQCo10TypeAArrayZ3feqCQEo4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeSQBr8location3LocPSQCj6dscope5ScopeZ11visitAArrayMFCQDqQCo10TypeAArrayZ4fcmpCQEp4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticFCQBc5mtype4TypeSQBr8location3LocPSQCj6dscope5ScopeZ11visitAArrayMFCQDqQCo10TypeAArrayZ5fhashCQEq4func15FuncDeclaration", "FuncDeclaration"],
 
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ11visitAArrayMFCQFcQEi10TypeAArrayZ8fd_aaLenCQGf4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpEQDtQCz10DotExpFlagZ8noMemberMFQEdQDsQDdCQFh10identifier10IdentifieriZ4nesti", "int"],
@@ -89,8 +97,10 @@ enum string[2][] dmdStatics =
 
 //	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
 	// 2.103
-	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
+//	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
+	// 2.111
+	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocQuZ8countersHSQDgQDfQCwQCnFNbQBxQBxQCdZ3Keyk", "countersType"],
 
 	// 2.106
 	["_D3dmd7arrayop7arrayOpFCQw10expression6BinExpPSQBt6dscope5ScopeZQByCQCo9dtemplate19TemplateDeclaration", "TemplateDeclaration"],
@@ -287,7 +297,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.obj = false;
 	global.params.useDeprecated = !opts.noDeprecated ? DiagnosticReporting.off
 		: opts.deprecatedInfo ? DiagnosticReporting.inform : DiagnosticReporting.error ;
-	global.params.warnings = !opts.warnings ? DiagnosticReporting.off
+	global.params.useWarnings = !opts.warnings ? DiagnosticReporting.off
 		: opts.warnAsError ? DiagnosticReporting.error : DiagnosticReporting.inform;
 	global.params.linkswitches = Strings();
 	global.params.libfiles = Strings();
@@ -340,7 +350,7 @@ void dmdSetupParams(const ref Options opts)
 			default: break;
 		}
 	}
-	global.params.versionlevel = opts.versionLevel;
+	// global.params.versionlevel = opts.versionLevel;
 	auto versionids = new Strings();
 	foreach(v; opts.versionIds)
 		versionids.push(toStringz(v));
@@ -363,7 +373,7 @@ void dmdSetupParams(const ref Options opts)
 	// always enable for tooltips
 	global.params.ddoc.doOutput = true;
 
-	global.params.debuglevel = opts.debugLevel;
+	// global.params.debuglevel = opts.debugLevel;
 	auto debugids = new Strings();
 	foreach(d; opts.debugIds)
 		debugids.push(toStringz(d));
@@ -377,7 +387,7 @@ void dmdSetupParams(const ref Options opts)
 
 	global.path.setDim(0);
 	foreach(i; opts.importDirs)
-		global.path.push(toStringz(i));
+		global.path.push(ImportPathInfo(toStringz(i)));
 
 	global.filePath.setDim(0);
 	foreach(i; opts.stringImportDirs)

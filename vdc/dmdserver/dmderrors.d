@@ -31,7 +31,7 @@ private __gshared // under gErrorSync lock
 
 	private string gLastHeader;
 	private string[] gLastErrorMsgs; // all but first are supplemental
-	private Loc[] gLastErrorLocs;
+	private SourceLoc[] gLastErrorLocs;
 }
 
 void flushLastError()
@@ -46,7 +46,7 @@ void flushLastError()
 		char[] msg;
 		if (pos < gLastErrorLocs.length)
 		{
-			Loc loc = gLastErrorLocs[pos];
+			auto loc = gLastErrorLocs[pos];
 			int len = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
 			msg ~= buf[0..len];
 		}
@@ -57,7 +57,7 @@ void flushLastError()
 			if (i > 0)
 				msg ~= "\a";
 
-			Loc loc = gLastErrorLocs[i];
+			auto loc = gLastErrorLocs[i];
 			if (i == pos)
 			{
 				if (i > 0)
@@ -65,7 +65,8 @@ void flushLastError()
 			}
 			else if (loc.filename)
 			{
-				int len = snprintf(buf.ptr, buf.length, "%s(%d): ", loc.filename, loc.linnum);
+				auto fn = loc.filename;
+				int len = snprintf(buf.ptr, buf.length, "%.*s(%d): ", cast(int)fn.length, fn.ptr, loc.linnum);
 				msg ~= buf[0..len];
 			}
 			msg ~= gLastErrorMsgs[i];
@@ -75,7 +76,7 @@ void flushLastError()
 
 	size_t otherLocs;
 	foreach (loc; gLastErrorLocs)
-		if (!loc.filename || _stricmp(loc.filename, gErrorFile) != 0)
+		if (!loc.filename || icmp(loc.filename, gErrorFile) != 0)
 			otherLocs++;
 
 	if (otherLocs == gLastErrorLocs.length)
@@ -87,8 +88,8 @@ void flushLastError()
 		// prepend the loc inside gErrorFile to the beginning of the error message
 		for (size_t i = 0; i < gLastErrorLocs.length; i++)
 		{
-			Loc loc = gLastErrorLocs[i];
-			if (loc.filename && _stricmp(loc.filename, gErrorFile) == 0)
+			auto loc = gLastErrorLocs[i];
+			if (loc.filename && icmp(loc.filename, gErrorFile) == 0)
 			{
 				gErrorMessages ~= genErrorMessage(i) ~ "\n";
 				break;
@@ -101,7 +102,7 @@ void flushLastError()
 	gLastErrorMsgs.length = 0;
 }
 
-bool errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
+bool errorPrint(const ref SourceLoc loc, Color headerColor, const(char)* header,
 				const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null) nothrow
 {
 	if (!loc.filename)
@@ -109,7 +110,7 @@ bool errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 
 	try synchronized(gErrorSync)
 	{
-		bool other = _stricmp(loc.filename, gErrorFile) != 0;
+		bool other = icmp(loc.filename, gErrorFile) != 0;
 		while (header && std.ascii.isWhite(*header))
 			header++;
 		bool supplemental = !header || !*header;
