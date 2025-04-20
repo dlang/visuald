@@ -2,7 +2,7 @@
 This is the CHANGES file for visuald, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2013 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2025 by Rainer Schuetze, All Rights Reserved
 
 Version history
 ---------------
@@ -1406,3 +1406,11 @@ Version history
   * mago: fixed showing intellisense information in tool tip while debugging in VS2022
   * mago: expression evaluator now resolves identifiers of named enumerator types
   * full installer now bundled with DMD 2.110.0 and LDC 1.40.0
+
+2025-04-20 version 1.4.1-beta1
+  * dmdserver: updated to frontend of DMD 2.111.0
+  * full installer now bundled with DMD 2.111.0 and LDC 1.40.1
+  * updated to build with dmd-2.111
+  * mago: fixed display of AA key in expanded view
+  * issue #291: allow overriding the default compiler executable path in the VC project settings
+  * issue #296: VC project integration: added support to build for ARM64 with LDC

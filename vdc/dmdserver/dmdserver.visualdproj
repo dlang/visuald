@@ -2208,7 +2208,7 @@
   <preview_inclincontracts>0</preview_inclincontracts>
   <preview_shortenedMethods>0</preview_shortenedMethods>
   <transition_vmarkdown>0</transition_vmarkdown>
-  <compiler>0</compiler>
+  <compiler>2</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -nologo -c -TP -Idmd\src -Idmd\compiler\src\dmd\backend -Idmd\compiler\src\dmd\tk -Idmd\compiler\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
@@ -2279,6 +2279,12 @@
     <File path="dmd\compiler\src\dmd\common\outbuffer.d" />
     <File path="dmd\compiler\src\dmd\common\smallbuffer.d" />
    </Folder>
+   <Folder name="mangle">
+    <File path="dmd\compiler\src\dmd\mangle\basic.d" />
+    <File path="dmd\compiler\src\dmd\mangle\cpp.d" />
+    <File path="dmd\compiler\src\dmd\mangle\cppwin.d" />
+    <File path="dmd\compiler\src\dmd\mangle\package.d" />
+   </Folder>
    <Folder name="root">
     <File path="dmd\compiler\src\dmd\root\aav.d" />
     <File path="dmd\compiler\src\dmd\root\array.d" />
@@ -2301,6 +2307,16 @@
     <File path="dmd\compiler\src\dmd\root\strtold.d" />
     <File path="dmd\compiler\src\dmd\root\utf.d" />
    </Folder>
+   <Folder name="visitor">
+    <File path="dmd\compiler\src\dmd\visitor\foreachvar.d" />
+    <File path="dmd\compiler\src\dmd\visitor\package.d" />
+    <File path="dmd\compiler\src\dmd\visitor\parsetime.d" />
+    <File path="dmd\compiler\src\dmd\visitor\permissive.d" />
+    <File path="dmd\compiler\src\dmd\visitor\postorder.d" />
+    <File path="dmd\compiler\src\dmd\visitor\statement_rewrite_walker.d" />
+    <File path="dmd\compiler\src\dmd\visitor\strict.d" />
+    <File path="dmd\compiler\src\dmd\visitor\transitive.d" />
+   </Folder>
    <File path="dmd\compiler\src\dmd\access.d" />
    <File path="dmd\compiler\src\dmd\aggregate.d" />
    <File path="dmd\compiler\src\dmd\aliasthis.d" />
@@ -2316,7 +2332,6 @@
    <File path="dmd\compiler\src\dmd\asttypename.d" tool="None" />
    <File path="dmd\compiler\src\dmd\attrib.d" />
    <File path="dmd\compiler\src\dmd\attribsem.d" />
-   <File path="dmd\compiler\src\dmd\basicmangle.d" />
    <File path="dmd\compiler\src\dmd\blockexit.d" />
    <File path="dmd\compiler\src\dmd\boostlicense.txt" />
    <File path="dmd\compiler\src\dmd\builtin.d" />
@@ -2329,8 +2344,6 @@
    <File path="dmd\compiler\src\dmd\console.d" />
    <File path="dmd\compiler\src\dmd\constfold.d" />
    <File path="dmd\compiler\src\dmd\cparse.d" />
-   <File path="dmd\compiler\src\dmd\cppmangle.d" />
-   <File path="dmd\compiler\src\dmd\cppmanglewin.d" />
    <File path="dmd\compiler\src\dmd\ctfeexpr.d" />
    <File path="dmd\compiler\src\dmd\ctorflow.d" />
    <File path="dmd\compiler\src\dmd\dcast.d" />
@@ -2338,11 +2351,11 @@
    <File path="dmd\compiler\src\dmd\declaration.d" />
    <File path="dmd\compiler\src\dmd\delegatize.d" />
    <File path="dmd\compiler\src\dmd\denum.d" />
+   <File path="dmd\compiler\src\dmd\deps.d" />
    <File path="dmd\compiler\src\dmd\dimport.d" />
    <File path="dmd\compiler\src\dmd\dinifile.d" tool="None" />
    <File path="dmd\compiler\src\dmd\dinterpret.d" />
    <File path="dmd\compiler\src\dmd\dmacro.d" />
-   <File path="dmd\compiler\src\dmd\dmangle.d" />
    <File path="dmd\compiler\src\dmd\dmdparams.d" />
    <File path="dmd\compiler\src\dmd\dmodule.d" />
    <File path="dmd\compiler\src\dmd\dmsc.d" tool="None" />
@@ -2363,7 +2376,6 @@
    <File path="dmd\compiler\src\dmd\expression.d" />
    <File path="dmd\compiler\src\dmd\expressionsem.d" />
    <File path="dmd\compiler\src\dmd\file_manager.d" />
-   <File path="dmd\compiler\src\dmd\foreachvar.d" />
    <File path="dmd\compiler\src\dmd\frontend.d" tool="None" />
    <File path="dmd\compiler\src\dmd\func.d" />
    <File path="dmd\compiler\src\dmd\funcsem.d" />
@@ -2406,16 +2418,13 @@
    <File path="dmd\compiler\src\dmd\opover.d" />
    <File path="dmd\compiler\src\dmd\optimize.d" />
    <File path="dmd\compiler\src\dmd\parse.d" />
-   <File path="dmd\compiler\src\dmd\parsetimevisitor.d" />
-   <File path="dmd\compiler\src\dmd\permissivevisitor.d" />
-   <File path="dmd\compiler\src\dmd\postordervisitor.d" />
    <File path="dmd\compiler\src\dmd\pragmasem.d" />
    <File path="dmd\compiler\src\dmd\printast.d" />
    <File path="dmd\compiler\src\dmd\root\region.d" />
    <File path="dmd\compiler\src\dmd\rootobject.d" />
    <File path="dmd\compiler\src\dmd\s2ir.d" tool="None" />
    <File path="dmd\compiler\src\dmd\safe.d" />
-   <File path="dmd\compiler\src\dmd\sapply.d" />
+   <File path="dmd\compiler\src\dmd\sarif.d" />
    <File path="dmd\compiler\src\dmd\scanelf.d" tool="None" />
    <File path="dmd\compiler\src\dmd\scanmach.d" tool="None" />
    <File path="dmd\compiler\src\dmd\scanmscoff.d" tool="None" />
@@ -2424,12 +2433,10 @@
    <File path="dmd\compiler\src\dmd\semantic3.d" />
    <File path="dmd\compiler\src\dmd\sideeffect.d" />
    <File path="dmd\compiler\src\dmd\statement.d" />
-   <File path="dmd\compiler\src\dmd\statement_rewrite_walker.d" />
    <File path="dmd\compiler\src\dmd\statementsem.d" />
    <File path="dmd\compiler\src\dmd\staticassert.d" />
    <File path="dmd\compiler\src\dmd\staticcond.d" />
    <File path="dmd\compiler\src\dmd\stmtstate.d" />
-   <File path="dmd\compiler\src\dmd\strictvisitor.d" />
    <File path="dmd\compiler\src\dmd\target.d" />
    <File path="dmd\compiler\src\dmd\templateparamsem.d" />
    <File path="dmd\compiler\src\dmd\templatesem.d" />
@@ -2441,11 +2448,9 @@
    <File path="dmd\compiler\src\dmd\tokens.d" />
    <File path="dmd\compiler\src\dmd\toobj.d" tool="None" />
    <File path="dmd\compiler\src\dmd\traits.d" />
-   <File path="dmd\compiler\src\dmd\transitivevisitor.d" />
    <File path="dmd\compiler\src\dmd\typesem.d" />
    <File path="dmd\compiler\src\dmd\typinf.d" />
    <File path="dmd\compiler\src\dmd\utils.d" />
-   <File path="dmd\compiler\src\dmd\visitor.d" />
   </Folder>
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />
@@ -2467,6 +2472,7 @@ if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot; set rc=&q
   <File path="..\ivdserver.d" />
   <File path="semanalysis.d" />
   <File path="semvisitor.d" />
+  <File path="dmd\compiler\src\dmd\timetrace.d" />
   <File path="..\..\tools\tracegc.d" />
   <File path="..\vdserverfactory.d" />
  </Folder>

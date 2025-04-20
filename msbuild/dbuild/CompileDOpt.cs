@@ -161,11 +161,12 @@ namespace dbuild
             get { return GetStringProperty("CodeGeneration"); }
             set
             {
-                string[][] switchMap = new string[3][]
+                string[][] switchMap = new string[4][]
                 {
                     new string[2] { "32BitsMS-COFF", "-m32mscoff" },
                     new string[2] { "32Bits", "-m32" },
-                    new string[2] { "64Bits", "-m64" }
+                    new string[2] { "64Bits", "-m64" },
+                    new string[2] { "ARM64", "-march=arm64" }
                 };
 
 				SetEnumProperty("CodeGeneration", "Code Generation",

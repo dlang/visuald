@@ -42,8 +42,7 @@ import dmd.init;
 import dmd.location;
 import dmd.mtype;
 import dmd.objc;
-import dmd.postordervisitor;
-import dmd.sapply;
+import dmd.visitor.postorder;
 import dmd.semantic2;
 import dmd.semantic3;
 import dmd.statement;
@@ -507,8 +506,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(ForeachRangeStatement stmt)
 	{
-		if (!stop && stmt.prm)
-			stmt.prm.accept(this);
+		if (!stop && stmt.param)
+			stmt.param.accept(this);
 		visitExpression(stmt.lwr);
 		visitExpression(stmt.upr);
 		visit(cast(Statement)stmt);
@@ -2460,8 +2459,8 @@ void addSymbolProperties(ref string[] expansions, RootObject sym, Type t, string
 	                           : t.isTypeSArray()   && hasThis ? staticArrayProps
 	                           : t.isTypeAArray()   && hasThis ? assocArrayProps
 	                           : t.isTypeDArray()   && hasThis ? dynArrayProps
-	                           : t.isfloating()     ? floatingProps
-	                           : t.isintegral()     ? integerProps
+	                           : t.isFloating()     ? floatingProps
+	                           : t.isIntegral()     ? integerProps
 	                           : genericProps;
 	foreach (id, p; props)
 		if (id.startsWith(tok))
@@ -2864,7 +2863,8 @@ Module cloneModule(Module mo)
 {
 	if (!mo)
 		return null;
-	Module m = new Module(mo.srcfile.toString(), mo.ident, cast(bool)mo.docfile, cast(bool)mo.hdrfile);
+	Loc mloc = Loc.singleFilename(mo.srcfile.toString());
+	Module m = new Module(mloc, mo.srcfile.toString(), mo.ident, cast(bool)mo.docfile, cast(bool)mo.hdrfile);
 	*cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
 	m.isPackageFile = mo.isPackageFile;
 	m.md = mo.md;
@@ -2885,23 +2885,23 @@ Module cloneModule(Module mo)
 		override void visit(ConditionalStatement cond)
 		{
 			if (auto dbg = cond.condition.isDebugCondition())
-				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
+				cond.condition = new DebugCondition(dbg.loc, m, dbg.ident);
 			else if (auto ver = cond.condition.isVersionCondition())
-				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+				cond.condition = new VersionCondition(ver.loc, m, ver.ident);
 			super.visit(cond);
 		}
 
 		override void visit(ConditionalDeclaration cond)
 		{
 			if (auto dbg = cond.condition.isDebugCondition())
-				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
+				cond.condition = new DebugCondition(dbg.loc, m, dbg.ident);
 			else if (auto ver = cond.condition.isVersionCondition())
-				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+				cond.condition = new VersionCondition(ver.loc, m, ver.ident);
 			super.visit(cond);
 		}
 	}
 
-	import dmd.permissivevisitor;
+	import dmd.visitor.permissive;
 	scope v = new AdjustModuleVisitor(m);
 	m.accept(v);
 	return m;
@@ -2914,7 +2914,8 @@ Module createModuleFromText(string filename, string text)
 	text ~= "\0\0\0\0"; // parser needs 4 trailing zeroes
 	string name = stripExtension(baseName(filename));
 	auto id = Identifier.idPool(name);
-	auto mod = new Module(filename, id, true, false);
+	Loc mloc = Loc.singleFilename(filename);
+	auto mod = new Module(mloc, filename, id, true, false);
 	mod.src = cast(ubyte[])text;
 	mod.read(Loc.initial);
 	mod.importedFrom = mod; // avoid skipping unittests

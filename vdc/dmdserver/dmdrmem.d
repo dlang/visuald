@@ -3,6 +3,10 @@ module dmd.root.rmem;
 import core.memory : GC;
 import core.stdc.string : strlen;
 
+__gshared size_t heapleft = 0;
+__gshared void* heapp;
+__gshared size_t heapTotal = 0; // Total amount of memory allocated using malloc
+
 extern (C++) struct Mem
 {
 	enum isGCEnabled = true;

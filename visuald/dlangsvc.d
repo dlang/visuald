@@ -5236,10 +5236,10 @@ version(unittest)
 				return E_FAIL;
 			if (iStartIndex > text[iStartLine].length)
 				return E_FAIL;
-			int endLine = iEndLine < 0 ? text.length - 1 : iEndLine;
+			int endLine = iEndLine < 0 ? cast(int) text.length - 1 : iEndLine;
 			if (endLine >= text.length)
 				return E_FAIL;
-			int endIndex = iEndIndex < 0 ? text[endLine].length : iEndIndex;
+			int endIndex = iEndIndex < 0 ? cast(int) text[endLine].length : iEndIndex;
 			if (endIndex > text[endLine].length)
 				return E_FAIL;
 
@@ -5262,14 +5262,14 @@ version(unittest)
 
 		HRESULT GetLineCount (/+[out]+/ int *piLines)
 		{
-			*piLines = text.length;
+			*piLines = cast(int) text.length;
 			return S_OK;
 		};
 		HRESULT GetLastLineIndex (/+[out]+/ int *piLine,
 		                          /+[out]+/ int *piIndex)
 		{
-			*piLine = text.length - 1;
-			*piIndex = text.length > 0 ? text[$-1].length : -1;
+			*piLine = cast(int) text.length - 1;
+			*piIndex = text.length > 0 ? cast(int) text[$-1].length : -1;
 			return S_OK;
 		};
 		HRESULT GetLengthOfLine (const int iLine,
@@ -5277,7 +5277,7 @@ version(unittest)
 		{
 			if (iLine >= text.length)
 				return E_FAIL;
-			*piLength = text[iLine].length;
+			*piLength = cast(int) text[iLine].length;
 			return S_OK;
 		}
 
@@ -5310,7 +5310,7 @@ version(unittest)
 		TextLines textLines = newCom!TextLines();
 		textLines.text = splitLines(txt);
 		Source src = newCom!Source(textLines);
-		int lines = textLines.text.length;
+		int lines = cast(int) textLines.text.length;
 
 		FormatOptions fmtOpt;
 		fmtOpt.tabSize = 4;

@@ -371,6 +371,7 @@
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'ARM64'">$(LDCInstallDir)\libarm64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalDependencies>$(DRuntimeLibs);$(CRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
