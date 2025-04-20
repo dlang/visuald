@@ -57,7 +57,9 @@ enum string[2][] dmdStatics =
 	// up to 2.110
 //	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
 	// 2.111
-	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifierEQEw8astenums3STCZ2stCQFr7dsymbol12DsymbolTable", "DsymbolTable"],
+//	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifierEQEw8astenums3STCZ2stCQFr7dsymbol12DsymbolTable", "DsymbolTable"],
+	// 2.111.1
+	["_D3dmd4func15FuncDeclaration8genCfuncFPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifierEQEw8astenums3STCZ2stCQFr7dsymbol12DsymbolTable", "DsymbolTable"],
 
 	// 2.091
 //	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],

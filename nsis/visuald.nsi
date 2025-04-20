@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.110.0"
+!define DMD_VERSION "2.111.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.40.0"
+!define LDC_VERSION "1.40.1"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -387,7 +387,7 @@ ${MementoSection} "Install DMD" SecDMD
   !define DmdBaseDir "$CompilerInstallDir\dmd-${DMD_VERSION}"
   ${SetOutPath} "${DmdBaseDir}"
   File /r ${DMD_SRC}\html
-  File /r ${DMD_SRC}\samples
+  ;File /r ${DMD_SRC}\samples
   File /r ${DMD_SRC}\src
   File /r ${DMD_SRC}\windows
   File ${DMD_SRC}\license.txt
@@ -745,6 +745,8 @@ ${MementoSectionEnd}
 !endif
 
 !macro RegisterPlatform Vxxx Platform
+  !define UniqueID ${__LINE__}
+  IfFileExists '${Vxxx}\Platforms\${Platform}' +1 NoPlatformDir_${UniqueID}
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore\Default"
     ${File} ..\msbuild\ImportBefore\Default\ d.props
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore"
@@ -754,6 +756,8 @@ ${MementoSectionEnd}
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportAfter"
     ${File} ..\msbuild\ImportAfter\ d.targets
     ${File} ..\msbuild\ImportAfter\ general_d.targets
+  NoPlatformDir_${UniqueID}:
+  !undef UniqueID
 !macroend
 !define RegisterPlatform "!insertmacro RegisterPlatform"
 
@@ -792,6 +796,7 @@ ${MementoSection} "MSBuild integration" SecMSBuild
   StrCmp $1 "" NoVS2022
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "ARM64"
     ${RegisterIcons} "17.0"
 
     !define V170_GENERAL_XML "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
@@ -809,6 +814,7 @@ ${MementoSection} "MSBuild integration" SecMSBuild
   StrCmp $1 "" NoVS2022_2
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "ARM64"
     ${RegisterIcons} "17.0"
 
     !define V170_GENERAL_XML_2 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
@@ -826,6 +832,7 @@ ${MementoSection} "MSBuild integration" SecMSBuild
   StrCmp $1 "" NoVS2022_3
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "ARM64"
     ${RegisterIcons} "17.0"
 
     !define V170_GENERAL_XML_3 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
@@ -843,6 +850,7 @@ ${MementoSection} "MSBuild integration" SecMSBuild
   StrCmp $1 "" NoVS2022_4
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "ARM64"
     ${RegisterIcons} "17.0"
 
     !define V170_GENERAL_XML_4 "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
@@ -859,6 +867,7 @@ ${MementoSection} "MSBuild integration" SecMSBuild
   StrCmp $1 "" NoVS2022BT
     ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
     ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "ARM64"
     ${RegisterIcons} "17.0"
 
     !define V170BT_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"

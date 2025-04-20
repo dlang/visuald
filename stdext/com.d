@@ -57,14 +57,6 @@ C newCom(C, T...)(T arguments) if(is(C : ComObject) && T.length > 0)
 
 class ComObject : IUnknown
 {
-	version(none)
-	@disable new(size_t size)
-	{
-		assert(false); // should not be called because we don't have enough type info
-		void* p = gc_malloc(size, 1, typeid(ComObject)); // BlkAttr.FINALIZE
-		return p;
-	}
-
 extern (Windows):
 	override HRESULT QueryInterface(const IID* riid, void** ppv)
 	{

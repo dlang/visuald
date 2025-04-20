@@ -82,8 +82,10 @@
     </BoolProperty>
     <BoolProperty Name="LowMem" Category="General" DisplayName="Enable garbage collection for the compiler"
                   Description="Uses less memory for the compilation at the cost of slower compilation. (-lowmem)" Switch="-lowmem" />
+	<StringProperty Name="CompilerExe" Category="General" DisplayName="Compiler executable" IncludeInCommandLine="False"
+					Description="Path to the compiler executable." />
 
-    <!-- =============== Messages =============== -->
+	<!-- =============== Messages =============== -->
     <EnumProperty Name="Warnings" Category="Messages" DisplayName="Enable warnings" Description="Enable display of warnings. (-w, -wi)">
       <EnumValue Name="None" DisplayName="None" />
       <EnumValue Name="Info" DisplayName="warnings as messages (compilation will continue)" Switch="-wi" />
@@ -234,6 +236,7 @@
       <EnumValue Name="32BitsMS-COFF" DisplayName="Generate 32 bit code and write MS-COFF object files" Switch="-m32mscoff" />
       <EnumValue Name="32Bits" DisplayName="Generate 32 bit code" Switch="-m32" />
       <EnumValue Name="64Bits" DisplayName="Generate 64 bit code" Switch="-m64" />
+      <EnumValue Name="ARM64" DisplayName="Generate ARM64 code" Switch="-march=arm64" />
     </EnumProperty>
     <StringProperty Subtype="AdditionalOptions" Name="AdditionalOptions" Category="Command Line"
                     DisplayName="Additional Options" Description="Additional Options" />

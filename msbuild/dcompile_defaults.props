@@ -131,7 +131,8 @@
       <CodeGeneration Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">32BitsMS-COFF</CodeGeneration>
       <CodeGeneration Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">32Bits</CodeGeneration>
       <CodeGeneration Condition="'$(Platform)' == 'X64'">64Bits</CodeGeneration>
-      <CodeGeneration Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
+      <CodeGeneration Condition="'$(Platform)' == 'ARM64'">ARM64</CodeGeneration>
+      <CodeGeneration Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64' and '$(Platform)' != 'ARM64'">echo DMD not supported on this platform
 exit 1</CodeGeneration>
     
   

@@ -9,8 +9,8 @@ Copyright (c) 2010-2025 by Rainer Schuetze, All Rights Reserved
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
-For installer download, more documentation and build instructions, please visit http://rainers.github.io/visuald/visuald/StartPage.html.
-Use forum http://forum.dlang.org/group/digitalmars.D.ide for questions and the D bug tracker https://issues.dlang.org/ to report issues.
+For installer download, more documentation and build instructions, please visit https://rainers.github.io/visuald/visuald/StartPage.html.
+Use forum https://forum.dlang.org/group/ide for questions and the D bug tracker https://github.com/dlang/visuald/issues to report issues.
 
 
 Major Features
@@ -22,7 +22,7 @@ Major Features
   - custom build commands
   - pre/post custom build steps
   - automatic dependency generation
-  - automatic link between dependend projects
+  - automatic link between dependent projects
   - new project templates
 
 * Integration with VC projects
@@ -81,7 +81,7 @@ For more details, see the full text of the license in the file LICENSE_1.0.txt.
 
 The installer comes with a number of additional products:
 - cv2pdb: https://github.com/rainers/cv2pdb by Rainer Schuetze
-- mago: http://dsource.org/projects/mago_debugger by Aldo Nunez
+- mago: https://github.com/rainers/mago by Aldo Nunez/Rainer Schuetze
 - DParser: https://github.com/aBothe/D_Parser by Alexander Bothe
 
 Installation
@@ -113,17 +113,17 @@ In a nutshell:
 - build project "VisualD"
 
 For more information, visit
-http://rainers.github.io/visuald/visuald/BuildFromSource.html
+https://rainers.github.io/visuald/visuald/BuildFromSource.html
 
 More Information
 ----------------
 For more information on installation, a quick tour of Visual D with some
 screen shots and feedback, please visit the project home for Visual D at 
-[http://rainers.github.io/visuald/visuald/StartPage.html](http://rainers.github.io/visuald/visuald/StartPage.html).
+(https://rainers.github.io/visuald/visuald/StartPage.html).
 
-There's a forum dedicated to IDE discussions (http://forum.dlang.org/group/digitalmars.D.ide), where you can leave your comments and suggestions.
-Bug reports can be filed to the [D bugzilla database](https://issues.dlang.org/enter_bug.cgi?product=D) 
-for Component VisualD.
+There's a forum dedicated to IDE discussions (https://forum.dlang.org/group/digitalmars.D.ide), where you can leave your comments and suggestions.
+Bug reports can be filed to the [issues](https://github.com/dlang/visuald/issues) 
+of the repository.
 
 Have fun,
 Rainer Schuetze
