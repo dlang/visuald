@@ -16,6 +16,7 @@ import vdc.ivdserver;
 import dmd.arraytypes;
 import dmd.cond;
 import dmd.dmodule;
+import dmd.dsymbol;
 import dmd.dsymbolsem;
 import dmd.errors;
 import dmd.globals;
@@ -223,6 +224,14 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 	Module.runDeferredSemantic3();
 
 	return Module.rootModule;
+}
+
+debug
+{
+    auto __debugOverview(Identifier id) => id ? id.toString : null;
+    auto __debugOverview(Dsymbol s) => s && s.ident ? s.ident.toString : null;
+    auto __debugOverview(ref const Loc loc) => loc.toChars();
+    auto __debugExpanded(ref const Loc loc) => loc.toChars();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1944,6 +1953,19 @@ void do_unittests()
 	assert_equal(stcpos[1], ParameterStorageClassPos(1, 12, 11));
 	assert_equal(stcpos[2], ParameterStorageClassPos(2, 13, 12));
 	assert_equal(stcpos[3], ParameterStorageClassPos(0, 14, 11));
+
+	// extracted from regex.d, caused an assertion in dinterpret.d
+	//  because the type must not be saved to TemplateValueParameter.specValue
+	source = q{
+		enum IR { End }
+		static op(int code:IR.End)() {}
+
+		void foo() 
+		{
+			op!(0);
+		}
+	};
+	m = checkErrors(source, "");
 }
 
 unittest
@@ -2176,6 +2198,19 @@ void test_ana_dmd()
 			writeln(GC.stats);
 	}
 	test_leaks();
+
+	void test_std()
+	{
+		bool dump = false;
+		string source = q{
+			import std;
+			void main() {
+				auto re = regex(`([0-9]+)\.([0-9]+)(\.([0-9]+))?([-\.]?([abr])?[a-z]*[-\.]?([0-9]*))?`);
+			}
+		};
+		Module m = checkErrors(source, "");
+	}
+	test_std();
 }
 
 unittest

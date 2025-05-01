@@ -3,24 +3,24 @@
 //***************************************************************************
 
 using System;
-using System.ComponentModel.Composition;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices; // DllImport
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Globalization;
-using System.Runtime.InteropServices; // DllImport
-
+using System.Windows.Forms;
+using System.Windows.Media;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
-using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Utilities;
 
 namespace vdext15
 {
@@ -42,8 +42,9 @@ namespace vdext15
 		protected Dictionary<SnapshotSpan, TAdornment> adornmentCache = new Dictionary<SnapshotSpan, TAdornment>();
 		protected ITextSnapshot snapshot { get; private set; }
 		private readonly List<SnapshotSpan> invalidatedSpans = new List<SnapshotSpan>();
+		protected SnapshotSpan _lastTagSpan;
 
-		protected IntraTextAdornmentTagger(IWpfTextView view)
+        protected IntraTextAdornmentTagger(IWpfTextView view)
 		{
 			this.view = view;
 			snapshot = view.TextBuffer.CurrentSnapshot;
@@ -91,7 +92,17 @@ namespace vdext15
 				if (wasEmpty && this.invalidatedSpans.Count > 0)
 					view.VisualElement.Dispatcher.BeginInvoke(new Action(AsyncUpdate));
 			}
+        }
+
+		public void InvokeAsyncUpdate()
+		{
+            view.VisualElement.Dispatcher.BeginInvoke(new Action(RedoAsyncUpdate));
 		}
+        public void RedoAsyncUpdate()
+		{
+            if (snapshot != null)
+                RaiseTagsChanged(new SnapshotSpan(snapshot, 0, snapshot.Length));
+        }
 
 		private void AsyncUpdate()
 		{
@@ -126,7 +137,8 @@ namespace vdext15
 			var start = translatedSpans.Select(span => span.Start).Min();
 			var end = translatedSpans.Select(span => span.End).Max();
 
-			RaiseTagsChanged(new SnapshotSpan(start, end));
+			_lastTagSpan = new SnapshotSpan(start, end);
+            RaiseTagsChanged(_lastTagSpan);
 		}
 
 		/// <summary>
@@ -323,7 +335,15 @@ namespace vdext15
 			: base(view)
 		{
 			this.paramStorageTagger = paramStorageTagger;
-			this.formatMap = formatMap;
+            ITextBuffer buffer = view.TextBuffer;
+            if (buffer != null)
+            {
+                ParamStorageTagger tagger;
+                if (buffer.Properties.TryGetProperty(typeof(ParamStorageTagger), out tagger))
+					tagger._adornmentTagger = this;
+            }
+
+            this.formatMap = formatMap;
 			this.formatMap.FormatMappingChanged += (sender, args) => UpdateColors();
 			UpdateColors();
 		}
@@ -390,7 +410,9 @@ namespace vdext15
 		int[] _stcLocs;
 		ITextSnapshot _pendingSnapshot;
 		ITextSnapshot _currentSnapshot;
-		int _changeCount;
+		public ParamStorageAdornmentTagger _adornmentTagger;
+
+        int _changeCount;
 
 		public ParamStorageTagger(ITextBuffer buffer)
 		{
@@ -413,16 +435,16 @@ namespace vdext15
 
 		#region ITagger implementation
 
-		public void UpdateStcSpans()
+		public bool UpdateStcSpans()
 		{
 			int[] stcLocs;
 			bool pending;
 			int changeCount;
 			ParamStorageAdornmentTagger.GetParameterStorageLocations(_fileName, out stcLocs, out pending, out changeCount);
 			if (pending && _stcLocs != null)
-				return;
+                return pending;
 			if (_pendingSnapshot == null && _changeCount == changeCount)
-				return;
+				return false;
 
 			if (stcLocs != null)
 			{
@@ -445,11 +467,12 @@ namespace vdext15
 			_changeCount = changeCount;
 			if (!pending)
 				_pendingSnapshot = null;
+			return pending;
 		}
 
 		public virtual IEnumerable<ITagSpan<ParamStorageTag>> GetTags(NormalizedSnapshotSpanCollection spans)
 		{
-			UpdateStcSpans();
+			bool pending = UpdateStcSpans();
 
 			// Note that the spans argument can contain spans that are sub-spans of lines or intersect multiple lines.
 			if (_stcLocs != null)
@@ -469,7 +492,18 @@ namespace vdext15
 						yield return new TagSpan<ParamStorageTag>(span, new ParamStorageTag(_stcLocs[i]));
 					}
 				}
-		}
+
+			if (pending)
+			{
+                System.Threading.Timer timer = null;
+                timer = new System.Threading.Timer((obj) =>
+                {
+                    timer.Dispose();
+					if (_adornmentTagger != null)
+						_adornmentTagger.InvokeAsyncUpdate();
+                }, null, 1000, System.Threading.Timeout.Infinite);
+            }
+        }
 		public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
 		#endregion
@@ -484,8 +518,7 @@ namespace vdext15
 			if (args.Changes.Count == 0)
 				return;
 
-			var temp = TagsChanged;
-			if (temp == null)
+			if (TagsChanged == null)
 				return;
 
 			// adapt stcSpans, so any unmodified tags get moved with changes
@@ -503,11 +536,12 @@ namespace vdext15
 			int start = args.Changes[0].NewPosition;
 			int end = args.Changes[args.Changes.Count - 1].NewEnd;
 
-			SnapshotSpan totalAffectedSpan = new SnapshotSpan(
+            SnapshotSpan totalAffectedSpan = new SnapshotSpan(
 				_currentSnapshot.GetLineFromPosition(start).Start,
 				_currentSnapshot.GetLineFromPosition(end).End);
 
-			temp(this, new SnapshotSpanEventArgs(totalAffectedSpan));
+			if (TagsChanged != null)
+				TagsChanged(this, new SnapshotSpanEventArgs(totalAffectedSpan));
 		}
 	}
 

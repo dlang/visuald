@@ -23,11 +23,13 @@ import dmd.dmodule;
 import dmd.dstruct;
 import dmd.dsymbol;
 import dmd.dtemplate;
+import dmd.escape;
 import dmd.expression;
 import dmd.func;
 import dmd.globals;
 import dmd.id;
 import dmd.identifier;
+import dmd.location;
 import dmd.mtype;
 import dmd.objc;
 import dmd.rootobject;
@@ -42,6 +44,8 @@ import core.stdc.string;
 ////////////////////////////////////////////////////////////////
 alias countersType = uint[uint]; // actually uint[Key]
 alias EscapeInfer = RootObject[int];
+enum uint_1 : uint { initValue = 1 }
+
 
 enum string[2][] dmdStatics =
 [
@@ -108,6 +112,7 @@ enum string[2][] dmdStatics =
 	["_D3dmd7arrayop7arrayOpFCQw10expression6BinExpPSQBt6dscope5ScopeZQByCQCo9dtemplate19TemplateDeclaration", "TemplateDeclaration"],
 	["_D3dmd6errors18colorHighlightCodeFNbKSQBk6common9outbuffer9OutBufferZ6nestedi", "int"],
 	["_D3dmd7dmodule6Module18loadCoreStdcConfigFZ16core_stdc_configCQCiQChQCc", "Module"],
+	// EscapeState.reset not accessible in package dmd
 	["_D3dmd6escape11EscapeState17scopeInferFailureHiCQBu10rootobject10RootObject", "EscapeInfer" ],
 ];
 
@@ -135,7 +140,7 @@ string genInitDmdStatics()
 {
 	string s;
 	foreach (decl; dmdStatics)
-		s ~= cmangled(decl[0]) ~ " = " ~ decl[1] ~ ".init;\n";
+		s ~= cmangled(decl[0]) ~ " = (" ~ decl[1] ~ ").init;\n";
 	return s;
 }
 
@@ -197,6 +202,7 @@ void dmdInit()
 	//Token._init();
 	Id.initialize();
 	Expression._init();
+	location_init();
 
 	target._init(global.params); // needed by Type._init
 	Type._init();

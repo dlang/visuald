@@ -840,7 +840,7 @@ class DMDServer : ComObject, IVDServer
 			*types = allocBSTR("__pending__");
 			return S_OK;
 		}
-		version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypesResult: " ~ firstLine(mLastReferences) ~ "...");
+		version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypesResult: " ~ firstLine(mLastIdentifierTypes) ~ "...");
 		*types = allocBSTR(mLastIdentifierTypes);
 		return S_OK;
 	}
@@ -855,14 +855,20 @@ class DMDServer : ComObject, IVDServer
 		{
 			md = findModule(fname, false);
 			if (!md || !md.analyzedModule)
+			{
+				version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " not found");
 				return S_FALSE;
+			}
 		}
 
 		auto stcLoc = findParameterStorageClass(md.analyzedModule);
 
 		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, 3 * cast(ULONG) stcLoc.length);
 		if(!sa)
+		{
+			version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " out of memory (" ~ to!string(stcLoc.length) ~ " entries)");
 			return E_OUTOFMEMORY;
+		}
 
 		for(LONG index = 0; index < stcLoc.length; index++)
 		{
@@ -877,6 +883,7 @@ class DMDServer : ComObject, IVDServer
 			SafeArrayPutElement(sa, &idx, &value);
 		}
 
+		version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " OK (" ~ to!string(stcLoc.length) ~ " entries)");
 		locs.vt = VT_ARRAY | VT_INT;
 		locs.parray = sa;
 		return S_OK;
