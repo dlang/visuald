@@ -720,7 +720,7 @@ void do_unittests()
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon needed to end declaration of `y`, instead of `}`\a" ~
 		"source.d(13): `y` declared here\n" ~
-		"12,15,12,16:Error: no property `f` for type `source.S`\a" ~
+		"12,15,12,16:Error: no property `f` for `anS` of type `source.S`\a" ~
 		"source.d(2): struct `S` defined here\n");
 	//dumpAST(m);
 	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
@@ -745,7 +745,8 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `source.S`\a" ~
+					"12,11,12,12:Error: no property `fool` for `anS` of type `source.S`\a" ~
+					"source.d(9): did you mean function `foo`?\a" ~
 					"source.d(2): struct `S` defined here\n" ~
 					"13,10,13,11:Error: undefined identifier `fok`, did you mean function `foo`?\n");
 	//dumpAST(m);

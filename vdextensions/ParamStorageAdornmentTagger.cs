@@ -501,7 +501,7 @@ namespace vdext15
                     timer.Dispose();
 					if (_adornmentTagger != null)
 						_adornmentTagger.InvokeAsyncUpdate();
-                }, null, 1000, System.Threading.Timeout.Infinite);
+                }, null, 200, System.Threading.Timeout.Infinite);
             }
         }
 		public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
