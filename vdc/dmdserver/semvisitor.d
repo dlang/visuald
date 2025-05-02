@@ -2343,7 +2343,7 @@ string symbol2ExpansionLine(Dsymbol sym)
 {
 	string type = symbol2ExpansionType(sym);
 	string tip = tipForObject(sym);
-	return type ~ ":" ~ tip.replace("\n", "\a");
+	return type ~ ":" ~ tip.replace("\n", "\a").replace("\r", "");
 }
 
 string[string] initSymbolProperties(int kind)

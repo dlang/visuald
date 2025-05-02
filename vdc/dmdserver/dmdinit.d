@@ -400,6 +400,63 @@ void dmdSetupParams(const ref Options opts)
 	global.filePath.setDim(0);
 	foreach(i; opts.stringImportDirs)
 		global.filePath.push(toStringz(i));
+
+	dmdSetupCompileEnv();
+}
+
+void dmdSetupCompileEnv()
+{
+	import dmd.common.charactertables;
+
+	global.compileEnv.previewIn        = global.params.previewIn;
+	global.compileEnv.transitionIn     = global.params.v.vin;
+	global.compileEnv.ddocOutput       = global.params.ddoc.doOutput;
+
+	final switch(global.params.cIdentifierTable)
+	{
+		case CLIIdentifierTable.C99:
+			global.compileEnv.cCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.C99);
+			break;
+
+		case CLIIdentifierTable.C11:
+		case CLIIdentifierTable.default_:
+			// ImportC is defined against C11, not C23.
+			// If it was C23 this needs to be changed to UAX31 instead.
+			global.compileEnv.cCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.C11);
+			break;
+
+		case CLIIdentifierTable.UAX31:
+			global.compileEnv.cCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.UAX31);
+			break;
+
+		case CLIIdentifierTable.All:
+			global.compileEnv.cCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.LR);
+			break;
+	}
+
+	final switch(global.params.dIdentifierTable)
+	{
+		case CLIIdentifierTable.C99:
+			global.compileEnv.dCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.C99);
+			break;
+
+		case CLIIdentifierTable.C11:
+			global.compileEnv.dCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.C11);
+			break;
+
+		case CLIIdentifierTable.UAX31:
+			global.compileEnv.dCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.UAX31);
+			break;
+
+		case CLIIdentifierTable.All:
+		case CLIIdentifierTable.default_:
+			// @@@DEPRECATED_2.119@@@
+			// Change the default to UAX31,
+			//  this is a breaking change as C99 (what D used for ~23 years),
+			//  has characters that are not in UAX31.
+			global.compileEnv.dCharLookupTable = IdentifierCharLookup.forTable(IdentifierTable.LR);
+			break;
+	}
 }
 
 // initialization that are necessary before restarting an analysis (which might run
