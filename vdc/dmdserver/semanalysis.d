@@ -16,6 +16,7 @@ import vdc.ivdserver;
 import dmd.arraytypes;
 import dmd.cond;
 import dmd.dmodule;
+import dmd.dsymbol;
 import dmd.dsymbolsem;
 import dmd.errors;
 import dmd.globals;
@@ -223,6 +224,14 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 	Module.runDeferredSemantic3();
 
 	return Module.rootModule;
+}
+
+debug
+{
+    auto __debugOverview(Identifier id) => id ? id.toString : null;
+    auto __debugOverview(Dsymbol s) => s && s.ident ? s.ident.toString : null;
+    auto __debugOverview(ref const Loc loc) => loc.toChars();
+    auto __debugExpanded(ref const Loc loc) => loc.toChars();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -711,7 +720,7 @@ void do_unittests()
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon needed to end declaration of `y`, instead of `}`\a" ~
 		"source.d(13): `y` declared here\n" ~
-		"12,15,12,16:Error: no property `f` for type `source.S`\a" ~
+		"12,15,12,16:Error: no property `f` for `anS` of type `source.S`\a" ~
 		"source.d(2): struct `S` defined here\n");
 	//dumpAST(m);
 	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
@@ -736,7 +745,8 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `source.S`\a" ~
+					"12,11,12,12:Error: no property `fool` for `anS` of type `source.S`\a" ~
+					"source.d(9): did you mean function `foo`?\a" ~
 					"source.d(2): struct `S` defined here\n" ~
 					"13,10,13,11:Error: undefined identifier `fok`, did you mean function `foo`?\n");
 	//dumpAST(m);
@@ -1944,6 +1954,19 @@ void do_unittests()
 	assert_equal(stcpos[1], ParameterStorageClassPos(1, 12, 11));
 	assert_equal(stcpos[2], ParameterStorageClassPos(2, 13, 12));
 	assert_equal(stcpos[3], ParameterStorageClassPos(0, 14, 11));
+
+	// extracted from regex.d, caused an assertion in dinterpret.d
+	//  because the type must not be saved to TemplateValueParameter.specValue
+	source = q{
+		enum IR { End }
+		static op(int code:IR.End)() {}
+
+		void foo() 
+		{
+			op!(0);
+		}
+	};
+	m = checkErrors(source, "");
 }
 
 unittest
@@ -2176,6 +2199,19 @@ void test_ana_dmd()
 			writeln(GC.stats);
 	}
 	test_leaks();
+
+	void test_std()
+	{
+		bool dump = false;
+		string source = q{
+			import std;
+			void main() {
+				auto re = regex(`([0-9]+)\.([0-9]+)(\.([0-9]+))?([-\.]?([abr])?[a-z]*[-\.]?([0-9]*))?`);
+			}
+		};
+		Module m = checkErrors(source, "");
+	}
+	test_std();
 }
 
 unittest

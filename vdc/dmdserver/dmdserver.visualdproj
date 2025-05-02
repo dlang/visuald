@@ -2406,7 +2406,7 @@
    <File path="dmd\compiler\src\dmd\libmscoff.d" tool="None" />
    <File path="dmd\compiler\src\dmd\libomf.d" tool="None" />
    <File path="dmd\compiler\src\dmd\link.d" tool="None" />
-   <File path="dmd\compiler\src\dmd\location.d" />
+   <File path="dmd\compiler\src\dmd\location.d" tool="None" />
    <File path="dmd\compiler\src\dmd\mars.d" tool="None" />
    <File path="dmd\compiler\src\dmd\mtype.d" />
    <File path="dmd\compiler\src\dmd\mustuse.d" />
@@ -2455,6 +2455,7 @@
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />
   <File path="dmdlib.d" />
+  <File path="dmdlocation.d" />
   <File path="dmdrmem.d" />
   <File path="dmdserver.d" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;

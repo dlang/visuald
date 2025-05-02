@@ -1414,3 +1414,10 @@ Version history
   * mago: fixed display of AA key in expanded view
   * issue #291: allow overriding the default compiler executable path in the VC project settings
   * issue #296: VC project integration: added support to build for ARM64 with LDC
+
+2025-05-01 version 1.4.1-beta2
+  * issue #300: storage class adornments not updated after edits
+  * issue #301: mago: strip modifier from type before detecting arrays
+  * mago: improved stability when displaying arrays from invalid memory address
+  * dmdserver: fixed a couple of assertions causing the server to restart
+  * dmdserver: replaced new location storage to avoid leaking memory

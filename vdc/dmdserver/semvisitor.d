@@ -1091,7 +1091,7 @@ RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int start
 
 RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
 {
-	auto filename = mod.srcfile.toChars();
+	auto filename = mod.srcfile.toString().toLocFilename.ptr;
 	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
 }
 
@@ -1524,7 +1524,7 @@ string findTip(Module mod, int startLine, int startIndex, int endLine, int endIn
 	showSizeAndAlignment = addsize;
 	scope(exit) showSizeAndAlignment = false; // tips also used by findExpansions
 
-	auto filename = mod.srcfile.toChars();
+	auto filename = mod.srcfile.toString().toLocFilename.ptr;
 	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
 	mod.accept(ftv);
 
@@ -1606,7 +1606,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 
 string findDefinition(Module mod, ref int line, ref int index)
 {
-	auto filename = mod.srcfile.toChars();
+	auto filename = mod.srcfile.toString().toLocFilename.ptr;
 	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
@@ -1647,7 +1647,7 @@ Loc[] findBinaryIsInLocations(Module mod)
 	}
 
 	scope BinaryIsInVisitor biiv = new BinaryIsInVisitor;
-	biiv.filename = mod.srcfile.toChars();
+	biiv.filename = mod.srcfile.toString().toLocFilename.ptr;
 	biiv.unconditional = true;
 	mod.accept(biiv);
 
@@ -1676,6 +1676,8 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		extern(D)
 		final void addTypePos(const(char)[] ident, int type, int line, int col)
 		{
+			if (line <= 0)
+				return; // not visible
 			if (auto pid = ident in idTypes)
 			{
 				// merge sorted
@@ -2003,7 +2005,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 	}
 
 	scope IdentifierTypesVisitor itv = new IdentifierTypesVisitor;
-	itv.filename = mod.srcfile.toChars();
+	itv.filename = mod.srcfile.toString().toLocFilename.ptr;
 	mod.accept(itv);
 
 	return itv.idTypes;
@@ -2085,7 +2087,7 @@ ParameterStorageClassPos[] findParameterStorageClass(Module mod)
 	}
 
 	scope psv = new ParameterStorageClassVisitor;
-	psv.filename = mod.srcfile.toChars();
+	psv.filename = mod.srcfile.toString().toLocFilename.ptr;
 	mod.accept(psv);
 
 	return psv.stcPos;
@@ -2100,7 +2102,7 @@ struct Reference
 
 Reference[] findReferencesInModule(Module mod, int line, int index)
 {
-	auto filename = mod.srcfile.toChars();
+	auto filename = mod.srcfile.toString().toLocFilename.ptr;
 	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
@@ -2118,7 +2120,7 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 		extern(D)
 		void addReference(ref const Loc loc, Identifier ident)
 		{
-			if (loc.filename is filename && ident)
+			if (loc.filename is filename && ident && loc.linnum > 0)
 				if (!references.contains(Reference(loc, ident)))
 					references ~= Reference(loc, ident);
 		}
@@ -2341,7 +2343,7 @@ string symbol2ExpansionLine(Dsymbol sym)
 {
 	string type = symbol2ExpansionType(sym);
 	string tip = tipForObject(sym);
-	return type ~ ":" ~ tip.replace("\n", "\a");
+	return type ~ ":" ~ tip.replace("\n", "\a").replace("\r", "");
 }
 
 string[string] initSymbolProperties(int kind)
@@ -2510,15 +2512,8 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 	override void visit(DotIdExp de)
 	{
 		if (!found && de.ident)
-		{
 			if (matchDotIdentifier(de.dotloc, de.identloc, de.ident))
-			{
-				if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
-					foundResolved(de.resolvedTo);
-				else
-					foundNode(de);
-			}
-		}
+				foundNode(de);
 	}
 
 	override void checkScope(ScopeDsymbol sc)
@@ -2542,7 +2537,7 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 
 string[] findExpansions(Module mod, int line, int index, string tok)
 {
-	auto filename = mod.srcfile.toChars();
+	auto filename = mod.srcfile.toString().toLocFilename.ptr;
 	scope FindExpansionsVisitor fdv = new FindExpansionsVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
@@ -2584,6 +2579,13 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		if (auto t = getType(e, false))
 			type = t;
 	}
+	if (!type)
+		if (auto sym = fdv.found ? fdv.found.isDsymbol() : null)
+			if (auto em = sym.isEnumMember())
+				type = em.ed.type;
+
+	if (type && type.isTypeEnum())
+		flags |= SearchOpt.localsOnly;
 
 	auto sds = fdv.foundScope;
 	if (type)
