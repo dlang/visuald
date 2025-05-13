@@ -1421,3 +1421,16 @@ Version history
   * mago: improved stability when displaying arrays from invalid memory address
   * dmdserver: fixed a couple of assertions causing the server to restart
   * dmdserver: replaced new location storage to avoid leaking memory
+
+2025-05-04 version 1.4.1-beta3
+  * mago:
+    - the option "Expand strings to show array of characters" had no effect
+    - the call stack now displays D expression if "Parameter values" is enabled
+    - issue #253: mago: with option "Shorten type names and function names in call stack"
+      module names are removed when displayed
+    - issue #305: mago: with option "Call property methods implicitly in expression evaluation"
+      methods annotated with @property and without arguments are evaluated without parentheses
+    - format options could be erratic when execution function for expression evaluation
+    - fixed selecting the zero-argument method in case multiple overloads
+    - added format specifiers 'd' (decimmal), 'x' (hex), '@' (evaluate function automatically)
+    - added a couple of caches for better responsiveness

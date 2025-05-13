@@ -322,6 +322,10 @@ class DMDServer : ComObject, IVDServer
 	{
 		try
 		{
+			import core.exception;
+			debug assertHandler(function(string file, ulong line, string msg){
+				throw new AssertError(msg, file, line);
+			});
 			dg();
 		}
 		catch(Exception e)

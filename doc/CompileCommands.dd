@@ -78,7 +78,7 @@ $(H3 DMD/Win32)
 
 $(PRE obj2asm -x "$(DOLLAR)(InputFile)" >"$(DOLLAR)(TargetPath)")
 
-This assumes obj2asm can be found in through PATH. If this is not the case, please add
+This assumes obj2asm can be found through PATH. If this is not the case, please add
 the full path to it. The same replacement macros can be used as in the project 
 configurations.
 
@@ -110,7 +110,7 @@ use LLVM tools for other architectures, you'll have to change the default settin
 
 $(PRE llvm-objdump -disassemble -x86-asm-syntax=intel -no-show-raw-insn "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
 
-You'll have to add the path the LLVM tools to the "Executable Paths" or to the
+You'll have to add the path to the LLVM tools to the "Executable Paths" or to the
 llvm-objdump command.
 
 $(H3 GDC)
