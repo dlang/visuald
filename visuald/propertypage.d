@@ -3118,8 +3118,10 @@ struct MagoOptions
 	bool hideReferencePointers;
 	bool removeLeadingHexZeroes;
 	bool recombineTuples;
+	bool shortenTypeNames;
 	bool callDebuggerFunctions;
 	bool callDebuggerRanges;
+	bool callPropertyMethods;
 	bool callDebuggerUseMagoGC;
 	bool showDArrayLengthInType;
 	uint maxArrayElements;
@@ -3135,8 +3137,10 @@ struct MagoOptions
 		keyMago.Set("hideReferencePointers", hideReferencePointers);
 		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
 		keyMago.Set("recombineTuples", recombineTuples);
+		keyMago.Set("shortenTypeNames", shortenTypeNames);
 		keyMago.Set("callDebuggerFunctions", callDebuggerFunctions);
 		keyMago.Set("callDebuggerRanges", callDebuggerRanges);
+		keyMago.Set("callPropertyMethods", callPropertyMethods);
 		keyMago.Set("callDebuggerUseMagoGC", callDebuggerUseMagoGC);
 		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
 		keyMago.Set("maxArrayElements", maxArrayElements);
@@ -3154,8 +3158,10 @@ struct MagoOptions
 		hideReferencePointers  = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
 		recombineTuples        = (keyMago.GetDWORD("recombineTuples", 1) != 0);
+		shortenTypeNames       = (keyMago.GetDWORD("shortenTypeNames", 1) != 0);
 		callDebuggerFunctions  = (keyMago.GetDWORD("callDebuggerFunctions", 1) != 0);
 		callDebuggerRanges     = (keyMago.GetDWORD("callDebuggerRanges", 0) != 0);
+		callPropertyMethods    = (keyMago.GetDWORD("callPropertyMethods", 0) != 0);
 		callDebuggerUseMagoGC  = (keyMago.GetDWORD("callDebuggerUseMagoGC", 1) != 0);
 		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
@@ -3171,23 +3177,26 @@ class MagoPropertyPage : ResizablePropertyPage
 
 	override void CreateControls()
 	{
-		AddLabel("Changes to these settings only apply to new debugging sessions");
+		// AddLabel("Changes to these settings apply with the next execution step");
 		AddControl("", mHideInternalNames = new CheckBox(mCanvas, "Hide compiler generated symbols"));
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
 		AddControl("", mRecombineTuples   = new CheckBox(mCanvas, "Rebuild tuples from compiler generated fields"));
+		AddControl("", mShortenTypeNames  = new CheckBox(mCanvas, "Shorten type names and function names in call stack"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
-		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|StringView]"));
-		AddControl("", mCallDebuggerRange = new CheckBox(mCanvas, "Call range methods to show elements in overview/expansion"));
-		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
-		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
+		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		auto saveWidth = kLabelWidth;
-		kLabelWidth = kPageWidth * 4 / 5;
+		kLabelWidth = kPageWidth * 3 / 4;
 		AddControl("Limit array elements shown in expansions to", mMaxArrayElements = new Text(mCanvas));
 		kLabelWidth  = saveWidth;
+		AddTitleLine("Function Execution");
+		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|StringView]"));
+		AddControl("", mCallDebuggerRange = new CheckBox(mCanvas, "Call range methods to show elements in overview/expansion"));
+		AddControl("", mCallPropertyMethods = new CheckBox(mCanvas, "Call property methods implicitly in expression evaluation"));
+		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -3238,8 +3247,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
 		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
 		mRecombineTuples.setChecked(mOptions.recombineTuples);
+		mShortenTypeNames.setChecked(mOptions.shortenTypeNames);
 		mCallDebuggerFuncs.setChecked(mOptions.callDebuggerFunctions);
 		mCallDebuggerRange.setChecked(mOptions.callDebuggerRanges);
+		mCallPropertyMethods.setChecked(mOptions.callPropertyMethods);
 		mCallDebugSwitchGC.setChecked(mOptions.callDebuggerUseMagoGC);
 		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
@@ -3256,8 +3267,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
 		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
 		changes += changeOption(mRecombineTuples.isChecked(), opts.recombineTuples, refopts.recombineTuples);
+		changes += changeOption(mShortenTypeNames.isChecked(), opts.shortenTypeNames, refopts.shortenTypeNames);
 		changes += changeOption(mCallDebuggerFuncs.isChecked(), opts.callDebuggerFunctions, refopts.callDebuggerFunctions);
 		changes += changeOption(mCallDebuggerRange.isChecked(), opts.callDebuggerRanges, refopts.callDebuggerRanges);
+		changes += changeOption(mCallPropertyMethods.isChecked(), opts.callPropertyMethods, refopts.callPropertyMethods);
 		changes += changeOption(mCallDebugSwitchGC.isChecked(), opts.callDebuggerUseMagoGC, refopts.callDebuggerUseMagoGC);
 		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
@@ -3277,8 +3290,10 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mHideRefPointers;
 	CheckBox mRemoveHexZeroes;
 	CheckBox mRecombineTuples;
+	CheckBox mShortenTypeNames;
 	CheckBox mCallDebuggerFuncs;
 	CheckBox mCallDebuggerRange;
+	CheckBox mCallPropertyMethods;
 	CheckBox mCallDebugSwitchGC;
 	CheckBox mShowLengthInType;
 	Text mMaxArrayElements;

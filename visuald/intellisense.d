@@ -593,9 +593,10 @@ struct ParameterInfo
 		}
 
 		int braceLevel = 1;
-		pos--;
 		string ident;
-		int endpos = lineInfo[pos].EndIndex;
+		int endpos = pos <= 0 ? lineInfo[0].StartIndex : lineInfo[pos-1].EndIndex;
+		if (pos > 0)
+			pos--;
 
 		void prependParam()
 		{

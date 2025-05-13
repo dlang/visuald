@@ -29,6 +29,8 @@ import std.algorithm;
 import std.path;
 import std.conv;
 
+// version = ReinitSemanticAll;
+
 // debug version = traceGC;
 
 __gshared AnalysisContext lastContext;
@@ -200,38 +202,64 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 
 	Module.loadModuleHandler = &ctxt.loadModuleHandler;
 
+	void semantic(Module m)
+	{
+		m.dsymbolSemantic(null);
+		Module.runDeferredSemantic();
+		m.semantic2(null);
+		Module.runDeferredSemantic2();
+		m.semantic3(null);
+		Module.runDeferredSemantic3();
+	}
+
 	if (needsReinit)
 	{
 		reinitSemanticModules();
 
-		// analyze other modules lazily
-		ctxt.modules[rootModuleIndex].createSemanticModule(true);
+		version(ReinitSemanticAll)
+		{
+			Module.rootModule = ctxt.modules[rootModuleIndex].semanticModule;
 
-		version(none) // do this lazily
 			foreach(ref mi; ctxt.modules)
-			{
+				mi.createSemanticModule(true);
+
+			foreach(ref mi; ctxt.modules)
 				mi.semanticModule.importAll(null);
-			}
+			foreach(ref mi; ctxt.modules)
+				semantic(mi.semanticModule);
+
+			return Module.rootModule;
+		}
+		else
+		{
+			// analyze other modules lazily
+			ctxt.modules[rootModuleIndex].createSemanticModule(true);
+
+			version(none) // do this lazily
+				foreach(ref mi; ctxt.modules)
+				{
+					mi.semanticModule.importAll(null);
+				}
+		}
 	}
 
-	Module.rootModule = ctxt.modules[rootModuleIndex].semanticModule;
-	Module.rootModule.importAll(null);
-	Module.rootModule.dsymbolSemantic(null);
-	Module.runDeferredSemantic();
-	Module.rootModule.semantic2(null);
-	Module.runDeferredSemantic2();
-	Module.rootModule.semantic3(null);
-	Module.runDeferredSemantic3();
+	auto mi = ctxt.modules[rootModuleIndex];
+	Module.rootModule = mi.semanticModule;
+	mi.semanticModule.importAll(null);
+	semantic(mi.semanticModule);
 
 	return Module.rootModule;
 }
 
 debug
 {
-    auto __debugOverview(Identifier id) => id ? id.toString : null;
-    auto __debugOverview(Dsymbol s) => s && s.ident ? s.ident.toString : null;
-    auto __debugOverview(ref const Loc loc) => loc.toChars();
-    auto __debugExpanded(ref const Loc loc) => loc.toChars();
+	auto __debugOverview(Identifier id) => id ? id.toString : null;
+	auto __debugOverview(Dsymbol s) => s && s.ident ? s.ident.toString : null;
+	auto __debugOverview(ref const Loc loc) => loc.toChars();
+	auto __debugExpanded(ref const Loc loc) => {
+		struct S { const(char)* filename; int line; }
+		return S(loc.filename, loc.linnum);
+	}();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1967,6 +1995,41 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source, "");
+
+	///////////////////////////////////////////////////////////
+	// check array initializer
+	auto tmpl_source = q{
+		T func(T)(T x)
+		{
+			return x;    // Line 4
+		}
+		T func2(T)(T x)
+		{
+			return x;    // Line 8
+		}
+	};
+	filename = "source.d";
+	auto tmpl_m = checkErrors(tmpl_source, "");
+	source = q{
+		import source;
+		int foo()
+		{
+			return func(3);
+		}
+	};
+	filename = "invoke.d";
+	m = checkErrors(source, "");
+
+	checkTip(tmpl_m, 4, 11, "(parameter) `int x`");
+	filename = "source.d";
+
+	version(ReinitSemanticAll)
+	{
+		// parsing the template source file again forgets all instantiations
+		tmpl_m = checkErrors(tmpl_source, "");
+		checkTip(tmpl_m, 4, 11, "(parameter) `int x`");
+		//checkTip(tmpl_m, 8, 11, "(parameter) `T x`");
+	}
 }
 
 unittest
@@ -2202,6 +2265,7 @@ void test_ana_dmd()
 
 	void test_std()
 	{
+		filename = "re.d";
 		bool dump = false;
 		string source = q{
 			import std;
