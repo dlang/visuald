@@ -253,13 +253,51 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 
 debug
 {
-	auto __debugOverview(Identifier id) => id ? id.toString : null;
-	auto __debugOverview(Dsymbol s) => s && s.ident ? s.ident.toString : null;
-	auto __debugOverview(ref const Loc loc) => loc.toChars();
-	auto __debugExpanded(ref const Loc loc) => {
-		struct S { const(char)* filename; int line; }
-		return S(loc.filename, loc.linnum);
-	}();
+	auto __debugOverview(Identifier id)
+	{
+		try
+		{
+			return id ? id.toString : null;
+		}
+		catch(Throwable t)
+		{
+			return t.msg;
+		}
+	}
+	auto __debugOverview(Dsymbol s)
+	{
+		try
+		{
+			return s ? s.toString : null;
+		}
+		catch(Throwable t)
+		{
+			return t.msg;
+		}
+	}
+	auto __debugOverview(ref const Loc loc)
+	{
+		try
+		{
+			return loc.toChars();
+		}
+		catch(Throwable t)
+		{
+			return t.msg.ptr;
+		}
+	}
+	auto __debugExpanded(ref const Loc loc)
+	{
+		struct S { const(char)* filename; int line; int col; }
+		try
+		{
+			return S(loc.filename, loc.linnum, loc.charnum);
+		}
+		catch(Throwable t)
+		{
+			return S(t.msg.ptr, 0, 0);
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1553,6 +1591,33 @@ void do_unittests()
 			 "#<source#source.d#>.#<tfun#source.d,16,15#>(#<source#source.d#>.#<Templ#source.d,2,12#>!int.#<S#source.d,4,11#> s)`", true);
 	checkTip(m, 18,  4, "`void #<source#source.d#>.#<tmplfun#source.d,21,8#>!int(int x) pure nothrow @nogc @safe`", true);
 
+	// check template arguments
+	source = q{
+		class Expression
+		{
+			int op;
+		}                               // Line 5
+		T ctfeEmplaceExp(T : Expression, Args...)(Args args)
+		{
+			return new T(args);
+		}
+		void fun(Expression e)          // Line 10
+		{
+			e = ctfeEmplaceExp!Expression();
+		};
+	};
+	m = checkErrors(source, "");
+
+	import dmd.common.outbuffer;
+	import dmd.hdrgen;
+	auto buf = OutBuffer();
+	buf.doindent = 1;
+	moduleToBuffer(buf, true, m);
+	auto modstr = buf.extractData();
+
+	checkTip(m,  12, 17, "`source.Expression source.ctfeEmplaceExp!(source.Expression)() pure nothrow @safe`");
+	checkTip(m,  12, 23, "(class) `source.Expression`");
+
 	// check FQN types in cast
 	source = q{
 		void foo(Error*)
@@ -2182,6 +2247,14 @@ void test_ana_dmd()
 		writeln(GC.stats);
 		dumpGC();
 	}
+
+	void test_file(string srcfile)
+	{
+		string src = cast(string)std.file.read(srcfile);
+		filename = srcfile;
+		Module m = checkErrors(src, "");
+	}
+	test_file(std.path.buildPath(srcdir, r"..\test\runnable\testaa2.d"));
 
 	void test_sem()
 	{

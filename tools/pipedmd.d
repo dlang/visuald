@@ -146,6 +146,12 @@ int main(string[] argv)
 		}
 		else if(argv[skipargs + 1] == "-deps")
 			depsfile = argv[skipargs += 2];
+
+		else if(argv[skipargs + 1] == "--") // allow --DRT arguments for callee
+		{
+			skipargs++;
+			break;
+		}
 		else
 			break;
 	}

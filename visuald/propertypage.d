@@ -3121,9 +3121,9 @@ struct MagoOptions
 	bool shortenTypeNames;
 	bool callDebuggerFunctions;
 	bool callDebuggerRanges;
-	bool callPropertyMethods;
 	bool callDebuggerUseMagoGC;
 	bool showDArrayLengthInType;
+	uint callPropertyMethods;
 	uint maxArrayElements;
 
 	void saveToRegistry()
@@ -3140,9 +3140,9 @@ struct MagoOptions
 		keyMago.Set("shortenTypeNames", shortenTypeNames);
 		keyMago.Set("callDebuggerFunctions", callDebuggerFunctions);
 		keyMago.Set("callDebuggerRanges", callDebuggerRanges);
-		keyMago.Set("callPropertyMethods", callPropertyMethods);
 		keyMago.Set("callDebuggerUseMagoGC", callDebuggerUseMagoGC);
 		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
+		keyMago.Set("callPropertyMethods", callPropertyMethods);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
@@ -3161,9 +3161,9 @@ struct MagoOptions
 		shortenTypeNames       = (keyMago.GetDWORD("shortenTypeNames", 1) != 0);
 		callDebuggerFunctions  = (keyMago.GetDWORD("callDebuggerFunctions", 1) != 0);
 		callDebuggerRanges     = (keyMago.GetDWORD("callDebuggerRanges", 0) != 0);
-		callPropertyMethods    = (keyMago.GetDWORD("callPropertyMethods", 0) != 0);
 		callDebuggerUseMagoGC  = (keyMago.GetDWORD("callDebuggerUseMagoGC", 1) != 0);
 		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
+		callPropertyMethods    = keyMago.GetDWORD("callPropertyMethods", 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
@@ -3195,7 +3195,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddTitleLine("Function Execution");
 		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|StringView]"));
 		AddControl("", mCallDebuggerRange = new CheckBox(mCanvas, "Call range methods to show elements in overview/expansion"));
-		AddControl("", mCallPropertyMethods = new CheckBox(mCanvas, "Call property methods implicitly in expression evaluation"));
+		kLabelWidth = kPageWidth * 9 / 16;
+		AddControl("Call property methods in expression evaluation if",
+				   mCallPropertyMethods = new ComboBox(mCanvas, [ "Never", "@property const pure", "@property const", "@property", "@property/const pure" ], false));
+		kLabelWidth  = saveWidth;
 		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
 	}
 
@@ -3250,9 +3253,9 @@ class MagoPropertyPage : ResizablePropertyPage
 		mShortenTypeNames.setChecked(mOptions.shortenTypeNames);
 		mCallDebuggerFuncs.setChecked(mOptions.callDebuggerFunctions);
 		mCallDebuggerRange.setChecked(mOptions.callDebuggerRanges);
-		mCallPropertyMethods.setChecked(mOptions.callPropertyMethods);
 		mCallDebugSwitchGC.setChecked(mOptions.callDebuggerUseMagoGC);
 		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
+		mCallPropertyMethods.setSelection(mOptions.callPropertyMethods);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
@@ -3270,7 +3273,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mShortenTypeNames.isChecked(), opts.shortenTypeNames, refopts.shortenTypeNames);
 		changes += changeOption(mCallDebuggerFuncs.isChecked(), opts.callDebuggerFunctions, refopts.callDebuggerFunctions);
 		changes += changeOption(mCallDebuggerRange.isChecked(), opts.callDebuggerRanges, refopts.callDebuggerRanges);
-		changes += changeOption(mCallPropertyMethods.isChecked(), opts.callPropertyMethods, refopts.callPropertyMethods);
+		changes += changeOption(mCallPropertyMethods.getSelection(), opts.callPropertyMethods, refopts.callPropertyMethods);
 		changes += changeOption(mCallDebugSwitchGC.isChecked(), opts.callDebuggerUseMagoGC, refopts.callDebuggerUseMagoGC);
 		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
@@ -3293,9 +3296,9 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mShortenTypeNames;
 	CheckBox mCallDebuggerFuncs;
 	CheckBox mCallDebuggerRange;
-	CheckBox mCallPropertyMethods;
 	CheckBox mCallDebugSwitchGC;
 	CheckBox mShowLengthInType;
+	ComboBox mCallPropertyMethods;
 	Text mMaxArrayElements;
 }
 

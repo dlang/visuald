@@ -1430,7 +1430,18 @@ Version history
       module names are removed when displayed
     - issue #305: mago: with option "Call property methods implicitly in expression evaluation"
       methods annotated with @property and without arguments are evaluated without parentheses
-    - format options could be erratic when execution function for expression evaluation
-    - fixed selecting the zero-argument method in case multiple overloads
-    - added format specifiers 'd' (decimmal), 'x' (hex), '@' (evaluate function automatically)
+    - format options could be erratic when executing functions for expression evaluation
+    - fixed selecting the zero-argument method in case of multiple overloads
+    - added format specifiers 'd' (decimal), 'x' (hex), '@' (evaluate function automatically)
     - added a couple of caches for better responsiveness
+    - changed mago options are now applied with the next step in the debugger, no restart of
+      the debug session required anymore
+
+2025-07-03 version 1.4.1-beta4
+  * mago:
+    - added option to select what type of property functions that can now be implicitly called.
+    - fixed calling functions with slices or larger structs
+    - improve shortened names in call stack
+    - better propagate the raw option modifier (!) to expanded expressions
+    - don't fail enumerating child expressions if one fails, show error for this item instead
+  * dmdserver: fixed intellisense on TemplateInstance!Argument
