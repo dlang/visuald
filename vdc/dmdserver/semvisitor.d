@@ -1284,8 +1284,15 @@ bool showSizeAndAlignment = false;
 string tipSizeAndAlignment(Type t)
 {
 	if (auto cd = t.isClassHandle())
+	{
+		if (cd.sizeok != Sizeok.done)
+			return "";
 		return "Size: " ~ to!string(cd.structsize) ~ ", Alignment: " ~ to!string(cd.alignsize);
-	return "Size: " ~ to!string(t.size()) ~ ", Alignment: " ~ to!string(t.alignsize());
+	}
+	auto sz = t.size();
+	if (sz == SIZE_INVALID)
+		return "";
+	return "Size: " ~ to!string(sz) ~ ", Alignment: " ~ to!string(t.alignsize());
 }
 
 TipData tipForType(Type t)
