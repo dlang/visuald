@@ -1445,3 +1445,6 @@ Version history
     - better propagate the raw option modifier (!) to expanded expressions
     - don't fail enumerating child expressions if one fails, show error for this item instead
   * dmdserver: fixed intellisense on TemplateInstance!Argument
+
+2025-07-15 version 1.4.1
+  * dmdserver: do not display invalid struct size and alignment in tool tip
