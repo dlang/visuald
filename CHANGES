@@ -1439,8 +1439,8 @@ Version history
 
 2025-07-03 version 1.4.1-beta4
   * mago:
-    - added option to select what type of property functions that can now be implicitly called.
-    - fixed calling functions with slices or larger structs
+    - added option to select what type of property functions can be implicitly called.
+    - fixed calling functions with slices or larger structs as return types
     - improve shortened names in call stack
     - better propagate the raw option modifier (!) to expanded expressions
     - don't fail enumerating child expressions if one fails, show error for this item instead
