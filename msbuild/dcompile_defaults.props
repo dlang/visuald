@@ -107,6 +107,7 @@
       <VersionIdentifiers></VersionIdentifiers>
       <DebugIdentifiers></DebugIdentifiers>
       <ImportPaths></ImportPaths>
+      <ImportCPaths></ImportCPaths>
       <StringImportPaths></StringImportPaths>
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>

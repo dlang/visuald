@@ -1422,7 +1422,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
-  <release>0</release>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>

@@ -633,6 +633,7 @@ version(none)
 				case CmdShowLangPage:
 				case CmdShowWebsite:
 				case CmdDelLstFiles:
+				case CmdResetVDServer:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
@@ -715,6 +716,11 @@ version(none)
 		if(nCmdID == CmdDelLstFiles)
 		{
 			GetGlobalOptions().DeleteCoverageFiles();
+			return S_OK;
+		}
+		if(nCmdID == CmdResetVDServer)
+		{
+			VDServerClient.restartServer = true;
 			return S_OK;
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
@@ -1617,7 +1623,8 @@ class GlobalOptions
 	bool mixinAnalysis;
 	bool UFCSExpansions;
 	bool showParamStorage;
-	byte sortExpMode;  // 0: alphabetically, 1: by type, 2: by declaration and scope
+	byte analyzeAfterEdit;  // 0: edited file, 1: dependent files, 2: all edited files
+	byte sortExpMode;       // 0: alphabetically, 1: by type, 2: by declaration and scope
 	bool exactExpMatch;
 	ubyte checkUpdatesVisualD; // CheckFrequency: 0: never, 1: daily, 2: weekly, 3: daily prereleases
 	ubyte checkUpdatesDMD;
@@ -2061,6 +2068,7 @@ class GlobalOptions
 			useDParser          = getBoolOpt("useDParser3", false);
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
+			analyzeAfterEdit    = getBoolOpt("analyzeAfterEdit", 1);
 			sortExpMode         = getBoolOpt("sortExpMode", 0);
 			exactExpMatch       = getBoolOpt("exactExpMatch", true);
 			checkUpdatesVisualD = cast(ubyte) getIntOpt("checkUpdatesVisualD", CheckFrequency.Weekly);
@@ -2339,6 +2347,7 @@ class GlobalOptions
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("sortExpMode",         sortExpMode);
+			keyToolOpts.Set("analyzeAfterEdit",    analyzeAfterEdit);
 			keyToolOpts.Set("exactExpMatch",       exactExpMatch);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("fmtIndentCase",       fmtIndentCase);

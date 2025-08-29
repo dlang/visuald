@@ -34,13 +34,16 @@
         <Group guid="g_commandSetCLSID" id="IDG_VD_EDIT" priority="0x0001">
             <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
         </Group>
-        <Group guid="g_commandSetCLSID" id="IDG_VD_BUILD" priority="0x0002">
+        <Group guid="g_commandSetCLSID" id="IDG_VD_INTELLISENSE" priority="0x0002">
             <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
         </Group>
-        <Group guid="g_commandSetCLSID" id="IDG_VD_CONVERSION" priority="0x0003">
+        <Group guid="g_commandSetCLSID" id="IDG_VD_BUILD" priority="0x0003">
             <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
         </Group>
-        <Group guid="g_commandSetCLSID" id="IDG_VD_WEB" priority="0x0004">
+        <Group guid="g_commandSetCLSID" id="IDG_VD_CONVERSION" priority="0x0004">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+        <Group guid="g_commandSetCLSID" id="IDG_VD_WEB" priority="0x0005">
             <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
         </Group>
     </Groups>
@@ -132,13 +135,23 @@
             </Strings>
         </Button>
         <Button guid="g_commandSetCLSID" id="CmdBuildPhobos" priority="0xF300" type="Button">
-            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_INTELLISENSE"/>
             <Strings>
                 <ButtonText>Build Phobos Browse Info</ButtonText>
                 <MenuText>Build Phobos &amp;Browse Info</MenuText>
                 <ToolTipText>Build Phobos Browse Info</ToolTipText>
                 <CanonicalName>BuildPhobosBrowseInfo</CanonicalName>
                 <LocCanonicalName>BuildPhobosBrowseInfo</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdResetVDServer" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_INTELLISENSE"/>
+            <Strings>
+                <ButtonText>Reset Language Server</ButtonText>
+                <MenuText>Reset Language Server</MenuText>
+                <ToolTipText>Reset Language Server</ToolTipText>
+                <CanonicalName>ResetVDServer</CanonicalName>
+                <LocCanonicalName>ResetVDServer</LocCanonicalName>
             </Strings>
         </Button>
         <Button guid="g_commandSetCLSID" id="CmdShowProfile" priority="0xF300" type="Button">
@@ -189,6 +202,16 @@
                 <ToolTipText>Reduce Failure with DustMite</ToolTipText>
                 <CommandName>DustMite</CommandName>
                 <CanonicalName>DustMite</CanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdDelLstFiles" priority="0xF301" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Delete Coverage Files</ButtonText>
+                <MenuText>Delete Coverage Files</MenuText>
+                <ToolTipText>Delete Coverage Files</ToolTipText>
+                <CanonicalName>DeleteCoverageFiles</CanonicalName>
+                <LocCanonicalName>DeleteCoverageFiles</LocCanonicalName>
             </Strings>
         </Button>
         <Button guid="g_commandSetCLSID" id="CmdDelLstFiles" priority="0xF301" type="Button">
@@ -392,6 +415,7 @@
       <IDSymbol name="IDG_VD_WEB"        value="0x0103" />
       <IDSymbol name="IDG_VD_CONVERSION" value="0x0104" />
       <IDSymbol name="IDG_VD_OUTLINE"    value="0x0105" />
+      <IDSymbol name="IDG_VD_INTELLISENSE" value="0x0106" />
 
       <!--
       <IDSymbol name="IDG_TESTBMP"       value="0x0106" />
