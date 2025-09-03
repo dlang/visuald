@@ -230,7 +230,6 @@
   Var VSVersion
   Var VCVersion
   Var VCPath
-  Var MSBuildOnly
 
 ;--------------------------------
 ;Interface Settings
@@ -1425,11 +1424,6 @@ FunctionEnd
 ;--------------------------------
 Function .onInit
 
-  ${GetOptions} $CMDLINE "/msbuild" $MSBuildOnly
-  IfErrors NotMSBuild
-	StrCpy $MSBuildOnly "yes"
-  NotMSBuild:
-  
   ${MementoSectionRestore}
 
 !ifdef VS_NET

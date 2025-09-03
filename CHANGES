@@ -1449,11 +1449,12 @@ Version history
 2025-07-15 version 1.4.1
   * dmdserver: do not display invalid struct size and alignment in tool tip
 
-2025-07-15 version 1.4.2
+2025-09-03 version 1.4.2-beta1
   * dmdserver: fixed error "module specified twice on command line" for same module name in
     different packages
+  * dmdserver: added support for importing C files
   * added command "Reset Language Server" to extension menu
   * issue #313: installer now checks whether VS and the C++ development workloads are installed
     and provides some assistance in installing them
   * dbuild: add file imported from C to the dependencies for rebuilding
-  * dbuild: add option to set C include search path
+  * dbuild: add option to set C include search path and C #defines

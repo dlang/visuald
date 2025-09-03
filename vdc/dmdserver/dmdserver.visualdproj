@@ -2291,6 +2291,7 @@
     <File path="dmd\compiler\src\dmd\root\bitarray.d" />
     <File path="dmd\compiler\src\dmd\root\complex.d" />
     <File path="dmd\compiler\src\dmd\root\ctfloat.d" />
+    <File path="dmd\compiler\src\dmd\root\env.d" />
     <File path="dmd\compiler\src\dmd\root\file.d" />
     <File path="dmd\compiler\src\dmd\root\filename.d" />
     <File path="dmd\compiler\src\dmd\root\hash.d" />
@@ -2344,6 +2345,7 @@
    <File path="dmd\compiler\src\dmd\console.d" />
    <File path="dmd\compiler\src\dmd\constfold.d" />
    <File path="dmd\compiler\src\dmd\cparse.d" />
+   <File path="dmd\compiler\src\dmd\cpreprocess.d" />
    <File path="dmd\compiler\src\dmd\ctfeexpr.d" />
    <File path="dmd\compiler\src\dmd\ctorflow.d" />
    <File path="dmd\compiler\src\dmd\dcast.d" />
@@ -2405,7 +2407,7 @@
    <File path="dmd\compiler\src\dmd\libmach.d" tool="None" />
    <File path="dmd\compiler\src\dmd\libmscoff.d" tool="None" />
    <File path="dmd\compiler\src\dmd\libomf.d" tool="None" />
-   <File path="dmd\compiler\src\dmd\link.d" tool="None" />
+   <File path="dmd\compiler\src\dmd\link.d" />
    <File path="dmd\compiler\src\dmd\location.d" tool="None" />
    <File path="dmd\compiler\src\dmd\mars.d" tool="None" />
    <File path="dmd\compiler\src\dmd\mtype.d" />
@@ -2451,6 +2453,7 @@
    <File path="dmd\compiler\src\dmd\typesem.d" />
    <File path="dmd\compiler\src\dmd\typinf.d" />
    <File path="dmd\compiler\src\dmd\utils.d" />
+   <File path="dmd\compiler\src\dmd\vsoptions.d" />
   </Folder>
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />

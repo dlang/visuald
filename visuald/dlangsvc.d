@@ -13,6 +13,8 @@ module visuald.dlangsvc;
 import visuald.comutil;
 import visuald.lexutil;
 import visuald.logutil;
+import visuald.chiernode;
+import visuald.hierarchy;
 import visuald.hierutil;
 import visuald.fileutil;
 import visuald.stringutil;
@@ -1154,7 +1156,13 @@ class LanguageService : DisposingComObject,
 			string versions = cfg.getCompilerVersionIDs();
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
-			cmdline = cfgopts.dmdFrontEndOptions();
+
+			string docName = toLower(file);
+			CHierNode node = searchNode(cfg.GetProject().GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
+			if (auto pFile = cast(CFileNode) node)
+				cmdline = cfg.GetCompileCommand(pFile, true);
+			else
+				cmdline = cfgopts.dmdFrontEndOptions();
 		}
 		else
 		{
@@ -1190,6 +1198,8 @@ class LanguageService : DisposingComObject,
 		}
 		if (globopts.dmdServerMemThres)
 			cmdline ~= " -memThreshold=" ~ to!string(globopts.dmdServerMemThres);
+		if (cfg)
+			cmdline ~= " -workdir=" ~ quoteArgument(cfg.GetProjectDir());
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp),
 		                                              assumeUnique(versionids), assumeUnique(debugids), cmdline, flags);
 	}

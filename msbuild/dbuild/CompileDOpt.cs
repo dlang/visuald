@@ -59,10 +59,11 @@ namespace dbuild
             this.switchOrderList.Add("CodeGeneration");
 
             this.switchOrderList.Add("ImportPaths");
-            this.switchOrderList.Add("ImportCPaths");
             this.switchOrderList.Add("StringImportPaths");
             this.switchOrderList.Add("VersionIdentifiers");
             this.switchOrderList.Add("DebugIdentifiers");
+            this.switchOrderList.Add("ImportCPaths");
+            this.switchOrderList.Add("ImportCDefines");
             this.switchOrderList.Add("ObjectFileName");
             this.switchOrderList.Add("PreserveSourcePath");
             this.switchOrderList.Add("CRuntimeLibrary");
@@ -203,6 +204,16 @@ namespace dbuild
             {
                 SetStringArray("ImportCPaths", true, "Import C Include Paths",
                                "Where to look for includes in imported C files. (-P-I[path]).", "-P-I", value);
+            }
+        }
+
+        public string[] ImportCDefines
+        {
+            get { return GetStringArray("ImportCDefines"); }
+            set
+            {
+                SetStringArray("ImportCDefines", false, "Import C Preprocessor Defines",
+                               "#defines for imported C files. (-P-D[ident[=val]]).", "-P-D", value);
             }
         }
 

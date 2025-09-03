@@ -50,6 +50,8 @@
                         Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=" />
     <StringListProperty Name="ImportCPaths" Category="General" DisplayName="Include C Paths" Description="where to look for C includes in imported C files."
                         Subtype="folder" Switch="-P-I" />
+    <StringListProperty Name="ImportCDefines" Category="General" DisplayName="Import C Preprocessor Defines"
+                        Description="#defines for imported C files." Switch="-P-D" />
 
     <EnumProperty Name="CompilationModel" Category="General" DisplayName="Compilation Model" IncludeInCommandLine="false"
                   Description="Compilation model if object file name is empty: project, package or single.">
