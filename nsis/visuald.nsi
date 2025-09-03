@@ -55,6 +55,7 @@
   !include "MUI2.nsh"
   !include "Memento.nsh"
   !include "Sections.nsh"
+  !include "TextFunc.nsh"
   !include "InstallOptions.nsh"
 
   !include "uninstall_helper.nsh"
@@ -180,6 +181,14 @@
   !define MAGO_EE_KEY                 AD7Metrics\ExpressionEvaluator\${LANGUAGE_CLSID}\${VENDOR_CLSID}
 !endif
 
+  !define VS2019Filename "vs_community2019.exe"
+  !define VS2022Filename "vs_community2022.exe"
+
+  !define VS2019Url "https://download.visualstudio.microsoft.com/download/pr/8ab6eab3-e151-4f4d-9ca5-07f8434e46bb/8cc1a4ebd138b5d0c2b97501a198f5eacdc434daa8a5c6564c8e23fdaaad3619/vs_Community.exe"
+  !define VS2022Url "https://c2rsetup.officeapps.live.com/c2r/downloadVS.aspx?sku=community&channel=Release&version=VS2022"
+
+  !define VSINSTALLER "$PROGRAMFILES\Microsoft Visual Studio\Installer\vs_installer.exe"
+
   ;Default installation folder
   InstallDir "$PROGRAMFILES\${APPNAME}"
 
@@ -191,6 +200,9 @@
   RequestExecutionLevel admin
 
   ReserveFile ${DMD_PAGE_INI}
+  ReserveFile /Plugin INetC.dll
+  ReserveFile "vsinstall.ini"
+  ReserveFile "vcinstall.ini"
 !ifdef DMD ; doesn't work in NSIS3 on appveyor
 ;  ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !endif
@@ -215,6 +227,9 @@
   Var DMDInstallDir
   Var DInstallDir
   Var CompilerInstallDir
+  Var VSVersion
+  Var VCVersion
+  Var VCPath
 
 ;--------------------------------
 ;Interface Settings
@@ -227,6 +242,10 @@
   !define MUI_TEXT_WELCOME_INFO_TITLE "Welcome to the ${LONG_APPNAME} ${VERSION} Setup Wizard"
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "license"
+
+  Page custom VSInstallPage ValidateVSInstallPage
+  Page custom VCInstallPage ValidateVCInstallPage
+
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
 
@@ -1576,6 +1595,106 @@ Function .onInit
 FunctionEnd
 
 ;--------------------------------
+!macro DownloadAndRun Filename Url AltUrl
+  inetc::get /CAPTION "Downloading ${Filename}..." /BANNER "" "${Url}" "$TEMP\${Filename}"
+  Pop $0
+  StrCmp $0 "OK" run_${Filename}
+  !if `${AltUrl}` != ""
+    inetc::get /CAPTION "Downloading ${Filename}..." /BANNER "" "${AltUrl}" "$TEMP\${Filename}"
+    Pop $0
+    StrCmp $0 "OK" run_${Filename}
+  !endif
+
+  ; failed
+  MessageBox MB_OK|MB_ICONEXCLAMATION "Could not download ${Filename}$\r$\n$\r$\n${Url}" /SD IDOK
+
+  Goto dandr_done_${Filename}
+
+  run_${Filename}:
+  DetailPrint "Running ${Filename}"
+  ExecWait "$TEMP\${Filename}"
+
+  Delete "$TEMP\${Filename}"
+
+  dandr_done_${Filename}:
+!macroend
+
+Function VSInstallPage
+
+  Call DetectVC ; detects older versions of VS (but also build tools)
+  StrCmp $VCVersion "" test_vs
+    Abort
+  test_vs:
+  Call DetectVS
+  StrCmp $VSVersion "" ask_vs
+    Abort
+  ask_vs:
+
+  !insertmacro MUI_HEADER_TEXT "Choose Visual Studio Installation" "Choose the Visual Studio version to install"
+  !insertmacro INSTALLOPTIONS_EXTRACT "vsinstall.ini"
+  !insertmacro INSTALLOPTIONS_DISPLAY "vsinstall.ini"
+
+FunctionEnd
+
+Function ValidateVSInstallPage
+
+  !insertmacro INSTALLOPTIONS_READ $0 "vsinstall.ini" "Field 2" "State"
+  StrCmp $0 1 install_vs2022
+  !insertmacro INSTALLOPTIONS_READ $0 "vsinstall.ini" "Field 3" "State"
+  StrCmp $0 1 install_vs2019
+  goto done_vs
+
+  install_vs2022:
+    !insertmacro DownloadAndRun ${VS2022Filename} ${VS2022Url} ""
+    goto check_vs
+
+  install_vs2019:
+    !insertmacro DownloadAndRun ${VS2019Filename} ${VS2019Url} ""
+    goto check_vs
+
+  check_vs:
+    Call DetectVS
+    StrCmp $VSVersion "" 0 done_vs
+    Abort
+
+  done_vs:
+
+FunctionEnd
+
+Function VCInstallPage
+
+  Call DetectVC
+  StrCmp $VCVersion "" ask_vs
+  Abort
+  ask_vs:
+
+  !insertmacro MUI_HEADER_TEXT "Visual C++ Installation" "Install the C++ environment in Visual Studio"
+  !insertmacro INSTALLOPTIONS_EXTRACT "vcinstall.ini"
+  !insertmacro INSTALLOPTIONS_DISPLAY "vcinstall.ini"
+
+FunctionEnd
+
+Function ValidateVCInstallPage
+
+  !insertmacro INSTALLOPTIONS_READ $0 "vcinstall.ini" "Field 2" "State"
+  StrCmp $0 1 run_vs_installer
+  goto done_vc
+
+  run_vs_installer:
+    DetailPrint "Running ${VSINSTALLER}"
+    ExecWait "${VSINSTALLER}"
+    goto check_vc
+
+  check_vc:
+    Call DetectVC
+    StrCmp $VVVersion "" 0 done_vc
+    Abort
+
+  done_vc:
+
+FunctionEnd
+
+;--------------------------------
 Function DMDInstallPage
 
 !ifdef DMD
@@ -2128,3 +2247,103 @@ Function InstallForVS2022
 FunctionEnd
 
 !endif ; VS2022
+
+; -----------------------------------------
+
+Function DetectVS
+    ClearErrors
+
+    StrCpy $VSVersion ""
+    StrCpy $0 "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe"
+    IfFileExists "$0" 0 no_vswhere
+        nsExec::ExecToStack '"$0" -products * -prerelease -property installationPath'
+        Pop $1 ; stdout: path
+        Pop $0 ; result code
+        StrCmp $0 0 no_vswhere
+        StrCmp $1 "" no_vswhere
+        StrCpy $VSVersion "VS2017+" ; value not used, but only checked if empty
+	no_vswhere:
+
+FunctionEnd
+
+Function DetectVC
+    ClearErrors
+
+    StrCpy $0 "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe"
+    IfFileExists "$0" 0 no_vswhere
+        nsExec::ExecToStack '"$0" -products * -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath'
+        Pop $1 ; stdout: path
+        Pop $0 ; result code
+        StrCmp $0 0 no_vswhere
+        StrCmp $1 "" no_vswhere
+        StrCpy $VCVersion "VC2017+" ; value not used, but only checked if empty
+        StrCpy $VCPath $1
+        Goto done
+    no_vswhere:
+
+    Call DetectVS2019_InstallationFolder
+    StrCpy $1 "VC2019"
+    StrCmp $0 "" not_vc2019 vs2019
+    vs2019:
+        ${LineRead} "$0\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" "1" $2
+        IfErrors not_vc2019
+        StrCpy $0 "$0\VC\Tools\MSVC\$2"
+        Goto done_vs
+    not_vc2019:
+
+    Call DetectVS2019BuildTools_InstallationFolder
+    StrCpy $1 "VC2019BT"
+    StrCmp $0 "" not_vc2019BT vs2019BT
+    vs2019BT:
+        ${LineRead} "$0\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" "1" $2
+        IfErrors not_vc2019BT
+        StrCpy $0 "$0\VC\Tools\MSVC\$2"
+        Goto done_vs
+    not_vc2019BT:
+
+    ReadRegStr $0 HKLM "SOFTWARE\Microsoft\VisualStudio\SxS\VS7" "15.0"
+    StrCpy $1 "VC2017"
+    IfErrors not_vc2017
+        ${LineRead} "$0\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" "1" $2
+        IfErrors not_vc2017
+        StrCpy $0 "$0\VC\Tools\MSVC\$2"
+        Goto done_vs
+    not_vc2017:
+
+    Call DetectVS2017BuildTools_InstallationFolder
+    StrCpy $1 "VC2017BT"
+    StrCmp $0 "" not_vc2017BT vs2017BT
+    vs2017BT:
+        ${LineRead} "$0\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" "1" $2
+        IfErrors not_vc2017BT
+        StrCpy $0 "$0\VC\Tools\MSVC\$2"
+        Goto done_vs
+    not_vc2017BT:
+
+    ClearErrors
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\14.0\Setup\VC" "ProductDir"
+    StrCpy $1 "VC2015"
+    IfErrors 0 done_vs
+    ClearErrors
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\12.0\Setup\VC" "ProductDir"
+    StrCpy $1 "VC2013"
+    IfErrors 0 done_vs
+    ClearErrors
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\11.0\Setup\VC" "ProductDir"
+    StrCpy $1 "VC2012"
+    IfErrors 0 done_vs
+    ClearErrors
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\10.0\Setup\VC" "ProductDir"
+    StrCpy $1 "VC2010"
+    IfErrors 0 done_vs
+    ClearErrors
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\9.0\Setup\VC" "ProductDir"
+    StrCpy $1 "VC2008"
+    IfErrors done done_vs
+
+    done_vs:
+    StrCpy $VCPath $0
+    StrCpy $VCVersion $1
+    done:
+
+FunctionEnd

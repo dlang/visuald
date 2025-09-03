@@ -95,7 +95,7 @@ class AnalysisContext
 				if (md.packages.length != packages.length)
 					continue L_nextMod;
 				for (size_t p = 0; p < packages.length; p++)
-					if (cast(Identifier)md.packages[p] != md.packages[p])
+					if (cast(Identifier)md.packages[p] != packages[p])
 						continue L_nextMod;
 			}
 			return mi.createSemanticModule(false);

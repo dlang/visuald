@@ -13,6 +13,7 @@ import dmd.astenums;
 import dmd.builtin;
 import dmd.cond;
 import dmd.compiler;
+import dmd.cpreprocess;
 import dmd.ctfeexpr;
 import dmd.dclass;
 import dmd.declaration;
@@ -39,6 +40,8 @@ import dmd.common.outbuffer;
 import dmd.root.ctfloat;
 
 import std.string;
+import stdext.path;
+import stdext.string;
 import core.stdc.string;
 
 ////////////////////////////////////////////////////////////////
@@ -114,6 +117,11 @@ enum string[2][] dmdStatics =
 	["_D3dmd7dmodule6Module18loadCoreStdcConfigFZ16core_stdc_configCQCiQChQCc", "Module"],
 	// EscapeState.reset not accessible in package dmd
 	["_D3dmd6escape11EscapeState17scopeInferFailureHiCQBu10rootobject10RootObject", "EscapeInfer" ],
+
+	// 2.10x
+	["_D3dmd7typesem21getComplexLibraryTypeFSQBl8location3LocPSQCd6dscope5ScopeEQCu8astenums2TYZ13complex_floatCQEa5mtype4Type", "Type" ],
+	["_D3dmd7typesem21getComplexLibraryTypeFSQBl8location3LocPSQCd6dscope5ScopeEQCu8astenums2TYZ14complex_doubleCQEb5mtype4Type", "Type" ],
+	["_D3dmd7typesem21getComplexLibraryTypeFSQBl8location3LocPSQCd6dscope5ScopeEQCu8astenums2TYZ12complex_realCQDz5mtype4Type", "Type" ],
 ];
 
 string cmangled(string s)
@@ -288,6 +296,8 @@ void dmdSetupParams(const ref Options opts)
 	global = global.init;
 
 	global._init();
+    global.preprocess = &preprocess;
+
 	target.os = Target.OS.Windows;
 	global.params.v.errorLimit = 0;
 	global.params.v.color = false;
@@ -318,7 +328,11 @@ void dmdSetupParams(const ref Options opts)
 	target.cpu = CPU.baseline;
 	target.isLP64 = opts.x64;
 
-	string[] cli = opts.cmdline.split(' ');
+	string[] cli = splitCmdLine(opts.cmdline);
+	string workdir;
+	foreach(opt; cli)
+		if (opt.startsWith("-workdir="))
+			workdir = unquoteArgument(opt[9..$]);
 	foreach(opt; cli)
 	{
 		switch(opt)
@@ -355,7 +369,20 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=shortenedMethods": global.params.shortenedMethods = true; break;
 			case "-preview=fixImmutableConv": global.params.fixImmutableConv = true; break;
 			case "-preview=systemVariables": global.params.systemVariables = FeatureState.enabled; break;
-			default: break;
+			default:
+				if (opt.startsWith("-P"))
+				{
+					string cppopt = opt[2..$];
+					if (cppopt.startsWith("-I"))
+					{
+						string dir = unquoteArgument(cppopt[2..$]);
+						string ndir = makeFilenameAbsolute(dir, workdir);
+						if (dir != ndir)
+							cppopt = "-I" ~ quoteArgument(ndir);
+					}
+					global.params.cppswitches.push(toStringz(cppopt));
+				}
+				break;
 		}
 	}
 	// global.params.versionlevel = opts.versionLevel;
@@ -395,7 +422,11 @@ void dmdSetupParams(const ref Options opts)
 
 	global.path.setDim(0);
 	foreach(i; opts.importDirs)
-		global.path.push(ImportPathInfo(toStringz(i)));
+	{
+		auto path = toStringz(i);
+		global.importPaths.push(path);
+		global.path.push(ImportPathInfo(path));
+	}
 
 	global.filePath.setDim(0);
 	foreach(i; opts.stringImportDirs)

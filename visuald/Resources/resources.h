@@ -68,3 +68,5 @@
 
 #define CmdDubUpgrade    0x124
 #define CmdDubRefresh    0x125
+
+#define CmdResetVDServer 0x126

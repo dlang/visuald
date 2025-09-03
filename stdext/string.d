@@ -65,6 +65,72 @@ string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_
 	return args;
 }
 
+// Microsoft like quoting
+string[] splitCmdLine(string cmdline, bool removeSlashes = true)
+{
+	string[] args;
+	for (size_t p = 0; p < cmdline.length; p++)
+	{
+		if (cmdline[p] == ' ' || cmdline[p] == '\t')
+			continue;
+		size_t q = p;
+		size_t quotes = 0;
+		while (q < cmdline.length)
+		{
+			auto c = cmdline[q];
+			if ((quotes & 1) == 0 && (c == ' ' || c == '\t'))
+				break;
+			q++;
+			if (c == '\\')
+			{
+				size_t slash = q - 1;
+				while (q < cmdline.length && cmdline[q] == '\\')
+					q++;
+				if (q < cmdline.length && cmdline[q] == '"')
+				{
+					size_t slashes = q - slash;
+					if (removeSlashes)
+					{
+						// strip half the slashes, if odd, escape the '"'
+						size_t nq = slash + (slashes >> 1);
+						cmdline = cmdline[0..nq] ~ cmdline[q .. $];
+						q = nq + 1;
+					}
+					if (slashes & 1)
+						q++;
+					else
+						quotes++;
+				}
+			}
+			else if (c == '"')
+			{
+				quotes++;
+			}
+		}
+		auto arg = cmdline[p..q];
+		if (quotes == 2 && arg[0] == '"' && arg[$-1] == '"')
+			arg = arg[1..$-1];
+		args ~= arg;
+		p = q;
+	}
+	return args;
+}
+
+unittest
+{
+	string[] args = splitCmdLine("a b c");
+	assert(args[0] == "a" && args[1] == "b" && args[2] == "c");
+
+	args = splitCmdLine(q"(a "b b" c)");
+	assert(args[0] == "a" && args[1] == "b b" && args[2] == "c");
+
+	args = splitCmdLine(q"(a "b\ b\\" c)");
+	assert(args[0] == "a" && args[1] == q"(b\ b\)" && args[2] == "c");
+
+	args = splitCmdLine(q"(a "b\" b\\" c)");
+	assert(args[0] == "a" && args[1] == q"(b" b\)" && args[2] == "c");
+}
+
 string unquoteArgument(string arg)
 {
 	if(arg.length <= 0 || arg[0] != '\"')
@@ -74,6 +140,14 @@ string unquoteArgument(string arg)
 		return arg;
 
 	return arg[1..$-1];
+}
+
+string quoteArgument(string arg)
+{
+	if(arg.indexOf(' ') < 0 && arg.indexOf('\t') < 0)
+		return arg;
+
+	return "\"" ~ arg ~ "\"";
 }
 
 string replaceCrLfSemi(string s)

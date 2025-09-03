@@ -165,7 +165,7 @@
       <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp'">default</_CppStandard> <!-- for older VS -->
     </PropertyGroup>
 
-    <PropertyGroup>
+	<PropertyGroup>
       <ClMultiToolTaskMinimalRebuild>true</ClMultiToolTaskMinimalRebuild>
       <ClMultiToolTaskMinimalRebuild Condition="'$(_BuildActionType)' != 'Build' or '$(ForceRebuild)' == 'true'">false</ClMultiToolTaskMinimalRebuild>
       <ProcessorNumber Condition="'$(ProcessorNumber)' == ''">$(CL_MPCount)</ProcessorNumber>
@@ -189,7 +189,6 @@
     >
     </MultiToolTaskVisualD>
 
-
     <CompileD Condition="'@(DCompile)' != '' and '%(DCompile.UseMultiToolTask)' != 'true'"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
@@ -202,6 +201,8 @@
               CodeGeneration="%(DCompile.CodeGeneration)"
               
               ImportPaths="%(DCompile.ImportPaths)"
+              ImportCPaths="%(DCompile.ImportCPaths)"
+              ImportCDefines="%(DCompile.ImportCDefines)"
               StringImportPaths="%(DCompile.StringImportPaths)"
               VersionIdentifiers="%(DCompile.VersionIdentifiers)"
               DebugIdentifiers="%(DCompile.DebugIdentifiers)"

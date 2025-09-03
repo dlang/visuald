@@ -108,6 +108,8 @@
       <DebugIdentifiers></DebugIdentifiers>
       <ImportPaths></ImportPaths>
       <StringImportPaths></StringImportPaths>
+      <ImportCPaths></ImportCPaths>
+      <ImportCDefines></ImportCDefines>
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>
       <CRuntimeLibrary>MultiThreaded</CRuntimeLibrary>

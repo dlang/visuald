@@ -916,7 +916,7 @@
   <useArrayBounds>0</useArrayBounds>
   <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>

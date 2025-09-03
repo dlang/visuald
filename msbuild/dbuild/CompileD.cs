@@ -37,11 +37,13 @@ namespace dbuild
 
 		public bool DoNotLink { get { return opts.DoNotLink; } set { opts.DoNotLink = value; } }
 		public string CodeGeneration { get { return opts.CodeGeneration; } set { opts.CodeGeneration = value; } }
-		public string[] ImportPaths { get { return opts.ImportPaths; } set { opts.ImportPaths = value; } }
-		public string[] StringImportPaths { get { return opts.StringImportPaths; } set { opts.StringImportPaths = value; } }
+        public string[] ImportPaths { get { return opts.ImportPaths; } set { opts.ImportPaths = value; } }
+        public string[] ImportCPaths { get { return opts.ImportCPaths; } set { opts.ImportCPaths = value; } }
+        public string[] StringImportPaths { get { return opts.StringImportPaths; } set { opts.StringImportPaths = value; } }
 		public string[] VersionIdentifiers { get { return opts.VersionIdentifiers; } set { opts.VersionIdentifiers = value; } }
 		public string[] DebugIdentifiers { get { return opts.DebugIdentifiers; } set { opts.DebugIdentifiers = value; } }
-		public string ObjectFileName { get { return opts.ObjectFileName; } set { opts.ObjectFileName = value; } }
+        public string[] ImportCDefines { get { return opts.ImportCDefines; } set { opts.ImportCDefines = value; } }
+        public string ObjectFileName { get { return opts.ObjectFileName; } set { opts.ObjectFileName = value; } }
 		public bool PreserveSourcePath { get { return opts.PreserveSourcePath; } set { opts.PreserveSourcePath = value; } }
 		public string CRuntimeLibrary { get { return opts.CRuntimeLibrary; } set { opts.CRuntimeLibrary = value; } }
 		public bool Profile { get { return opts.Profile; } set { opts.Profile = value; } }
@@ -188,12 +190,22 @@ namespace dbuild
 
         protected override string[] ReadTLogNames
         {
-            get { return new string[1] { TLogPrefix + ".read.1.tlog" }; }
+            get {
+				return new string[2] {
+					TLogPrefix + ".read.1.tlog",
+					TLogPrefix + "-cl.read.1.tlog",
+				};
+			}
         }
 
         protected override string[] WriteTLogNames
         {
-            get { return new string[1] { TLogPrefix + ".write.1.tlog" }; }
+            get {
+				return new string[2] {
+					TLogPrefix + ".write.1.tlog",
+					TLogPrefix + "-cl.write.1.tlog",
+	            };
+			}
         }
 
         protected override string CommandTLogName

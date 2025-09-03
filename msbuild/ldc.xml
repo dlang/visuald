@@ -48,6 +48,10 @@
                         Description="compile in version code identified by ident/&gt;= level." Switch="-version=" />
     <StringListProperty Name="DebugIdentifiers" Category="General" DisplayName="Debug Identifiers"
                         Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=" />
+    <StringListProperty Name="ImportCPaths" Category="General" DisplayName="Include C Paths" Description="where to look for C includes in imported C files."
+                        Subtype="folder" Switch="-P-I" />
+    <StringListProperty Name="ImportCDefines" Category="General" DisplayName="Import C Preprocessor Defines"
+                        Description="#defines for imported C files." Switch="-P-D" />
 
     <EnumProperty Name="CompilationModel" Category="General" DisplayName="Compilation Model" IncludeInCommandLine="false"
                   Description="Compilation model if object file name is empty: project, package or single.">
@@ -74,7 +78,7 @@
       <EnumValue Name="MultiThreadedDebugDll" DisplayName="Multi-threaded Debug DLL" Switch="-mscrtlib=msvcrtd"
                  Description="Causes your application to use the debug multithread- and DLL-specific version of the run-time library. It also causes the compiler to place the library name MSVCRTD.lib into the .obj file." />
     </EnumProperty>
-    <BoolProperty Name="CompileD_UseMultiToolTask" 
+    <BoolProperty Name="CompileD_UseMultiToolTask" DisplayName="Multi-processor Compilation"
                   Description="Use all available processors to compile the project. Ignored on VS2013 (not supported). Ignored if 'Compilation Model' is 'One object file per project'." Category="General" >
       <BoolProperty.DataSource>
         <DataSource Persistence="ProjectFile" ItemType="" Label="" HasConfigurationCondition="true" />
