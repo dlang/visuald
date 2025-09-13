@@ -445,6 +445,28 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <TargetVer>17.14</TargetVer>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v18_0|AnyCPU'">
+    <OutputPath>bin\Release-v18_0\</OutputPath>
+    <DefineConstants>TRACE;TOOLS_V17</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>18.0</TargetVer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v18_0|AnyCPU'">
+    <OutputPath>bin\Debug-v18_0\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TOOLS_V17</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>18.0</TargetVer>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -493,7 +515,7 @@
        or '$(TargetVer)' == '17.4' or '$(TargetVer)' == '17.5' or '$(TargetVer)' == '17.6'
        or '$(TargetVer)' == '17.7' or '$(TargetVer)' == '17.8' or '$(TargetVer)' == '17.9'
        or '$(TargetVer)' == '17.10' or '$(TargetVer)' == '17.11' or '$(TargetVer)' == '17.12'
-	   or '$(TargetVer)' == '17.13' or '$(TargetVer)' == '17.14'">v4.7.2</TargetFrameworkVersion>
+	   or '$(TargetVer)' == '17.13' or '$(TargetVer)' == '17.14' or '$(TargetVer)' == '18.0'">v4.7.2</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
@@ -830,6 +852,35 @@
   <ItemGroup Condition="'$(TargetVer)' == '17.14'">
     <Reference Include="Microsoft.Build.CPPTasks.Common">
       <HintPath>assemblies\v17_14\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <!-- VS2026 -->
+  <ItemGroup Condition="'$(TargetVer)' == '18.0'">
+    <Reference Include="Microsoft.Build">
+      <HintPath>assemblies\v18\Microsoft.Build.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Framework">
+      <HintPath>assemblies\v18\Microsoft.Build.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.Core">
+      <HintPath>assemblies\v18\Microsoft.Build.Tasks.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.Core">
+      <HintPath>assemblies\v18\Microsoft.Build.Utilities.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>assemblies\v18\envdte.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.VCProject">
+      <HintPath>assemblies\v18\Microsoft.VisualStudio.VCProject.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine">
+      <HintPath>assemblies\v18\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetVer)' == '18.0'">
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v18\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

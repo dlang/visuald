@@ -34,7 +34,7 @@
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.40.1"
+!define LDC_VERSION "1.41.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -42,6 +42,9 @@
 
 ; define VS2022 to include VS2022 support
 ; !define VS2022
+
+; define VS2026 to include VS2026 support
+; !define VS2026
 
 !ifdef DMD
   !define DMD_PAGE_INI "basedir.ini"
@@ -55,11 +58,14 @@
   !include "MUI2.nsh"
   !include "Memento.nsh"
   !include "Sections.nsh"
+  !include "StrFunc.nsh"
   !include "TextFunc.nsh"
   !include "InstallOptions.nsh"
 
   !include "uninstall_helper.nsh"
   !include "replaceinfile.nsh"
+
+  ${StrTrimNewLines}
 
 ;--------------------------------
 ;General
@@ -145,6 +151,7 @@
   !define VS2017_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\15.0
   !define VS2019_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\16.0
   !define VS2022_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\17.0
+  !define VS2026_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\18.0
   !define VS2017_INSTALL_KEY      SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
@@ -374,6 +381,9 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release-v17_12\ dbuild.17.12.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_13\ dbuild.17.13.dll
   ${File} ..\msbuild\dbuild\obj\release-v17_14\ dbuild.17.14.dll
+!endif
+!ifdef VS2026
+  ${File} ..\msbuild\dbuild\obj\release-v18_0\ dbuild.18.0.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
@@ -745,6 +755,17 @@ ${MementoSectionEnd}
 
 !endif
 
+!ifdef VS2026
+;--------------------------------
+${MementoSection} "Install in VS 2026" SecVS2026
+
+  Push 1
+  Call InstallForVS2026
+
+${MementoSectionEnd}
+
+!endif
+
 !ifdef EXPRESS
 ;--------------------------------
 ${MementoUnselectedSection} "Install in VC-Express 2008" SecVCExpress2008
@@ -804,6 +825,26 @@ SectionGroup Components
 ;--------------------------------
 !ifdef MSBUILD
 ${MementoSection} "MSBuild integration" SecMSBuild
+
+!ifdef VS2026
+  SectionGetFlags ${SecVS2026} $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} 0 NoVS2026
+
+  Push 1
+  Call DetectVS2026_InstallationFolder
+  StrCmp $1 "" NoVS2026
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v180" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v180" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v180" "ARM64"
+    ${RegisterIcons} "18.0"
+
+    !define V180_GENERAL_XML "$1\MsBuild\Microsoft\VC\v180\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V180_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.18.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.18.0.xml"
+  NoVS2026:
+!endif
 
 !ifdef VS2022
   SectionGetFlags ${SecVS2022} $2
@@ -1156,6 +1197,7 @@ SectionEnd
   LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
   LangString DESC_SecVS2019 ${LANG_ENGLISH} "Register for usage in Visual Studio 2019."
   LangString DESC_SecVS2022 ${LANG_ENGLISH} "Register for usage in Visual Studio 2022."
+  LangString DESC_SecVS2026 ${LANG_ENGLISH} "Register for usage in Visual Studio 2026."
   LangString DESC_SecVS2017BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2017 Build Tools."
   LangString DESC_SecVS2019BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2019 Build Tools."
   LangString DESC_SecVS2022BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2022 Build Tools."
@@ -1199,6 +1241,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_2} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_3} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022_4} $(DESC_SecVS2022)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2026} $(DESC_SecVS2026)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022BT} $(DESC_SecVS2022BT)
@@ -1236,6 +1279,19 @@ Section "Uninstall"
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
+!endif
+
+!ifdef VS2026
+  ReadRegStr $1 HKLM "Software\${APPNAME}" "VS2026InstallDir"
+  StrCmp $1 "" NoVS2026pkgdef
+    StrCpy $1 "$1Common7\IDE"
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2026ExtensionDir
+      Push $1
+      Call un.VSConfigurationChanged
+    NoVS2026ExtensionDir:
+    RMDir /r '$1${EXTENSION_DIR_APP}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2026pkgdef:
 !endif
 
 !ifdef VS2022
@@ -1570,6 +1626,19 @@ Function .onInit
     SectionSetText ${SecVS2022BT} ""
   Installed_VS2022BT:
 
+!endif
+
+!ifdef VS2026
+  ; detect VS2026
+  ClearErrors
+  Push 1
+  Call DetectVS2026_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2026
+    SectionSetFlags ${SecVS2026} ${SF_RO}
+    goto Done_VS2026
+  Installed_VS2026:
+    SectionSetText ${SecVS2026} "Install in $2"
+  Done_VS2026:
 !endif
 
 !ifdef EXPRESS
@@ -2248,6 +2317,81 @@ FunctionEnd
 
 !endif ; VS2022
 
+!ifdef VS2026
+; TODO: expects index of installation to be pushed as an argument, return folder in $1, display name in $2
+Function DetectVS2026_InstallationFolder
+
+    StrCpy $3 "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe"
+    IfFileExists "$3" 0 no_vswhere
+        nsExec::ExecToStack '"$3" -products * -prerelease  -version [18.0,19.0) -property displayName'
+        Pop $0 ; result code
+        Pop $2 ; stdout: name
+        StrCmp $0 0 0 no_vswhere
+        StrCmp $2 "" no_vswhere
+
+        nsExec::ExecToStack '"$3" -products * -prerelease  -version [18.0,19.0) -property installationPath'
+        Pop $0 ; result code
+        Pop $1 ; stdout: path
+        StrCmp $0 0 0 no_vswhere
+        StrCmp $1 "" no_vswhere
+        ; return path in $1 with trailing separator
+        ${StrTrimNewLines} $0 "$0"
+        ${StrTrimNewLines} $1 "$1"
+        StrCpy $1 "$1\"
+        Goto done
+    no_vswhere:
+    StrCpy $1 ""
+    StrCpy $2 ""
+    done:
+
+FunctionEnd
+
+Function InstallForVS2026
+
+  Exch $1 ; argument Index
+
+  Push $1
+  Call DetectVS2026_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2026InstallDir" $1
+
+  StrCpy $1 "$1Common7\IDE\"
+  RMDir /r '$1${EXTENSION_DIR_APP}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2026_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
+
+  GetFullPathName $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "18" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+
+  !ifdef MAGO
+    ; remove old DLL, now in x64\
+    Delete "$1..\Packages\Debugger\MagoNatCC.dll"
+    ${SetOutPath} "$1..\Packages\Debugger\x64"
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
+    ${SetOutPath} "$1..\Packages\Debugger\arm64"
+    ${File} ${MAGO_SOURCE}\bin\ARM64\Release\ MagoNatCC.dll
+    ${SetOutPath} "$1..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
+  !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
+  push $1
+  Call VSConfigurationChanged
+
+  pop $1
+
+FunctionEnd
+
+!endif ; VS2026
+
 ; -----------------------------------------
 
 Function DetectVS
@@ -2257,9 +2401,9 @@ Function DetectVS
     StrCpy $0 "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe"
     IfFileExists "$0" 0 no_vswhere
         nsExec::ExecToStack '"$0" -products * -prerelease -property installationPath'
-        Pop $1 ; stdout: path
         Pop $0 ; result code
-        StrCmp $0 0 no_vswhere
+        Pop $1 ; stdout: path
+        StrCmp $0 0 0 no_vswhere
         StrCmp $1 "" no_vswhere
         StrCpy $VSVersion "VS2017+" ; value not used, but only checked if empty
 	no_vswhere:
@@ -2272,9 +2416,9 @@ Function DetectVC
     StrCpy $0 "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe"
     IfFileExists "$0" 0 no_vswhere
         nsExec::ExecToStack '"$0" -products * -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath'
-        Pop $1 ; stdout: path
         Pop $0 ; result code
-        StrCmp $0 0 no_vswhere
+        Pop $1 ; stdout: path
+        StrCmp $0 0 0 no_vswhere
         StrCmp $1 "" no_vswhere
         StrCpy $VCVersion "VC2017+" ; value not used, but only checked if empty
         StrCpy $VCPath $1
