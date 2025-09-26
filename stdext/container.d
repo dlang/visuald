@@ -39,6 +39,13 @@ struct Queue(T)
 		return data[idx];
 	}
 
+	void clear()
+	{
+		for(size_t i = 0; i < used; i++)
+			data[i] = T.init;
+		used = 0;
+	}
+
 	ref Queue!T opOpAssign(string op)(ref T t) if (op == "~")
 	{
 		append(t);

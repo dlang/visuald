@@ -24,13 +24,13 @@ extern (C++) struct Mem
 	static void* xmalloc(size_t n) nothrow pure
 	{
 		if (*pcancel)
-			throw new Error("cancel malloc"); //*pcancelError;
+			throw new CancelError("cancel malloc"); //*pcancelError;
 		return GC.malloc(n);
 	}
 	static void* xmalloc_noscan(size_t n) nothrow pure
 	{
 		if (*pcancel)
-			throw new Error("cancel malloc");//*pcancelError;
+			throw new CancelError("cancel malloc");//*pcancelError;
 		return GC.malloc(n, GC.BlkAttr.NO_SCAN);
 	}
 
@@ -66,11 +66,19 @@ extern (C++) struct Mem
 		return p;
 	}
 
-	extern(D) __gshared immutable cancelError = new Error("cancel malloc");
+	extern(D) __gshared immutable cancelError = new CancelError("cancel malloc");
 	extern(D) __gshared bool cancel;
 	// fake purity
 	enum pcancel = cast(immutable) &cancel;
 	enum pcancelError = cast(immutable) &cancelError;
+}
+
+class CancelError : Error
+{
+	this(string s) pure
+	{
+		super(s);
+	}
 }
 
 extern (C++) const __gshared Mem mem;

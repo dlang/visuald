@@ -1673,7 +1673,7 @@
   <boundscheck>1</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>

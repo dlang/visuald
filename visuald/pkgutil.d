@@ -66,9 +66,12 @@ IVsOutputWindowPane getVisualDOutputPane()
 	IVsOutputWindowPane pane;
 	if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
 		return pane;
-	if(win.CreatePane(&g_outputPaneCLSID, "Visual D", false, true) == S_OK)
-		if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
-			return pane;
+	if(win.CreatePane(&g_outputPaneCLSID, "Visual D", false, true) == S_OK &&
+	   win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
+	{
+		pane.Activate();
+		return pane;
+	}
 
 	if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
 		return null;
@@ -104,21 +107,27 @@ void openSettingsPage(in GUID clsid)
 class OutputPaneBuffer
 {
 	static shared(string) buffer;
+	static shared(bool) activatePane;
 	static shared(Object) syncOut = new shared(Object);
 
-	static void push(string msg)
+	static void push(string msg, bool activate)
 	{
 		synchronized(OutputPaneBuffer.syncOut)
+		{
 			buffer ~= msg;
+			activatePane = activatePane || activate;
+		}
 	}
 
-	static string pop()
+	static string pop(out bool activate)
 	{
 		string msg;
 		synchronized(OutputPaneBuffer.syncOut)
 		{
 			msg = buffer;
 			buffer = buffer.init;
+			activate = activatePane;
+			activate = false;
 		}
 		return msg;
 	}
@@ -127,22 +136,24 @@ class OutputPaneBuffer
 	{
 		if(buffer.length)
 		{
-			string msg = pop();
-			writeToBuildOutputPane(msg);
+			bool activate;
+			string msg = pop(activate);
+			writeToBuildOutputPane(msg, activate);
 		}
 	}
 }
 
-void writeToBuildOutputPane(string msg)
+void writeToBuildOutputPane(string msg, bool activate = true)
 {
 	if(IVsOutputWindowPane pane = getVisualDOutputPane())
 	{
 		scope(exit) release(pane);
-		pane.Activate();
+		if (activate)
+			pane.Activate();
 		pane.OutputString(_toUTF16z(msg));
 	}
 	else
-		OutputPaneBuffer.push(msg);
+		OutputPaneBuffer.push(msg, activate);
 }
 
 bool OutputErrorString(string msg)

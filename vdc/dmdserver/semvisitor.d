@@ -1384,6 +1384,32 @@ const(char)* docForSymbol(Dsymbol var)
 	return null;
 }
 
+string rootObjectToString(RootObject obj)
+{
+	final switch (obj.dyncast())
+	{
+		case DYNCAST.identifier:
+		case DYNCAST.dsymbol:
+		case DYNCAST.type:          // https://issues.dlang.org/show_bug.cgi?id=1215
+		case DYNCAST.expression:    // https://issues.dlang.org/show_bug.cgi?id=1215
+		case DYNCAST.object:
+		case DYNCAST.tuple:
+		case DYNCAST.parameter:
+		case DYNCAST.statement:
+		case DYNCAST.templateparameter:
+		case DYNCAST.initializer:
+			return obj.toString().dup;
+		case DYNCAST.condition:
+			auto cond = cast(Condition)obj;
+			if (auto dc = cond.isDebugCondition())
+				return dc.ident.toString().dup;
+			if (auto vc = cond.isVersionCondition())
+				return vc.ident.toString().dup;
+			assert(0);
+	}
+	return "";
+}
+
 TipData tipDataForObject(RootObject obj)
 {
 	TipData tip;
@@ -1461,7 +1487,7 @@ TipData tipDataForObject(RootObject obj)
 	}
 	if (!tip.code.length)
 	{
-		tip.code = obj.toString().dup;
+		tip.code = rootObjectToString(obj);
 	}
 	// append doc
 	if (doc)
