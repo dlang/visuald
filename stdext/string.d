@@ -379,8 +379,17 @@ T[] firstLine(T)(T[] s)
 {
 	for(size_t i = 0; i < s.length; i++)
 		if(s[i] == '\n' || s[i] == '\r')
-			return s[0..i];
+			return i + 2 < s.length ? s[0..i] ~ "..." : s[0..i];
 	return s;
+}
+
+T[] firstLineOf(T)(T[][] arr)
+{
+	if (arr.length > 1)
+		return firstLine(arr[0]) ~ "...";
+	else if (arr.length > 0)
+		return firstLine(arr[0]);
+	return "";
 }
 
 char kInvalidUTF8Replacement = '?';

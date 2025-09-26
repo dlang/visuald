@@ -38,6 +38,7 @@ import std.process : environment;
 import std.string;
 
 version = DParserOption;
+// version = AnalyzeAfterEditOption;
 enum hasDubSupport = false;
 
 class PropertyWindow : Window
@@ -2999,11 +3000,14 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		kLabelWidth = kPageWidth * 4 / 5;
 		AddControl("  Restart parsing engine if it needs more than (MB, 0 for never)", mDmdServerMemThres = new Text(mCanvas));
 		kLabelWidth  = saveWidth;
+		version(AnalyzeAfterEditOption)
+			AddControl("  after edit, analyze", mAnalyzeAfterEdit = new ComboBox(mCanvas, [ "edited file", "dependent files", "all edited files" ], false));
 		auto lineY = mLineY;
 		AddControl("", mShowParamStorage = new CheckBox(mCanvas, "Show parameter storage class at call site (experimental)"));
 		mLineY = lineY; // overlay with next
 		AddTwoControls(mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"),
 		               mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
+		AddControl("", mLogToOutputPane = new CheckBox(mCanvas, "Log semantic server communication to output pane"));
 		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
 		AddTitleLine("Expansions");
 		AddControl("", mExpandSemantics = new CheckBox(mCanvas, "Expansions from semantic analysis"));
@@ -3037,6 +3041,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowValueInTooltip.setEnabled(mShowTypeInTooltip.isChecked());
 		mShowSizeAndAlign.setEnabled(!useDParser);
 		mDmdServerMemThres.setEnabled(!useDParser);
+		version(AnalyzeAfterEditOption)
+			mAnalyzeAfterEdit.setEnabled(!useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -3054,9 +3060,12 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 		mShowParamStorage.setChecked(opts.showParamStorage);
+		mLogToOutputPane.setChecked(opts.logToOutputPane);
 		mSortExpMode.setSelection(opts.sortExpMode);
 		mExactExpMatch.setChecked(opts.exactExpMatch);
 		mDmdServerMemThres.setText(to!string(opts.dmdServerMemThres));
+		version(AnalyzeAfterEditOption)
+			mAnalyzeAfterEdit.setSelection(opts.analyzeAfterEdit);
 
 		//mExpandSemantics.setEnabled(false);
 		EnableControls();
@@ -3078,8 +3087,11 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
 		changes += changeOption(mShowParamStorage.isChecked(), opts.showParamStorage, refopts.showParamStorage);
+		changes += changeOption(mLogToOutputPane.isChecked(), opts.logToOutputPane, refopts.logToOutputPane);
 		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
 		changes += changeOption(mExactExpMatch.isChecked(), opts.exactExpMatch, refopts.exactExpMatch);
+		version(AnalyzeAfterEditOption)
+			changes += changeOption(cast(ubyte) mAnalyzeAfterEdit.getSelection(), opts.analyzeAfterEdit, refopts.analyzeAfterEdit);
 
 		import stdext.string;
 		long thres;
@@ -3100,10 +3112,13 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	//CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDmdParser;
 	CheckBox mShowParamStorage;
+	CheckBox mLogToOutputPane;
 	CheckBox mUFCSExpansions;
 	ComboBox mSortExpMode;
 	CheckBox mExactExpMatch;
 	CheckBox mMixinAnalysis;
+	version(AnalyzeAfterEditOption)
+		ComboBox mAnalyzeAfterEdit;
 	Text mDmdServerMemThres;
 }
 

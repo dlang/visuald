@@ -1160,7 +1160,11 @@ class LanguageService : DisposingComObject,
 			string docName = toLower(file);
 			CHierNode node = searchNode(cfg.GetProject().GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
 			if (auto pFile = cast(CFileNode) node)
-				cmdline = cfg.GetCompileCommand(pFile, true);
+			{
+				cmdline = cfgopts.buildCommandLine(cfg, true, false, null, true);
+				if (cfgopts.additionalOptions.length)
+					cmdline ~= " " ~ cfgopts.additionalOptions.replace("\n", " ");
+			}
 			else
 				cmdline = cfgopts.dmdFrontEndOptions();
 		}
@@ -4701,7 +4705,7 @@ else
 	}
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
-								  string tasks, string outline, ParameterStorageLoc[] parameterStcLocs)
+								  string tasks, string outline, string identifierTypes, ParameterStorageLoc[] parameterStcLocs)
 	{
 		mHasPendingUpdateModule = false;
 		if (!Package.GetGlobalOptions().showParseErrors)
@@ -4719,8 +4723,9 @@ else
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 
 		if (Package.GetGlobalOptions().semanticHighlighting)
-			Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, Package.GetGlobalOptions().semanticResolveFields,
-															&OnUpdateIdentifierTypes);
+			OnUpdateIdentifierTypes(request, filename, identifierTypes);
+		//	Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, Package.GetGlobalOptions().semanticResolveFields,
+		//													&OnUpdateIdentifierTypes);
 
 		if (mCodeWinMgr && mCodeWinMgr.mNavBar)
 			mCodeWinMgr.mNavBar.UpdateFromSource(outline);

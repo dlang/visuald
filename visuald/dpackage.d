@@ -1623,6 +1623,7 @@ class GlobalOptions
 	bool mixinAnalysis;
 	bool UFCSExpansions;
 	bool showParamStorage;
+	bool logToOutputPane;
 	byte analyzeAfterEdit;  // 0: edited file, 1: dependent files, 2: all edited files
 	byte sortExpMode;       // 0: alphabetically, 1: by type, 2: by declaration and scope
 	bool exactExpMatch;
@@ -2052,6 +2053,7 @@ class GlobalOptions
 			//parseSource         = getBoolOpt("parseSource", true);
 			showParseErrors     = getBoolOpt("showParseErrors", true);
 			showParamStorage    = getBoolOpt("showParamStorage", true);
+			logToOutputPane     = getBoolOpt("logToOutputPane", false);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
 			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
@@ -2243,6 +2245,7 @@ class GlobalOptions
 
 			updateDefaultColors();
 
+			setVDServerLogging(logToOutputPane);
 			if(VDServerIID.length > 0)
 				gServerClassFactory_iid = uuid(VDServerIID);
 			else
@@ -2333,6 +2336,7 @@ class GlobalOptions
 			//keyToolOpts.Set("parseSource",         parseSource);
 			keyToolOpts.Set("showParseErrors",     showParseErrors);
 			keyToolOpts.Set("showParamStorage",    showParamStorage);
+			keyToolOpts.Set("logToOutputPane",     logToOutputPane);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
 			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
@@ -2425,6 +2429,7 @@ class GlobalOptions
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.UpdateColorizer(true);
 
+		setVDServerLogging(logToOutputPane);
 		if(lastUseDParser != useDParser)
 		{
 			updateVDServer();

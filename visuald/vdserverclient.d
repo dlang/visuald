@@ -33,13 +33,14 @@ import std.string;
 import std.conv;
 import std.path;
 import std.windows.charset;
+import core.atomic;
 import core.thread;
 
 alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully instantiate type info for string[Tid]
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 // version(TESTMAIN) version = InProc;
-debug version = DebugCmd;
+version = DebugCmd;
 // debug version = InProc;
 
 version(InProc) import vdc.vdserver;
@@ -48,11 +49,17 @@ version(InProc) import vdc.vdserver;
 version(DebugCmd)
 {
 import std.datetime;
-import core.stdc.stdio : fprintf, fopen, fflush, fputc, FILE;
+import core.stdc.stdio : fprintf, snprintf, fopen, fflush, fputc, FILE;
 __gshared FILE* dbgfh;
+__gshared bool dbgfh_failed;
+__gshared bool dbglog_enabled;
 
 private void dbglog(string s)
 {
+	char[40] strtm;
+	SysTime now = Clock.currTime();
+	auto len = snprintf(strtm.ptr, 40, "%02d:%02d:%02d.%03d ",
+					    now.hour, now.minute, now.second, cast(int)now.fracSecs.total!"msecs");
 	debug
 	{
 		version(all)
@@ -60,27 +67,31 @@ private void dbglog(string s)
 		else
 			OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
 	}
-	else
+	else if (!dbgfh_failed)
 	{
 		if(!dbgfh)
 		{
 			import std.file;
-			string fname = tempDir();
+			string fname = tempDir() ~ "/dmdserver";
 			char[20] name = "/vdclient0.log";
 			for (char i = '0'; !dbgfh && i <= '9'; i++)
 			{
 				name[9] = i;
 				dbgfh = fopen((fname ~ name).ptr, "w");
 			}
+			if (!dbgfh)
+			{
+				dbgfh_failed = true;
+				return;
+			}
 		}
-		SysTime now = Clock.currTime();
 		uint tid = sdk.win32.winbase.GetCurrentThreadId();
-		auto len = fprintf(dbgfh, "%02d:%02d:%02d - %04x - ",
-						   now.hour, now.minute, now.second, tid);
-		fprintf(dbgfh, "%.*s", s.length, s.ptr);
+		fprintf(dbgfh, "%s - %04x - ", strtm.ptr, tid);
+		fprintf(dbgfh, "%.*s", cast(int)s.length, s.ptr);
 		fputc('\n', dbgfh);
 		fflush(dbgfh);
 	}
+	writeToBuildOutputPane(cast(string)(strtm[0..len] ~ firstLine(s) ~ "\n"), false);
 }
 }
 
@@ -127,7 +138,8 @@ bool startVDServer()
 			return false;
 		}
 	}
-	version(DebugCmd) dbglog ("VDServer startet successfully");
+	version(DebugCmd) if (dbglog_enabled)
+		dbglog("VDServer startet successfully");
 	return true;
 }
 
@@ -136,12 +148,18 @@ bool stopVDServer()
 	if(!gVDServer)
 		return false;
 
-	version(DebugCmd) dbglog ("stopping VDServer");
+	version(DebugCmd) if (dbglog_enabled)
+		dbglog("stopping VDServer");
 	gVDServer = release(gVDServer);
 	gVDClassFactory = release(gVDClassFactory);
 
 	CoUninitialize();
 	return true;
+}
+
+void setVDServerLogging(bool log)
+{
+	dbglog_enabled = log;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -169,8 +187,9 @@ template _shared(T)
 {
 	this(string cmd)
 	{
-		mCommand = cmd;
-		mRequest = sLastRequest++;
+		version(DebugCmd)
+			mCommand = cmd;
+		mRequest = sLastRequest.atomicOp!"+="(1);
 	}
 
 	// called from clientLoop (might block due to server garbage collecting)
@@ -186,22 +205,26 @@ template _shared(T)
 	// called from onIdle
 	bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand);
 		return true;
 	}
 
 	void send(Tid id)
 	{
-		version(DebugCmd) dbglog(to!string(cast(void*)this) ~ " send: " ~ to!string(mRequest) ~ " " ~ mCommand);
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " send: " ~ mCommand);
 
 		.send(id, cast(size_t) cast(void*) this);
 //		.send(id, cast(shared)this);
 //		.send(id, this);
 	}
 
-	static uint sLastRequest;
+	static shared uint sLastRequest;
 
 	uint mRequest;
-	string mCommand;
+	version(DebugCmd)
+		string mCommand;
 }
 
 class ExitCommand : Command
@@ -259,7 +282,7 @@ class FileCommand : Command
 {
 	this(string cmd, string filename)
 	{
-		version(DebugCmd) cmd ~= ":" ~ baseName(filename);
+		version(DebugCmd) cmd ~= " " ~ baseName(filename);
 		super(cmd);
 		mFilename = filename;
 	}
@@ -377,6 +400,8 @@ class GetTipCommand : FileCommand
 
 	override bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ mType);
 		if(mCallback)
 			mCallback(mRequest, mFilename, mType, mSpan);
 		return true;
@@ -443,6 +468,8 @@ class GetDefinitionCommand : FileCommand
 
 	override bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ mDefFile);
 		if(mCallback)
 			mCallback(mRequest, mDefFile, mSpan);
 		return true;
@@ -456,23 +483,31 @@ class GetDefinitionCommand : FileCommand
 //////////////////////////////////////
 
 alias void delegate(uint request, string filename, string parseErrors,
-                    TextPos[] binaryIsIn, string tasks, string outline, ParameterStorageLoc[] stcLocs) UpdateModuleCallBack;
+                    TextPos[] binaryIsIn, string tasks, string outline, string idTypes, ParameterStorageLoc[] stcLocs) UpdateModuleCallBack;
+
+__gshared uint[string] gLastModuleUpdates;
+shared(Object) gSyncLastModuleUpdates = new Object;
 
 class UpdateModuleCommand : FileCommand
 {
 	this(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
 	{
 		super("UpdateModule", filename);
-		version(DebugCmd) mCommand ~= " " ~ to!string(firstLine(text));
 		mText = text;
 		mCallback = cb;
 		mVerbose = verbose;
+		synchronized(gSyncLastModuleUpdates)
+			gLastModuleUpdates[mFilename] = mRequest;
 	}
 
 	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
+
+		synchronized(gSyncLastModuleUpdates)
+			if (gLastModuleUpdates[mFilename] != mRequest)
+				return ERROR_CANCELLED;
 
 		BSTR bfname = allocBSTR(mFilename);
 
@@ -488,6 +523,10 @@ class UpdateModuleCommand : FileCommand
 	{
 		if(!gVDServer)
 			return S_FALSE;
+
+		synchronized(gSyncLastModuleUpdates)
+			if (gLastModuleUpdates[mFilename] != mRequest)
+				return ERROR_CANCELLED;
 
 		BSTR fname = allocBSTR(mFilename);
 		scope(exit) freeBSTR(fname);
@@ -543,17 +582,27 @@ class UpdateModuleCommand : FileCommand
 			if(gVDServer.GetParameterStorageLocs(fname, &stclocs) == S_OK)
 				variantToArray(stclocs, mParameterStcLocs);
 		}
-
+		if (Package.GetGlobalOptions().semanticHighlighting)
+		{
+			int flags = 2 | (Package.GetGlobalOptions().semanticResolveFields ? 1 : 0);
+			if (gVDServer.GetIdentifierTypes(fname, 0, -1, flags) == S_OK)
+			{
+				BSTR types;
+				if(gVDServer.GetIdentifierTypesResult(&types) == S_OK)
+					mIdentifierTypes = detachBSTR(types);
+			}
+		}
 		send(gUITid);
 		return S_OK;
 	}
 
 	override bool forward()
 	{
-		version(DebugCmd)
-			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mOutline, mParameterStcLocs);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks,
+					  mOutline, mIdentifierTypes, mParameterStcLocs);
 		return true;
 	}
 
@@ -562,6 +611,7 @@ class UpdateModuleCommand : FileCommand
 	string mErrors;
 	string mTasks;
 	string mOutline;
+	string mIdentifierTypes;
 	bool mVerbose;
 	TextPos[] mBinaryIsIn;
 	ParameterStorageLoc[] mParameterStcLocs;
@@ -618,8 +668,8 @@ class GetIdentifierTypesCommand : FileCommand
 
 	override bool forward()
 	{
-		version(DebugCmd)
-			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mIdentifierTypes);
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ mIdentifierTypes);
 		if(mCallback)
 			mCallback(mRequest, mFilename, mIdentifierTypes);
 		return true;
@@ -683,6 +733,8 @@ class GetExpansionsCommand : FileCommand
 
 	override bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ join(mExpansions, "\n"));
 		if(mCallback)
 			mCallback(mRequest, mFilename, mTok, mLine, mIndex, cast(string[])mExpansions);
 		return true;
@@ -747,6 +799,8 @@ class GetReferencesCommand : FileCommand
 
 	override bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand ~ " " ~ ": " ~ join(mReferences, "\n"));
 		if(mCallback)
 			mCallback(mRequest, mFilename, mTok, mLine, mIndex, cast(string[])mReferences);
 		return true;
@@ -790,6 +844,8 @@ class ServerRestartedCommand : Command
 
 	override bool forward()
 	{
+		version(DebugCmd) if (dbglog_enabled)
+			dbglog("#" ~ to!string(mRequest) ~ " fwrd: " ~ mCommand);
 		import visuald.dpackage;
 		Package.GetLanguageService().RestartParser();
 		return true;
@@ -821,6 +877,7 @@ class VDServerClient
 	//////////////////////////////////////
 	void shutDown()
 	{
+		dbglog_enabled = false; // output pane no longer accessible during shutdown
 		if(gVDServer)
 		{
 			(new _shared!(ExitCommand)).send(mTid);
@@ -954,12 +1011,16 @@ class VDServerClient
 				    (size_t icmd)
 					{
 						auto cmd = cast(Command) cast(void*) icmd;
-						version(DebugCmd) dbglog(to!string(cmd.mRequest) ~ " clientLp: " ~ cmd.mCommand);
+						version(DebugCmd) if (dbglog_enabled)
+							dbglog("#" ~ to!string(cmd.mRequest) ~ " exec: " ~ cmd.mCommand);
 						HRESULT hr = cmd.exec();
 						if(hr == S_OK)
 							toAnswer ~= cmd;
 						else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 							restartServer = true;
+						else
+							version(DebugCmd) if (dbglog_enabled)
+								dbglog("#" ~ to!string(cmd.mRequest) ~ " skip: " ~ cmd.mCommand);
 						changed = true;
 					},
 					(Variant var)
@@ -973,6 +1034,8 @@ class VDServerClient
 					HRESULT hr = cmd.answer();
 					if(hr == S_OK || hr == ERROR_CANCELLED)
 					{
+						version(DebugCmd) if (dbglog_enabled && hr == ERROR_CANCELLED)
+							dbglog("#" ~ to!string(cmd.mRequest) ~ " cncl: " ~ cmd.mCommand);
 						toAnswer.remove(i);
 						changed = true;
 						lastAnswerTime = Clock.currTime();
@@ -1013,7 +1076,7 @@ class VDServerClient
 						restartServer = true;
 				}
 
-				version(DebugCmd) if (changed)
+				version(DebugCmd) if (dbglog_enabled) if (changed)
 				{
 					string s = "   answerQ = [";
 					for(int i = 0; i < toAnswer.length; i++)
@@ -1023,8 +1086,10 @@ class VDServerClient
 				if(restartServer)
 				{
 					restartServer = false;
-					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
+					version(DebugCmd) if (dbglog_enabled)
+						dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
+					toAnswer.clear();
 					if (startVDServer())
 						(new _shared!(ServerRestartedCommand)()).send(gUITid);
 					else
@@ -1034,7 +1099,8 @@ class VDServerClient
 		}
 		catch(Throwable e)
 		{
-			version(DebugCmd) dbglog ("clientLoop exception: " ~ e.msg);
+			version(DebugCmd) if (dbglog_enabled)
+				dbglog ("clientLoop exception: " ~ e.msg);
 		}
 		stopVDServer();
 	}
@@ -1048,9 +1114,6 @@ class VDServerClient
 				(size_t icmd)
 				{
 					auto cmd = cast(Command) cast(void*) icmd;
-					version(DebugCmd)
-						if(cmd.mCommand != "GetMessage")
-							dbglog(to!string(cmd.mRequest) ~ " " ~ "idleLoop: " ~ cmd.mCommand);
 					cmd.forward();
 				},
 				(Variant var)
@@ -1063,7 +1126,8 @@ class VDServerClient
 		}
 		catch(Throwable e)
 		{
-			version(DebugCmd) dbglog ("clientLoop exception: " ~ e.msg);
+			version(DebugCmd) if (dbglog_enabled)
+				dbglog("clientLoop exception: " ~ e.msg);
 		}
 	}
 }

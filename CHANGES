@@ -1458,3 +1458,13 @@ Version history
     and provides some assistance in installing them
   * dbuild: add file imported from C to the dependencies for rebuilding
   * dbuild: add option to set C include search path and C #defines
+
+2025-09-26 version 1.5.0-beta1
+  * installer: added support for VS 2026
+  * dmdserver:
+    - now built with upcoming dmd 2.112 with improved GC performance
+    - don't stop analyzing when a static assert is hit
+    - add option to display server communication in the output pane
+    - some optimizations to to reduce communication overhead
+  * fixed WindowsApp template to build with recent DMD
+

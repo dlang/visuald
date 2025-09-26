@@ -2043,122 +2043,18 @@ if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp
 if errorlevel 1 goto reportError
 $(DMDInstallDir)\windows\bin\dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).dll&quot; &quot;-od$(IntDir)&quot; -defaultlib=user32.lib -m32mscoff -L/SUBSYSTEM:CONSOLE -L/ENTRY:DllMain@12 $(InputPath) kernel32.lib user32.lib" outfile="$(OutDir)\$(InputName).dll" path="..\tools\filemonitor.d" tool="Custom" />
   <File path="..\tools\largeadr.d" />
-  <File customcmd="dmd -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" perConfig="true" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\mb2utf16.d" tool="Custom">
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
+  <File customcmd="echo Compiling $(InputPath)...
 if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug COFF32|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
+$(LDCInstallDir)\bin\ldmd2 -m32 -g &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\mb2utf16.d" tool="Custom" />
+  <File customcmd="echo Compiling $(InputPath)...
 if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug COFF32|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+$(LDCInstallDir)\bin\ldmd2 -g -m32 -version=pipeLink &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
 if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01
-" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|Win32" />
-   <Config tool="Custom" customcmd="ldmd2 -m32 &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|Win32" />
-   <Config tool="Custom" customcmd="ldmd2 -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Reelase LDC|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|x64" />
-   <Config tool="Custom" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug LDC|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -m32mscoff -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug LDC ARM|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
-  </File>
-  <File customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" perConfig="true" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\pipedmd.d" tool="Custom">
-   <Config tool="Custom" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d oleaut32.lib ole32.lib
-&quot;$(VisualDInstallDir)\cv2pdb\cv2pdb.exe&quot; &quot;$(OutDir)\$(InputName).exe&quot;" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug COFF32|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug COFF32|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-dmd -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|Win32" />
-   <Config tool="Custom" customcmd="ldmd2 -m32 -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-ldmd2 -m32 -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|Win32" />
-   <Config tool="Custom" customcmd="ldmd2 -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Reelase LDC|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|x64" />
-   <Config tool="Custom" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d ole32.lib oleaut32.lib" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug LDC|x64" />
-   <Config tool="Custom" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
-if errorlevel 1 goto reportError
-$(DMDInstallDir)\windows\bin\dmd -g -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug LDC ARM|x64" />
-   <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ..\stdext\string.d oleaut32.lib ole32.lib" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
-  </File>
+$(LDCInstallDir)\bin\ldmd2 -g -m32  &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d  ..\stdext\string.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\pipedmd.d" tool="Custom" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError

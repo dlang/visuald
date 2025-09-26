@@ -8,10 +8,10 @@ extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc);
 extern (Windows)
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    return _d_run_main(0, null, &main); // arguments unused, retrieved via CommandLineToArgvW
+    return _d_run_main(0, null, &win_main); // arguments unused, retrieved via CommandLineToArgvW
 }
 
-extern(C) int main(string[] args)
+extern(C) int win_main(string[] args)
 {
     MessageBoxW(null, "Hello D World!"w.ptr, "D Windows Application"w.ptr, MB_OK);
     return 0;

@@ -22,12 +22,17 @@ import dmd.errors;
 import dmd.globals;
 import dmd.identifier;
 import dmd.location;
+import dmd.mtype;
 import dmd.semantic2;
 import dmd.semantic3;
+import dmd.visitor;
+import dmd.root.string: toDString;
+import dmd.root.stringtable;
 
 import std.algorithm;
 import std.path;
 import std.conv;
+import stdext.array;
 
 // version = ReinitSemanticAll;
 
@@ -50,7 +55,7 @@ struct ModuleInfo
 		if (resolve)
 		{
 			m.resolvePackage(); // adds module to Module.amodules (ignore return which could be module with same name)
-			Module.modules.insert(m);
+			//Module.modules.insert(m);
 		}
 		return m;
 	}
@@ -128,6 +133,167 @@ void reinitSemanticModules()
 		mi.semanticModule = null;
 }
 
+alias Mod = void*;
+alias Typ = void*;
+Mod asKey(Module m) { return cast(Mod)m; }
+Typ asKey(Type t) { return cast(Typ)t; }
+
+bool[Mod] findDependentModules(Module mod)
+{
+	// C++ classes don't work as AA keys
+	bool[Mod] dependents;
+	bool[Mod][Mod] importedBy;
+
+	foreach(m; Module.amodules)
+		foreach (Module mi; m.aimports)
+			importedBy[mi.asKey][m.asKey] = true;
+
+	if (mod.asKey !in importedBy)
+		return null;
+
+	// transitive closure
+	for (int chg = 1; chg > 0; )
+	{
+		chg = 0;
+		bool create_imp() scope { chg++; return true; }
+		void update_imp(ref bool) scope {}
+		foreach (m1, imps1; importedBy)
+			foreach (m2, b2; imps1) // m1 imported by m2
+				if (auto pimps2 = m2 in importedBy)
+					foreach (m3, b3; *pimps2) // m2 imported by m3
+						imps1.update(m3, &create_imp, &update_imp); // -> m1 imported by m3
+	}
+
+	return importedBy[mod.asKey];
+}
+
+bool[Typ] findDependentTypes(bool[Mod] deps)
+{
+	bool[Typ] depTypes;
+	int isDependentType(const(StringValue!Type)* sv) nothrow scope
+	{
+		extern(C++) class DependentTypeVisitor : Visitor
+		{
+			alias visit = Visitor.visit;
+			bool inDeps;
+
+			override void visit(Type t)
+			{
+				if (!inDeps && t.asKey in depTypes)
+					inDeps = true;
+			}
+			override void visit(TypeBasic t)
+			{
+				// avoid the lookup in visit(Type)
+			}
+			override void visit(TypeVector tv)
+			{
+				super.visit(tv);
+				if (!inDeps)
+					tv.basetype.accept(this);
+			}
+			override void visit(TypeNext tn)
+			{
+				super.visit(tn);
+				if (!inDeps)
+					tn.next.accept(this);
+			}
+			override void visit(TypeAArray taa)
+			{
+				super.visit(taa);
+				if (!inDeps)
+					taa.index.accept(this);
+			}
+			override void visit(TypeFunction tf)
+			{
+				super.visit(tf);
+				if (!inDeps)
+					foreach (i, fparam; tf.parameterList)
+						fparam.type.accept(this);
+			}
+			override void visit(TypeTuple tt)
+			{
+				super.visit(tt);
+				if (!inDeps && tt.arguments)
+					foreach (arg; *tt.arguments)
+						arg.type.accept(this);
+			}
+			override void visit(TypeStruct ts)
+			{
+				super.visit(ts);
+				auto m = ts.sym.getModule();
+				if (m.asKey in deps)
+					inDeps = true;
+			}
+			override void visit(TypeClass tc)
+			{
+				super.visit(tc);
+				auto m = tc.sym.getModule();
+				if (m.asKey in deps)
+					inDeps = true;
+			}
+			override void visit(TypeEnum te)
+			{
+				super.visit(te);
+				auto m = te.sym.getModule();
+				if (m.asKey in deps)
+					inDeps = true;
+			}
+		}
+		auto type = cast(Type)sv.value;
+		scope vis = new DependentTypeVisitor;
+		try
+		{
+			type.accept(vis);
+			if (vis.inDeps)
+				depTypes[type.asKey] = true;
+		}
+		catch(Exception e)
+		{
+			// Stringtype.apply wants this to be nothrow
+		}
+		return 0; // continue
+	}
+	Type.stringtable.opApply(&isDependentType);
+	return depTypes;
+}
+
+bool invalidateDependents(AnalysisContext ctxt, Module mod)
+{
+	bool[Mod] deps = findDependentModules(mod);
+	deps[mod.asKey] = true;
+
+	for (size_t i = 0; i < Module.amodules.dim; )
+		if (Module.amodules[i].asKey in deps)
+			Module.amodules.remove(i);
+		else
+			i++;
+
+	foreach(mv, b; deps)
+	{
+		auto m = cast(Module)mv;
+		DsymbolTable dst;
+		if (m.md)
+			dst = Package.resolve(m.md.packages, null, null);
+		else
+			dst = Module.modules;
+
+		version(GC) // needed for self-compilation
+			if (dst.lookup(m.ident))
+				dst.tab.aa.remove(cast(void*)m.ident);
+	}
+
+	foreach(ref mi; ctxt.modules)
+		if (mi.semanticModule.asKey in deps)
+			mi.semanticModule = null;
+
+	auto depTypes = findDependentTypes(deps);
+	foreach(type, b; depTypes)
+		Type.stringtable.remove((cast(Type)type).deco.toDString);
+
+	return true;
+}
+
 //
 Module analyzeModule(Module parsedModule, const ref Options opts)
 {
@@ -138,6 +304,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 		lastContext = new AnalysisContext;
 	AnalysisContext ctxt = lastContext;
 
+	size_t[] dependents;
 	auto filename = parsedModule.srcfile.toString();
 	int idx = ctxt.findModuleInfo(filename);
 	if (ctxt.options == opts)
@@ -150,6 +317,30 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 				ctxt.modules[idx].parsedModule = parsedModule;
 
 				// TODO: only update dependent modules
+				version(none) // too unstable
+				{
+					needsReinit = false;
+
+					if (auto m = ctxt.modules[idx].semanticModule)
+					{
+						DsymbolTable dst;
+						if (parsedModule.md)
+							dst = Package.resolve(parsedModule.md.packages, null, null);
+						else
+							dst = Module.modules;
+						auto mid = parsedModule.md ? parsedModule.md.id : parsedModule.ident;
+						Dsymbol prev = dst.lookup(mid); // package handling?
+						if (prev && prev != m)
+							needsReinit = true;
+						else
+							invalidateDependents(ctxt, m);
+					}
+				}
+				if (!needsReinit)
+				{
+					ctxt.modules[idx].semanticModule = null;
+					ctxt.modules[idx].createSemanticModule(true);
+				}
 			}
 			else
 			{
@@ -248,7 +439,30 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 	mi.semanticModule.importAll(null);
 	semantic(mi.semanticModule);
 
+	version(none)
+	{
+		foreach(i; dependents)
+			ctxt.modules[i].createSemanticModule(true);
+		foreach(i; dependents)
+			ctxt.modules[i].semanticModule.importAll(null);
+		foreach(i; dependents)
+			semantic(ctxt.modules[i].semanticModule);
+	}
 	return Module.rootModule;
+}
+
+Module analyzeInvalidatedModule(bool findOnly)
+{
+	if (lastContext)
+		foreach(mi; lastContext.modules)
+			if (mi.parsedModule && !mi.semanticModule)
+			{
+				if (findOnly)
+					return mi.parsedModule;
+				else
+					return analyzeModule(mi.parsedModule, lastContext.options);
+			}
+	return null;
 }
 
 debug
@@ -1608,15 +1822,29 @@ void do_unittests()
 	};
 	m = checkErrors(source, "");
 
-	import dmd.common.outbuffer;
-	import dmd.hdrgen;
-	auto buf = OutBuffer();
-	buf.doindent = 1;
-	moduleToBuffer(buf, true, m);
-	auto modstr = buf.extractData();
-
 	checkTip(m,  12, 17, "`source.Expression source.ctfeEmplaceExp!(source.Expression)() pure nothrow @safe`");
 	checkTip(m,  12, 23, "(class) `source.Expression`");
+
+	source = q{
+		char[100] tempMem;
+		size_t allocOffset = 0;
+
+		char[] concat(char[] s, string a, string b) // Line 5
+		{
+			return s;
+		}
+		char[] tconcat(Args...)(Args args)
+		{                                           // Line 10
+			char[] r = concat(tempMem[allocOffset..$], args);
+			return r;
+		}
+		void inst_tconcat()
+		{
+			auto t = tconcat("1", "2");
+		}
+	};
+	m = checkErrors(source, "");
+	checkTip(m,  11, 22, "(thread local global) `char[100] source.tempMem`");
 
 	// check FQN types in cast
 	source = q{
@@ -2088,10 +2316,11 @@ void do_unittests()
 	checkTip(tmpl_m, 4, 11, "(parameter) `int x`");
 	filename = "source.d";
 
-	version(ReinitSemanticAll)
+	version(all) //ReinitSemanticAll)
 	{
 		// parsing the template source file again forgets all instantiations
 		tmpl_m = checkErrors(tmpl_source, "");
+		analyzeInvalidatedModule(false);
 		checkTip(tmpl_m, 4, 11, "(parameter) `int x`");
 		//checkTip(tmpl_m, 8, 11, "(parameter) `T x`");
 	}

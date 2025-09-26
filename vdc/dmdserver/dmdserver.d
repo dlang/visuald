@@ -137,6 +137,28 @@ version(DebugServer)
 			fflush(dbgfh);
 		}
 	}
+	string dbghdr(string msg, string fname, int line = -1, int col = -1)
+	{
+		if (fname.length)
+		{
+			fname = baseName(fname);
+			if (line >= 0)
+			{
+				fname ~= "(";
+				fname ~= line.to!string();
+				if (col >= 0)
+				{
+					fname ~= ",";
+					fname ~= col.to!string();
+				}
+				fname ~= ")";
+			}
+			msg ~= " ";
+			msg ~= fname;
+		}
+		msg ~= ": ";
+		return msg;
+	}
 }
 
 ///////////////////////////////////////////////////////////////
@@ -204,6 +226,8 @@ class DMDServer : ComObject, IVDServer
 		return super.QueryInterface(riid, pvObject);
 	}
 
+	static __gshared bool gScheduuleBusy;
+
 	extern(D) static void taskLoop(Tid tid)
 	{
 		bool cont = true;
@@ -214,6 +238,8 @@ class DMDServer : ComObject, IVDServer
 				receiveTimeout(dur!"msecs"(50),
 							   (delegate_fake dg_fake)
 							   {
+								gScheduuleBusy = true;
+								scope(exit) gScheduuleBusy = false;
 								void delegate() dg = *(cast(void delegate()*)&dg_fake);
 								dg();
 							   },
@@ -302,12 +328,16 @@ class DMDServer : ComObject, IVDServer
 			auto p = opts.cmdline.indexOf(" -memThreshold=");
 			const(char)[] arg = p >= 0 ? opts.cmdline[p + 15..$] : "0";
 			opts.restartMemThreshold = parseLong(arg, res) ? cast(uint)res : 0;
+
+			version(DebugServer)
+				if(dbgfh) dbglog(dbghdr("Configure", fname) ~ " " ~ cmdln);
 		}
 		return S_OK;
 	}
 
 	override HRESULT ClearSemanticProject()
 	{
+		version(DebugServer) if(dbgfh) dbglog("ClearSemanticProject");
 		/+
 		synchronized(mSemanticProject)
 			mSemanticProject.disconnectAll();
@@ -318,7 +348,7 @@ class DMDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	extern(D) static void tryExec(void delegate() dg)
+	extern(D) static void tryExec(string dbgmsg, void delegate() dg)
 	{
 		try
 		{
@@ -330,16 +360,22 @@ class DMDServer : ComObject, IVDServer
 		}
 		catch(Exception e)
 		{
-			version(DebugServer) if(dbgfh) dbglog("UpdateModule.doParse: exception " ~ e.toString());
+			version(DebugServer) if(dbgfh) dbglog(dbgmsg ~ ": exception " ~ e.toString());
 		}
 		catch(OutOfMemoryError oom)
 		{
+			version(DebugServer) if(dbgfh) dbglog(dbgmsg ~ ": out of memory");
 			exit(33); // throw oom; // terminate
+		}
+		catch(CancelError t)
+		{
+			t.info = null;
+			version(DebugServer) if(dbgfh) dbglog(dbgmsg ~ ": " ~ t.toString());
 		}
 		catch(Throwable t)
 		{
-			version(DebugServer) if(dbgfh) dbglog("UpdateModule.doParse: error " ~ t.toString());
-			if (t.msg != "cancel malloc" && t.msg != "fatal error") // fatal() is a non-fatal error
+			version(DebugServer) if(dbgfh) dbglog(dbgmsg ~ ": error " ~ t.toString());
+			if (t.msg != "fatal error") // fatal() is a non-fatal error
 				exit(37); // terminate the server and let it be restarted
 		}
 	}
@@ -400,8 +436,6 @@ class DMDServer : ComObject, IVDServer
 
 		void doParse()
 		{
-			version(DebugServer) if(dbgfh) dbglog("    doParse: " ~ firstLine(text));
-
 			synchronized(gErrorSync)
 			{
 				modData.state = ModuleState.Parsing;
@@ -414,7 +448,7 @@ class DMDServer : ComObject, IVDServer
 			if(flags & 1)
 				writeReadyMessage();
 		}
-		version(DebugServer) if(dbgfh) dbglog("  scheduleParse: " ~ firstLine(text));
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("UpdateModule", fname) ~ firstLine(text));
 		schedule(&doParse);
 		return S_OK;
 	}
@@ -430,7 +464,7 @@ class DMDServer : ComObject, IVDServer
 				if (md.state == ModuleState.Done)
 				{
 					string err = md.parseErrors ~ md.analyzeErrors;
-					version(DebugServer) if(dbgfh) dbglog("GetParseErrors: " ~ err);
+					version(DebugServer) if(dbgfh) dbglog("  GetParseErrors: " ~ err);
 
 					*errors = allocBSTR(err);
 					return S_OK;
@@ -473,18 +507,19 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(OutOfMemoryError e)
 				{
+					version(DebugServer) if(dbgfh) dbglog("  GetTip: out of memory");
 					throw e; // terminate
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) if(dbgfh) dbglog("GetTip: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("  GetTip: exception " ~ t.toString());
 					txt = "exception: " ~ t.msg;
 				}
 			}
 			mLastTip = txt;
 			mSemanticTipRunning = false;
 		}
-		version(DebugServer) if(dbgfh) dbglog("  schedule GetTip: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetTip", fname, startLine, startIndex));
 		mSemanticTipRunning = true;
 		schedule(&_getTip);
 
@@ -499,7 +534,7 @@ class DMDServer : ComObject, IVDServer
 			return S_OK;
 		}
 
-		version(DebugServer) if(dbgfh) dbglog("GetTipResult: " ~ mLastTip);
+		version(DebugServer) if(dbgfh) dbglog("  GetTipResult: " ~ mLastTip);
 		writeReadyMessage();
 		startLine  = mTipSpan.start.line;
 		startIndex = mTipSpan.start.index;
@@ -540,17 +575,18 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(OutOfMemoryError e)
 				{
+					version(DebugServer) if(dbgfh) dbglog("  GetDefinition: out of memory");
 					throw e; // terminate
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) if(dbgfh) dbglog("GetDefinition: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("  GetDefinition: exception " ~ t.toString());
 				}
 			}
 			mLastDefFile = deffilename;
 			mSemanticDefinitionRunning = false;
 		}
-		version(DebugServer) if(dbgfh) dbglog("  schedule GetDefinition: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetDefinition", fname, startLine, startIndex));
 		mSemanticDefinitionRunning = true;
 		schedule(&_getDefinition);
 
@@ -565,7 +601,7 @@ class DMDServer : ComObject, IVDServer
 			return S_OK;
 		}
 
-		version(DebugServer) if(dbgfh) dbglog("GetDefinitionResult: " ~ mLastDefFile);
+		version(DebugServer) if(dbgfh) dbglog("  GetDefinitionResult: " ~ mLastDefFile);
 		writeReadyMessage();
 		startLine  = mDefSpan.end.line;
 		startIndex = mDefSpan.end.index - 1;
@@ -599,16 +635,17 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(OutOfMemoryError e)
 			{
+				version(DebugServer) if(dbgfh) dbglog("  GetSemanticExpansions: out of memory");
 				throw e; // terminate
 			}
 			catch(Throwable t)
 			{
-				version(DebugServer) if(dbgfh) dbglog("calcExpansions: exception " ~ t.toString());
+				version(DebugServer) if(dbgfh) dbglog("  GetSemanticExpansions: exception " ~ t.toString());
 			}
 			mSemanticExpansionsRunning = false;
 			mLastSymbols = symbols;
 		}
-		version(DebugServer) if(dbgfh) dbglog("  schedule GetSemanticExpansions: " ~ fname ~ "(" ~ to!string(line) ~ "," ~ to!string(idx) ~ "): " ~ stok);
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetSemanticExpansions", fname, line, idx) ~ stok);
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
 		schedule(&_calcExpansions);
@@ -629,7 +666,7 @@ class DMDServer : ComObject, IVDServer
 		}
 		*stringList = allocBSTR(slist.data);
 
-		version(DebugServer) if(dbgfh) dbglog("GetSemanticExpansionsResult: " ~ slist.data);
+		version(DebugServer) if(dbgfh) dbglog("  GetSemanticExpansionsResult: " ~ slist.data);
 		writeReadyMessage();
 		return S_OK;
 	}
@@ -707,10 +744,36 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetLastMessage(BSTR* message)
 	{
+		checkGCStats();
+
 		if(!mLastMessage.length)
 		{
 			if(mNextReadyMessage > Clock.currTime())
+			{
+				version(none)
+				if(!gScheduuleBusy)
+				{
+					void doAnalyze()
+					{
+
+						synchronized(gDMDSync)
+						{
+							if (Module m = analyzeInvalidatedModule(true))
+							{
+								version(DebugServer) if(dbgfh) dbglog("    doAnalyze " ~ m.srcfile.toString());
+								analyzeModule(m, lastContext.options);
+							}
+						}
+					}
+					if (Module m = analyzeInvalidatedModule(true))
+					{
+						mLastMessage = "Analyzing " ~ cast(string)m.srcfile.toString();
+						schedule(&doAnalyze);
+					}
+					
+				}
 				return S_FALSE;
+			}
 
 			mLastMessage = "Ready";
 			mNextReadyMessage = Clock.currTime().add!"years"(1);
@@ -757,17 +820,18 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(OutOfMemoryError e)
 				{
+					version(DebugServer) if(dbgfh) dbglog("  GetReferences: out of memory");
 					throw e; // terminate
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) if(dbgfh) dbglog("GetReferences: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("  GetReferences: exception " ~ t.toString());
 				}
 			}
 			mLastReferences = references;
 			mSemanticGetReferencesRunning = false;
 		}
-		version(DebugServer) if(dbgfh) dbglog("  schedule GetReferences: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetReferences", fname));
 		mSemanticGetReferencesRunning = true;
 		schedule(&_getReferences);
 
@@ -781,7 +845,7 @@ class DMDServer : ComObject, IVDServer
 			*stringList = allocBSTR("__pending__");
 			return S_OK;
 		}
-		version(DebugServer) if(dbgfh) dbglog("GetReferencesResult: " ~ firstLine(mLastReferences) ~ "...");
+		version(DebugServer) if(dbgfh) dbglog("  GetReferencesResult: " ~ firstLine(mLastReferences) ~ "...");
 		*stringList = allocBSTR(mLastReferences);
 		return S_OK;
 	}
@@ -820,19 +884,23 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(OutOfMemoryError e)
 				{
+					version(DebugServer) if(dbgfh) dbglog("  GetIdentifierTypes: out of memory");
 					throw e; // terminate
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypes: exception " ~ t.toString());
+					version(DebugServer) if(dbgfh) dbglog("  GetIdentifierTypes: exception " ~ t.toString());
 				}
 			}
 			mLastIdentifierTypes = identiferTypes;
 			mSemanticIdentifierTypesRunning = false;
 		}
-		version(DebugServer) if(dbgfh) dbglog("  schedule GetIdentifierTypes: " ~ fname);
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetIdentifierTypes", fname));
 		mSemanticIdentifierTypesRunning = true;
-		schedule(&_getIdentifierTypes);
+		if (flags & 2)
+			_getIdentifierTypes();
+		else
+			schedule(&_getIdentifierTypes);
 
 		return S_OK;
 	}
@@ -844,7 +912,7 @@ class DMDServer : ComObject, IVDServer
 			*types = allocBSTR("__pending__");
 			return S_OK;
 		}
-		version(DebugServer) if(dbgfh) dbglog("GetIdentifierTypesResult: " ~ firstLine(mLastIdentifierTypes) ~ "...");
+		version(DebugServer) if(dbgfh) dbglog("  GetIdentifierTypesResult: " ~ firstLine(mLastIdentifierTypes) ~ "...");
 		*types = allocBSTR(mLastIdentifierTypes);
 		return S_OK;
 	}
@@ -860,7 +928,7 @@ class DMDServer : ComObject, IVDServer
 			md = findModule(fname, false);
 			if (!md || !md.analyzedModule)
 			{
-				version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " not found");
+				version(DebugServer) if(dbgfh) dbglog(dbghdr("GetParameterStorageLocs", fname) ~ " not found");
 				return S_FALSE;
 			}
 		}
@@ -870,7 +938,7 @@ class DMDServer : ComObject, IVDServer
 		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, 3 * cast(ULONG) stcLoc.length);
 		if(!sa)
 		{
-			version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " out of memory (" ~ to!string(stcLoc.length) ~ " entries)");
+			version(DebugServer) if(dbgfh) dbglog(dbghdr("GetParameterStorageLocs", fname) ~ " out of memory (" ~ to!string(stcLoc.length) ~ " entries)");
 			return E_OUTOFMEMORY;
 		}
 
@@ -887,7 +955,7 @@ class DMDServer : ComObject, IVDServer
 			SafeArrayPutElement(sa, &idx, &value);
 		}
 
-		version(DebugServer) if(dbgfh) dbglog("GetParameterStorageLocs: " ~ fname ~ " OK (" ~ to!string(stcLoc.length) ~ " entries)");
+		version(DebugServer) if(dbgfh) dbglog(dbghdr("GetParameterStorageLocs", fname) ~ " OK (" ~ to!string(stcLoc.length) ~ " entries)");
 		locs.vt = VT_ARRAY | VT_INT;
 		locs.parray = sa;
 		return S_OK;
@@ -944,7 +1012,7 @@ class DMDServer : ComObject, IVDServer
 
 		if (fname)
 		{
-			tryExec(()
+			tryExec("  parseModule", ()
 			{
 				initErrorMessages(fname);
 				modData.parsedModule = createModuleFromText(fname, text);
@@ -954,7 +1022,7 @@ class DMDServer : ComObject, IVDServer
 
 		modData.state = ModuleState.Analyzing;
 
-		tryExec(()
+		tryExec("  analyzeModule", ()
 		{
 			if (modData.parsedModule)
 			{
@@ -1007,6 +1075,26 @@ private:
 		return md;
 	}
 
+	void checkGCStats()
+	{
+		version(DebugServer)
+		{
+			auto profileStats = GC.profileStats();
+			if (profileStats.numCollections == mProfileStats.numCollections)
+				return;
+
+			auto stats = GC.stats();
+
+			auto count = profileStats.numCollections - mProfileStats.numCollections;
+			auto time = profileStats.totalCollectionTime - mProfileStats.totalCollectionTime;
+			if(dbgfh)
+				dbglog("GC: " ~ to!string(count) ~ " collections took " ~ to!string(time.total!"msecs") ~ " ms, " ~
+					   "now at " ~ to!string(stats.usedSize >> 20) ~ " MB");
+
+			mProfileStats = profileStats;
+		}
+	}
+
 	version(SingleThread) Tid mTid;
 
 	Options mOptions;
@@ -1036,6 +1124,8 @@ private:
 	string mLastError;
 	bool mHadMessage;
 	SysTime mNextReadyMessage;
+
+	GC.ProfileStats mProfileStats;
 }
 
 ////////////////////////////////////////////////////////////////

@@ -173,6 +173,7 @@ public:
 	// startLine:  
 	// endLine:    results may be restricted to identifiers within this range
 	// flags:      bit 0 - resolveTypes:   resolve field/alias identifier types
+	//             bit 1 - syncExec:       no asynchronous execution
 	//
 	// this method is called once after GetParseErrors returned successfully
 	HRESULT GetIdentifierTypes(const BSTR filename, int startLine, int endLine, int flags);

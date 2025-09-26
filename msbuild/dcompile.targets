@@ -347,10 +347,7 @@
       <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '142'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '143'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' &gt;= '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
 
       <!-- LDC does not embed reference to C runtime into object files -->
       <_CRuntimeLib>@(DCompile->Metadata('CRuntimeLibrary')->Distinct()->ClearMetadata())</_CRuntimeLib>
