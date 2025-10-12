@@ -358,32 +358,32 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ d2.ico
   ${File} ..\msbuild\ di.ico
   ${File} "..\bin\${CONFIG}\" pipelink.exe
-  ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
-  ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
-  ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
+  ${File} ..\bin\dbuild\release\obj\ dbuild.12.0.dll
+  ${File} ..\bin\dbuild\release-v14\obj\ dbuild.14.0.dll
+  ${File} ..\bin\dbuild\release-v15\obj\ dbuild.15.0.dll
 !ifdef VS2019
-  ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
-  ${File} ..\msbuild\dbuild\obj\release-v16_1\ dbuild.16.1.dll
+  ${File} ..\bin\dbuild\release-v16\obj\ dbuild.16.0.dll
+  ${File} ..\bin\dbuild\release-v16_1\obj\ dbuild.16.1.dll
 !endif
 !ifdef VS2022
-  ${File} ..\msbuild\dbuild\obj\release-v17_0\ dbuild.17.0.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_1\ dbuild.17.1.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_2\ dbuild.17.2.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_3\ dbuild.17.3.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_4\ dbuild.17.4.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_5\ dbuild.17.5.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_6\ dbuild.17.6.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_7\ dbuild.17.7.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_8\ dbuild.17.8.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_9\ dbuild.17.9.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_10\ dbuild.17.10.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_11\ dbuild.17.11.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_12\ dbuild.17.12.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_13\ dbuild.17.13.dll
-  ${File} ..\msbuild\dbuild\obj\release-v17_14\ dbuild.17.14.dll
+  ${File} ..\bin\dbuild\release-v17_0\obj\ dbuild.17.0.dll
+  ${File} ..\bin\dbuild\release-v17_1\obj\ dbuild.17.1.dll
+  ${File} ..\bin\dbuild\release-v17_2\obj\ dbuild.17.2.dll
+  ${File} ..\bin\dbuild\release-v17_3\obj\ dbuild.17.3.dll
+  ${File} ..\bin\dbuild\release-v17_4\obj\ dbuild.17.4.dll
+  ${File} ..\bin\dbuild\release-v17_5\obj\ dbuild.17.5.dll
+  ${File} ..\bin\dbuild\release-v17_6\obj\ dbuild.17.6.dll
+  ${File} ..\bin\dbuild\release-v17_7\obj\ dbuild.17.7.dll
+  ${File} ..\bin\dbuild\release-v17_8\obj\ dbuild.17.8.dll
+  ${File} ..\bin\dbuild\release-v17_9\obj\ dbuild.17.9.dll
+  ${File} ..\bin\dbuild\release-v17_10\obj\ dbuild.17.10.dll
+  ${File} ..\bin\dbuild\release-v17_11\obj\ dbuild.17.11.dll
+  ${File} ..\bin\dbuild\release-v17_12\obj\ dbuild.17.12.dll
+  ${File} ..\bin\dbuild\release-v17_13\obj\ dbuild.17.13.dll
+  ${File} ..\bin\dbuild\release-v17_14\obj\ dbuild.17.14.dll
 !endif
 !ifdef VS2026
-  ${File} ..\msbuild\dbuild\obj\release-v18_0\ dbuild.18.0.dll
+  ${File} ..\bin\dbuild\release-v18_0\obj\ dbuild.18.0.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif

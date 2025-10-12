@@ -208,6 +208,7 @@
               DebugIdentifiers="%(DCompile.DebugIdentifiers)"
               ObjectFileName="%(DCompile.ObjectFileName)"
               PreserveSourcePath="%(DCompile.PreserveSourcePath)"
+              DRuntimeLibrary="%(DCompile.DRuntimeLibrary)"
               CRuntimeLibrary="%(DCompile.CRuntimeLibrary)"
               
               Profile="%(DCompile.Profile)"
@@ -344,9 +345,11 @@
     </PropertyGroup>
 
     <PropertyGroup>
-      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
+      <_DRuntimeLib>@(DCompile->Metadata('DRuntimeLibrary')->Distinct()->ClearMetadata())</_DRuntimeLib>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(_DRuntimeLib)' != 'None' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(_DRuntimeLib)' != 'None' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC' and '$(_DRuntimeLib)' != 'None' and '$(_DRuntimeLib)' != 'druntime'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC' and '$(_DRuntimeLib)' == 'druntime'">druntime-ldc.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' &gt;= '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
 
       <!-- LDC does not embed reference to C runtime into object files -->
