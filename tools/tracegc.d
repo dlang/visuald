@@ -206,7 +206,14 @@ bool validFilename(const(char)* fn)
 		r"\rt\util\container\common.d",
 		r"\rt\util\container\treap.d",
 		r"\gc\proxy.d",
+		r"\core\lifetime.d",
 		r"\core\memory.d",
+		r"\core\internal\array\appending.d",
+		r"\core\internal\array\capacity.d",
+		r"\core\internal\array\construction.d",
+		r"\core\internal\array\concatenation.d",
+		r"\core\internal\array\utils.d",
+		r"\core\internal\newaa.d",
 		r"\std\array.d",
 		r"\dmd\root\rmem.d",
 		r"\dmd\root\array.d",
@@ -289,10 +296,11 @@ class GCTraceProxy : GC
 		gc.collect();
 	}
 
-	void collectNoStack() nothrow
-	{
-		gc.collectNoStack();
-	}
+	static if(__VERSION__ < 2_111)
+		void collectNoStack() nothrow
+		{
+			gc.collectNoStack();
+		}
 
 	void minimize() nothrow
 	{
@@ -431,6 +439,39 @@ class GCTraceProxy : GC
 	{
 		return gc.allocatedInCurrentThread();
 	}
+
+	static if(__VERSION__ >= 2_111)
+	{
+		void[] getArrayUsed(void *ptr, bool atomic = false) nothrow
+		{
+			return gc.getArrayUsed(ptr, atomic);
+		}
+		bool expandArrayUsed(void[] slice, size_t newUsed, bool atomic = false) nothrow @safe
+		{
+			return gc.expandArrayUsed(slice, newUsed, atomic);
+		}
+		size_t reserveArrayCapacity(void[] slice, size_t request, bool atomic = false) nothrow @safe
+		{
+			return gc.reserveArrayCapacity(slice, request, atomic);
+		}
+		bool shrinkArrayUsed(void[] slice, size_t existingUsed, bool atomic = false) nothrow
+		{
+			return gc.shrinkArrayUsed(slice, existingUsed, atomic);
+		}
+	}
+	static if(__VERSION__ >= 2_112)
+	{
+		void initThread(ThreadBase thread) nothrow @nogc
+		{
+			gc.initThread(thread);
+		}
+
+		void cleanupThread(ThreadBase thread) nothrow @nogc
+		{
+			gc.cleanupThread(thread);
+		}
+	}
+
 	TraceBuffer traceBuffer;
 }
 
@@ -874,7 +915,7 @@ HashTab!(void*, void*) *g_references;
 HashTab!(void*, size_t) *g_objects;
 ConservativeGC g_cgc;
 
-void collectReferences(ConservativeGC cgc, bool precise,
+void collectReferences(ConservativeGC cgc, bool precise, bool withStacks,
 					   ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
 {
 	g_cgc = cgc;
@@ -1096,7 +1137,10 @@ void collectReferences(ConservativeGC cgc, bool precise,
                     break; // nothing more to do
 
                 // pop range from global stack and recurse
-                rng = toscan.pop();
+				static if(__VERSION__ < 2_111)
+					rng = toscan.pop();
+				else
+					toscan.pop(rng);
             }
             // printf("  pop [%p..%p] (%#zx)\n", p1, p2, cast(size_t)p2 - cast(size_t)p1);
             goto LcontRange;
@@ -1289,7 +1333,8 @@ void collectReferences(ConservativeGC cgc, bool precise,
 			mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
 		foreach(range; cgc.rangeIter)
 			mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
-		thread_scanAll((b, t) => mark!true(Gcx.ScanRange!true(b, t)));
+		if (withStacks)
+			thread_scanAll((b, t) => mark!true(Gcx.ScanRange!true(b, t)));
 	}
 	else
 	{
@@ -1297,7 +1342,8 @@ void collectReferences(ConservativeGC cgc, bool precise,
 			mark!false(Gcx.ScanRange!false(&root, &root + 1));
 		foreach(range; cgc.rangeIter)
 			mark!false(Gcx.ScanRange!false(range.pbot, range.ptop));
-		thread_scanAll((b, t) => mark!false(Gcx.ScanRange!false(b, t)));
+		if (withStacks)
+			thread_scanAll((b, t) => mark!false(Gcx.ScanRange!false(b, t)));
 	}
 
 	toscanConservative.clear();
@@ -1544,8 +1590,17 @@ const(char)[] dmdident(ConservativeGC cgc, void* p)
 bool isInImage(void* p)
 {
 	import core.internal.traits : externDFunc;
-	alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(string) nothrow @nogc);
-	void[] dataSection = findImageSection(".data");
+	static if(__VERSION__ < 2_111)
+	{
+		alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(string) nothrow @nogc);
+		void[] dataSection = findImageSection(".data");
+	}
+	else
+	{
+		alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(void*, string) nothrow @nogc);
+		void* handle = GetModuleHandle(null); // only executables
+		void[] dataSection = findImageSection(handle, ".data");
+	}
 
 	if (p - dataSection.ptr < dataSection.length)
 		return true;
@@ -1574,11 +1629,19 @@ const(char)[] dmdtype(ConservativeGC cgc, void* p)
 	return buf[0..len];
 }
 
+void** sobj_in_nongc_mem;
+
 void findRoot(void* sobj)
 {
 	//sobj = cast(void*)1;
 	if (!sobj)
 		return;
+	// avoid sobj been seen on the stack
+	static import core.stdc.stdlib;
+	if (!sobj_in_nongc_mem)
+		sobj_in_nongc_mem = cast(void**)core.stdc.stdlib.malloc(sobj.sizeof);
+	*sobj_in_nongc_mem = sobj;
+	sobj = null;
 
 	auto cgc = cast(ConservativeGC) tracer.gc;
 	assert(cgc);
@@ -1589,11 +1652,12 @@ void findRoot(void* sobj)
 	HashTab!(void*, void*)* preferences = &references;
 	pp_references = &preferences;
 
-	collectReferences(cgc, true, references, objects);
+	collectReferences(cgc, true, true, references, objects);
 
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;
 
+	sobj = *sobj_in_nongc_mem;
 	char[256] buf;
 nextLoc:
 	for ( ; ; )
