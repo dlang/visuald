@@ -17,6 +17,7 @@ import stdext.string;
 import stdext.path;
 
 import std.algorithm;
+import std.ascii : isAlpha;
 import std.path;
 import std.file;
 import std.string;
@@ -49,6 +50,8 @@ void getOldestNewestFileTime(string[] files, out long oldest, out long newest, o
 	foreach(file; files)
 	{
 		file = canonicalPath(file);
+		if (file.length == 6 && file[0..3] == "//./" && isAlpha(file[4]) && file[5] == ':')
+			continue; // since version 1.40, LDC produces a dependency on "\\.\c:"
 		long ftm;
 		if(auto ptm = file in gCachedFileTimes)
 			ftm = *ptm;
