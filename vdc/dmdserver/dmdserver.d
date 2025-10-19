@@ -1089,7 +1089,8 @@ private:
 			auto time = profileStats.totalCollectionTime - mProfileStats.totalCollectionTime;
 			if(dbgfh)
 				dbglog("GC: " ~ to!string(count) ~ " collections took " ~ to!string(time.total!"msecs") ~ " ms, " ~
-					   "now at " ~ to!string(stats.usedSize >> 20) ~ " MB");
+					   "now using " ~ to!string(stats.usedSize >> 20) ~ " MB, " ~
+					   to!string(stats.freeSize >> 20) ~ " MB free");
 
 			mProfileStats = profileStats;
 		}

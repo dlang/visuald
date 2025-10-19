@@ -1159,7 +1159,9 @@ class LanguageService : DisposingComObject,
 
 			string docName = toLower(file);
 			CHierNode node = searchNode(cfg.GetProject().GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
-			if (auto pFile = cast(CFileNode) node)
+			if (auto vccfg = cast(VCConfig)cfg)
+				cmdline = vccfg.mCmdLine;
+			else if (auto pFile = cast(CFileNode) node)
 			{
 				cmdline = cfgopts.buildCommandLine(cfg, true, false, null, true);
 				if (cfgopts.additionalOptions.length)

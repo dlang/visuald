@@ -93,6 +93,26 @@ private void dbglog(string s)
 	}
 	writeToBuildOutputPane(cast(string)(strtm[0..len] ~ firstLine(s) ~ "\n"), false);
 }
+
+void checkGCStats()
+{
+	import core.memory;
+	static GC.ProfileStats mProfileStats;
+	auto profileStats = GC.profileStats();
+	if (profileStats.numCollections == mProfileStats.numCollections)
+		return;
+
+	auto stats = GC.stats();
+
+	auto count = profileStats.numCollections - mProfileStats.numCollections;
+	auto time = profileStats.totalCollectionTime - mProfileStats.totalCollectionTime;
+	dbglog("GC: " ~ to!string(count) ~ " collections took " ~ to!string(time.total!"msecs") ~ " ms, " ~
+			"now using " ~ to!string(stats.usedSize >> 20) ~ " MB, " ~
+			to!string(stats.freeSize >> 20) ~ " MB free");
+
+	mProfileStats = profileStats;
+}
+
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1122,6 +1142,8 @@ class VDServerClient
 				}
 			))
 			{
+				version(DebugCmd) if (dbglog_enabled)
+					checkGCStats();
 			}
 		}
 		catch(Throwable e)

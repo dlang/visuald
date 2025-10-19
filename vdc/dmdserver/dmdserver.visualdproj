@@ -298,7 +298,7 @@
   <nofloat>0</nofloat>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
+  <stackStomp>1</stackStomp>
   <betterC>0</betterC>
   <dip25>0</dip25>
   <dip1000>0</dip1000>
@@ -1432,7 +1432,7 @@
   <nofloat>0</nofloat>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
+  <stackStomp>1</stackStomp>
   <betterC>0</betterC>
   <dip25>0</dip25>
   <dip1000>0</dip1000>

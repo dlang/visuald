@@ -123,8 +123,12 @@
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Release">
@@ -250,8 +254,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Release COFF32">
@@ -377,8 +385,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Debug COFF32">
@@ -504,8 +516,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="TestDebug">
@@ -631,8 +647,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Release LDC">
@@ -758,8 +778,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Debug">
@@ -885,8 +909,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Release">
@@ -1012,8 +1040,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Release COFF32">
@@ -1139,8 +1171,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Debug COFF32">
@@ -1266,8 +1302,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="TestDebug">
@@ -1393,8 +1433,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Release LDC">
@@ -1520,8 +1564,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Debug LDC ARM">
@@ -1647,8 +1695,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Debug LDC ARM">
@@ -1774,8 +1826,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Debug LDC">
@@ -1901,8 +1957,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="x64" name="Debug LDC">
@@ -2028,8 +2088,12 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
-echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <postBuildCommand>
+echo $(ProjectDir)\sdk.bat &gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\sdk_libs.bat &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo $(ProjectDir)\build.visualdproj &gt;&gt;&quot;$(TargetDir)\build.dep&quot;
+echo Success &gt;&quot;$(TargetPath)&quot;
+ </postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="build">

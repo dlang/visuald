@@ -67,6 +67,7 @@ namespace dbuild
             this.switchOrderList.Add("ObjectFileName");
             this.switchOrderList.Add("PreserveSourcePath");
             this.switchOrderList.Add("CRuntimeLibrary");
+            this.switchOrderList.Add("DRuntimeLibrary");
 
             this.switchOrderList.Add("Profile");
             this.switchOrderList.Add("ProfileGC");
@@ -275,6 +276,24 @@ namespace dbuild
 
                 SetEnumProperty("CRuntimeLibrary", "C Runtime Library",
                                 "Link against the static/dynamic debug/release C runtime library.",
+                                switchMap, value);
+            }
+        }
+
+        public string DRuntimeLibrary
+        {
+            get { return GetStringProperty("DRuntimeLibrary"); }
+            set
+            {
+                string[][] switchMap = new string[3][]
+                {
+                    new string[2] { "None", "-defaultlib=" },
+                    new string[2] { "Druntime", "-defaultlib=druntime-ldc" },
+                    new string[2] { "Phobos", "" },
+                };
+
+                SetEnumProperty("DRuntimeLibrary", "D Runtime Library",
+                                "Link against the D runtime library.",
                                 switchMap, value);
             }
         }

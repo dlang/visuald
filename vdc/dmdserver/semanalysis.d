@@ -131,6 +131,13 @@ void reinitSemanticModules()
 	// clear existing semantically analyzed modules
 	foreach(ref mi; lastContext.modules)
 		mi.semanticModule = null;
+
+	// the grow policy in the GC seems to be bad for our use case, it grows indefinitly.
+	// so run GC now as the all semantic data should be unreferenced
+	import core.memory;
+	auto stats = GC.stats();
+	if (stats.usedSize > stats.freeSize)
+		GC.collect();
 }
 
 alias Mod = void*;
@@ -555,23 +562,12 @@ unittest
 		import core.memory;
 		import std.stdio;
 		GC.collect();
-		writeln(GC.stats);
+		writeGCStats();
 		dumpGC();
 
 		do_unittests();
 
-		writeln(GC.stats);
-
-		lastContext = null;
-		dmdInit();
-		dmdReinit();
-
-		wipeStack();
-		GC.collect();
-		auto stats = GC.stats;
-		writeln(stats);
-		//if (stats.usedSize > 2_000_000)
-			dumpGC();
+		check_leaks();
 	}
 	else
 		do_unittests();
@@ -2400,23 +2396,34 @@ unittest
 	checkOutline(source, 3, expected);
 }
 
-void check_leaks()
+void writeGCStats()
 {
 	import core.memory;
 	import std.stdio;
+	auto stats = GC.stats;
+	writeln("GC: ", stats.usedSize >> 20, " MB used, ", stats.freeSize >> 20, " MB free");
+}
 
-	//mModules = null;
-	lastContext = null;
-	Module.loadModuleHandler = null;
-	dmdInit();
-	dmdReinit();
+void check_leaks()
+{
+	import core.memory;
+
+	version(none)
+	{
+		//mModules = null;
+		lastContext = null;
+		Module.loadModuleHandler = null;
+		dmdInit();
+		dmdReinit();
+	}
+	else
+		reinitSemanticModules();
 
 	version(traceGC)
 		wipeStack();
 	GC.collect();
 
-	auto stats = GC.stats;
-	writeln(stats);
+	writeGCStats();
 	version(traceGC)
 		dumpGC();
 }
@@ -2468,12 +2475,13 @@ void test_ana_dmd()
 		}
 	}
 
+	version(none)
+	{
 	version(traceGC)
 	{
 		import core.memory;
-		import std.stdio;
 		GC.collect();
-		writeln(GC.stats);
+		writeGCstats();
 		dumpGC();
 	}
 
@@ -2484,6 +2492,7 @@ void test_ana_dmd()
 		Module m = checkErrors(src, "");
 	}
 	test_file(std.path.buildPath(srcdir, r"..\test\runnable\testaa2.d"));
+	}
 
 	void test_sem()
 	{
@@ -2504,17 +2513,17 @@ void test_ana_dmd()
 			else
 				m = checkErrors(source, "");
 
-			version(traceGC)
+			m = null;
+			version(no_traceGC)
 			{
-				m = null;
 				check_leaks();
 			}
 			else
 			{
-				import std.stdio;
-				if ((i % 10) == 0)
-					GC.collect();
-				writeln(GC.stats);
+				if ((i % 4) == 0)
+					check_leaks();
+					// GC.collect();
+				writeGCStats();
 			}
 		}
 
@@ -2527,8 +2536,7 @@ void test_ana_dmd()
 			version(traceGC)
 			{
 				GC.collect();
-				auto stats = GC.stats;
-				writeln(stats);
+				writeGCStats();
 			}
 		}
 	}
@@ -2550,18 +2558,19 @@ void test_ana_dmd()
 			{
 				//GC.collect();
 				auto stats = GC.stats;
-				writeln(stats);
+				writeGCStats();
 				if (stats.usedSize > 200_000_000)
 				{
 					m = null;
 					check_leaks();
 					auto nstats = GC.stats();
+					import core.stdc.stdio;
 					printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
 				}
 			}
 		}
 		version(traceGC)
-			writeln(GC.stats);
+			writeGCStats();
 	}
 	test_leaks();
 

@@ -65,6 +65,15 @@
     <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
+    <EnumProperty Name="DRuntimeLibrary" Category="General" DisplayName="D Runtime Library" IncludeInCommandLine="true"
+                  Description="Link against the given D runtime library. druntime only (without phobos) is only available for LDC.">
+      <EnumValue Name="None" DisplayName="None" Switch="-defaultlib="
+                 Description="Don't force a specific D run-time library. The library must be explicitly passed to the linker." />
+      <EnumValue Name="Druntime" DisplayName="D Runtime" Switch="-defaultlib=druntime-ldc"
+                 Description="Causes your application to only use the core D runtime." />
+      <EnumValue Name="Phobos" DisplayName="Phobos (default)" Switch=""
+                 Description="Causes your application to use the full standard D runtime." />
+    </EnumProperty>
     <EnumProperty Name="CRuntimeLibrary" Category="General" DisplayName="C Runtime Library" IncludeInCommandLine="true"
                   Description="Link against the static/dynamic debug/release C runtime library.">
       <EnumValue Name="None" DisplayName="None" Switch="-mscrtlib="

@@ -45,7 +45,8 @@ namespace dbuild
         public string[] ImportCDefines { get { return opts.ImportCDefines; } set { opts.ImportCDefines = value; } }
         public string ObjectFileName { get { return opts.ObjectFileName; } set { opts.ObjectFileName = value; } }
 		public bool PreserveSourcePath { get { return opts.PreserveSourcePath; } set { opts.PreserveSourcePath = value; } }
-		public string CRuntimeLibrary { get { return opts.CRuntimeLibrary; } set { opts.CRuntimeLibrary = value; } }
+        public string CRuntimeLibrary { get { return opts.CRuntimeLibrary; } set { opts.CRuntimeLibrary = value; } }
+        public string DRuntimeLibrary { get { return opts.DRuntimeLibrary; } set { opts.DRuntimeLibrary = value; } }
 		public bool Profile { get { return opts.Profile; } set { opts.Profile = value; } }
 		public bool ProfileGC { get { return opts.ProfileGC; } set { opts.ProfileGC = value; } }
 		public bool Coverage { get { return opts.Coverage; } set { opts.Coverage = value; } }
