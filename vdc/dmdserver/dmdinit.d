@@ -205,7 +205,7 @@ void dmdInit()
 	version(CRuntime_Microsoft)
 		initFPU();
 
-	target.os = Target.OS.Windows;
+	setTargetBuildDefaults(target);
 	global._init();
 	//Token._init();
 	Id.initialize();
@@ -303,6 +303,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.v.color = false;
 //	global.params.link = true;
 	global.params.useUnitTests = opts.unittestOn;
+	global.params.debugEnabled = opts.debugOn;
 	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useInvariants = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useIn = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
@@ -342,9 +343,9 @@ void dmdSetupParams(const ref Options opts)
 			// case "-d": // already covered by flags
 			// case "-de":
 			// case "-release":
-			// case "-debug":
 			// case "-w":
 			// case "-wi":
+			case "-debug": global.params.debugEnabled = opts.debugOn; break;
 			// case "-property": global.params.checkProperty = true; break;
 			case "-betterC": global.params.betterC = true; break;
 			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
@@ -495,6 +496,8 @@ void dmdSetupCompileEnv()
 void dmdReinit()
 {
 	// Dsymbol.deinitialize();
+	target.deinitialize();
+	setTargetBuildDefaults(target);
 	target._init(global.params); // needed by Type._init
 	Type._reinit();
 
