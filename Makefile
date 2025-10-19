@@ -81,7 +81,7 @@ dmdserver_test:
 	devenv /Project "dmdserver" /Build "TestDebug|x64" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5.2 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5.2 /p:DefineConstants=NET40 $(MSBUILD_REBUILD)
 	editbin /STACK:0x800000 bin\Release\DParserCOMServer\DParserCOMServer.exe
 
 dparser_test:
@@ -94,18 +94,20 @@ fake_dparser:
 	if not exist bin\Release\DParserCOMServer\DParserCOMServer.exe echo dummy >bin\Release\DParserCOMServer\DParserCOMServer.exe
 	if not exist bin\Release\DParserCOMServer\D_Parser.dll echo dummy >bin\Release\DParserCOMServer\D_Parser.dll
 
+MSBUILD_REBUILD = /verbosity:quiet /t:Rebuild
+
 vdextension:
-	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 vdext15:
-	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 visualdwizard:
-	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
+	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild12:
 #	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\nul md msbuild\dbuild\obj\release
@@ -114,7 +116,7 @@ fake_dbuild12:
 
 dbuild14:
 #	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v14;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v14;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\nul md msbuild\dbuild\obj\release-v14
@@ -123,7 +125,7 @@ fake_dbuild14:
 
 dbuild15:
 #	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v15;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v15;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
@@ -132,65 +134,65 @@ fake_dbuild15:
 
 dbuild16:
 #	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild16_1:
 #	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16_1;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16_1;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_0:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_0;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_0;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_1:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_1;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_1;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_2:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_2;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_2;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_3:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_3;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_3;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_4:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_4;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_4;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_5:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_5;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_5;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_6:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_6;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_6;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_7:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_7;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_7;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_8:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_8;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_8;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_9:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_9;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_9;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_10:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_10;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_10;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_11:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_11;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_11;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_12:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_12;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_12;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_13:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_13;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_13;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_14:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_14;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17_14;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild17_all: dbuild17_0 dbuild17_1 dbuild17_2 dbuild17_3 dbuild17_4 dbuild17_5 dbuild17_6 dbuild17_7 \
               dbuild17_8 dbuild17_9 dbuild17_10 dbuild17_11 dbuild17_12 dbuild17_13 dbuild17_14
 
 dbuild18_0:
-	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v18_0;Platform=AnyCPU /t:Rebuild
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v18_0;Platform=AnyCPU $(MSBUILD_REBUILD)
 
 dbuild18_all: dbuild18_0
 
