@@ -60,7 +60,7 @@ public:
 			return true;
 		scope(exit) release(srpIVsTrackProjectDocuments2);
 
-		IVsProject pIVsProject = cast(IVsProject) mHierarchy;
+		IVsProject pIVsProject = qi_cast!IVsProject(mHierarchy);
 		assert(pIVsProject);
 
 		VSQUERYADDFILERESULTS fSummaryResult = VSQUERYADDFILERESULTS_AddOK;
@@ -85,7 +85,7 @@ public:
 			return;
 		scope(exit) release(srpIVsTrackProjectDocuments2);
 
-		IVsProject pIVsProject = cast(IVsProject) mHierarchy;
+		IVsProject pIVsProject = qi_cast!IVsProject(mHierarchy);
 		assert(pIVsProject);
 
 		ScopedBSTR cbstrMkDokument;
