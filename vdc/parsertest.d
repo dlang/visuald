@@ -310,12 +310,12 @@ int[] ctfeLexer(string s)
 {
 	Lexer lex;
 	int state;
-	size_t pos;
+	pos_t pos;
 	
 	int[] ids;
 	while(pos < s.length)
 	{
-		size_t prevpos = pos;
+		pos_t prevpos = pos;
 		int id;
 		int type = lex.scan(state, s, pos, id);
 		assert(prevpos < pos);

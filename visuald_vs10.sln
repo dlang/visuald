@@ -31,6 +31,9 @@ EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi2d", "c2d\vsi2d.visualdproj", "{8760F45A-69D9-4B68-BE63-0E055B51D447}"
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "parser", "vdc\parser.visualdproj", "{FE3A959D-6CFA-43BF-8637-62125B571770}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D} = {2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}
+	EndProjectSection
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "stdext", "stdext\stdext.visualdproj", "{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}"
 	ProjectSection(ProjectDependencies) = postProject

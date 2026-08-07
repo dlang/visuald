@@ -729,7 +729,7 @@ class Parser
 		lineno = 1;
 		size_t linepos = 0; // position after last line break
 		int tokid;
-		for(size_t pos = 0; pos < text.length && !abort; )
+		for(pos_t pos = 0; pos < text.length && !abort; )
 		{
 			int prevlineno = lineno;
 			size_t prevlinepos = linepos;
