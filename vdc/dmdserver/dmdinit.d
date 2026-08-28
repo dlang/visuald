@@ -52,7 +52,8 @@ alias countersType = uint[uint]; // actually uint[Key]
 alias EscapeInfer = RootObject[int];
 enum uint_1 : uint { initValue = 1 }
 
-enum build_for_version = "2.113";
+enum build_for_version = import("VERSION")[1..$]; // skip "v"
+pragma(msg, "Building for ", build_for_version);
 
 string select_by_version(string[] sel...)
 {

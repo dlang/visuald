@@ -209,8 +209,10 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(TraitsExp te)
 	{
+		import vdc.dmdserver.dmdinit;
 		visitArgs(te.args);
-		visitArgs(te.parsedArgs);
+		if (build_for_version >= "2.113")
+			visitArgs(te.parsedArgs);
 
 		super.visit(te);
 	}
