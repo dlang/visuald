@@ -31,11 +31,16 @@
 ; !define DMD 
 !define DMD_VERSION "2.112.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
+!define DMD_ZIP dmd.${DMD_VERSION}.windows.7z
 
 ; define LDC to include ldc installation
 ; !define LDC
 !define LDC_VERSION "1.42.0"
-!define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
+!define LDC_BASE ldc2-${LDC_VERSION}-windows-multilib
+!define LDC_SRC c:\d\${LDC_BASE}
+!define LDC_ZIP ${LDC_BASE}.7z
+
+!define DOWNLOADS c:\d\Downloads
 
 ; define VS2019 to include VS2019 support
 ; !define VS2019
@@ -128,8 +133,12 @@
 !endif
   OutFile "..\..\downloads\${APPNAME}-v${VERSION}${OUT_SUFFIX}.exe"
 
-  SetCompressor /solid lzma
+  SetDatablockOptimize off
 !ifdef DMD
+  SetCompressor /solid lzma
+  SetCompressorDictSize 112
+!else
+  SetCompressor /solid lzma
   SetCompressorDictSize 112
 !endif
 
@@ -434,6 +443,22 @@ ${MementoSection} "Install DMD" SecDMD
   ; not using ${File} to keep compiler even if Visual D uninstalled
 
   !define DmdBaseDir "$CompilerInstallDir\dmd-${DMD_VERSION}"
+!ifdef DMD_ZIP
+  ; the 7z contains the dmd2 sub directory
+  ${SetOutPath} "$CompilerInstallDir\Downloads"
+  File ${DOWNLOADS}\${DMD_ZIP}
+  ${SetOutPath} "${DmdBaseDir}.tmp"
+  nsExec::ExecToLog '"$INSTDIR\7z\7za.exe" x "$CompilerInstallDir\Downloads\${DMD_ZIP}" -y -o"${DmdBaseDir}.tmp"'
+  Pop $0
+
+  ${If} $0 != 0
+      MessageBox MB_ICONSTOP 'Failed to extract DMD.$\r$\n"$INSTDIR\7z\7za.exe" x "$CompilerInstallDir\Downloads ${DMD_ZIP}" -y -o"${DmdBaseDir}.tmp"$\r$\nError code: $0'
+      Abort
+  ${EndIf}
+  ${SetOutPath} "$CompilerInstallDir"
+  Rename "${DmdBaseDir}.tmp\dmd2" "${DmdBaseDir}"
+  RMDir "${DmdBaseDir}.tmp"
+!else
   ${SetOutPath} "${DmdBaseDir}"
   File /r ${DMD_SRC}\html
   ;File /r ${DMD_SRC}\samples
@@ -441,6 +466,7 @@ ${MementoSection} "Install DMD" SecDMD
   File /r ${DMD_SRC}\windows
   File ${DMD_SRC}\license.txt
   File ${DMD_SRC}\readme.txt
+!endif
 
   WriteRegStr HKLM "Software\${APPNAME}" "DMDInstallDir" ${DmdBaseDir}
 
@@ -453,7 +479,20 @@ ${MementoSection} "Install LDC" SecLDC
 
   ; not using ${File} to keep compiler even if Visual D uninstalled
 
-  !define LdcBaseDir "$CompilerInstallDir\ldc2-${LDC_VERSION}-windows-multilib"
+  !define LdcBaseDir "$CompilerInstallDir\${LDC_BASE}"
+!ifdef LDC_ZIP
+  ; the 7z contains the ${LDC_BASE} sub directory
+  ${SetOutPath} "$CompilerInstallDir\Downloads"
+  File ${DOWNLOADS}\${LDC_ZIP}
+  ${SetOutPath} "${LdcBaseDir}"
+  nsExec::ExecToLog '"$INSTDIR\7z\7za.exe" x "$CompilerInstallDir\Downloads\${LDC_ZIP}" -y -o"$CompilerInstallDir"'
+  Pop $0
+
+  ${If} $0 != 0
+    MessageBox MB_ICONSTOP 'Failed to extract LDC.$\r$\n"$INSTDIR\7z\7za.exe" x "$CompilerInstallDir\Downloads\${LDC_ZIP}" -y -o"$CompilerInstallDir"$\r$\nError code: $0'
+    Abort
+  ${EndIf}
+!else
   ${SetOutPath} "${LdcBaseDir}"
   File /r ${LDC_SRC}\bin
   File /r ${LDC_SRC}\etc
@@ -461,7 +500,8 @@ ${MementoSection} "Install LDC" SecLDC
   File /r ${LDC_SRC}\lib32
   File /r ${LDC_SRC}\lib64
   File ${LDC_SRC}\*.*
-  WriteRegStr HKLM "Software\${APPNAME}" "LDCInstallDir" ${LdcBaseDir}
+!endif
+  WriteRegStr HKLM "Software\${APPNAME}" "LDCInstallDir" "${LdcBaseDir}"
 
 ${MementoSectionEnd}
 !endif

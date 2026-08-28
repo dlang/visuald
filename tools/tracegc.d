@@ -294,6 +294,7 @@ class GCTraceProxy : GC
 	void collect() nothrow
 	{
 		gc.collect();
+		tracer.traceBuffer.removeOldEntries();
 	}
 
 	static if(__VERSION__ < 2_109)
@@ -563,7 +564,7 @@ nothrow:
 		return null;
 	}
 
-	AddrTracePair[] createTraceMap()
+	AddrTracePair[] createTraceMap(bool clearOld)
 	{
 		size_t n = numEntries();
 		if (!n)
@@ -580,10 +581,18 @@ nothrow:
 		foreach_reverse (ref rng; _p[0.._length])
 			foreach_reverse (ref te; rng._entries[0..rng._length])
 			{
+				if (!te.addr)
+					continue;
 				// insert with quadratic probing
 				size_t k = addrHash(te.addr, n - 1);
-				for (size_t j = 1; arr[k].addr !is te.addr; j++)
+				for (size_t j = 1; ; j++)
 				{
+					if (arr[k].addr is te.addr)
+					{
+						if (clearOld)
+							arr[k].entry.addr = null;
+						break;
+					}
 					if (arr[k].addr is null)
 					{
 						arr[k].addr = te.addr;
@@ -617,18 +626,30 @@ nothrow:
 		return arr[k].entry;
 	}
 
+	enum entriesPerRange = 64 * 1024; // Windows VirtualAlloc granularity
+
 	void newRange()
 	{
 		if (_length == _cap)
 			grow();
 
-		enum entriesPerRange = 64 * 1024; // Windows VirtualAlloc granularity
-		_p[_length]._entries = cast(TraceEntry*)os_mem_map(entriesPerRange * TraceEntry.sizeof);
+		if (_p[_length]._entries is null)
+			_p[_length]._entries = cast(TraceEntry*)os_mem_map(entriesPerRange * TraceEntry.sizeof);
 		_p[_length]._capacity = entriesPerRange;
 		_p[_length]._length = 0;
 		if (_p[_length]._entries is null)
 			onOutOfMemoryErrorNoGC();
 		_length++;
+	}
+
+	TraceEntry* getEntry(size_t idx)
+	{
+		for (size_t r = 0; r < _length; r++)
+			if (idx < _p[r]._length)
+				return &_p[r]._entries[idx];
+			else
+				idx -= _p[r]._length;
+		return null;
 	}
 
 	size_t numEntries()
@@ -647,6 +668,39 @@ nothrow:
 		return sum;
 	}
 
+	size_t removeOldEntries()
+	{
+		size_t num = numEntries();
+		if (num < 2)
+			return 0;
+		deleteTraceMap(createTraceMap(true));
+		size_t cnt = 0;
+		size_t rdr = 0, rdi = 0;
+		size_t wrr = 0, wri = 0;
+		while (rdr < _length)
+		{
+			if (_p[rdr]._entries[rdi].addr)
+			{
+				_p[wrr]._entries[wri] = _p[rdr]._entries[rdi];
+				if (++wri >= _p[wrr]._length)
+				{
+					wri = 0;
+					while (++wrr < _length && wri >= _p[wrr]._length) {}
+				}
+			}
+			else
+				cnt++;
+			if (++rdi >= _p[rdr]._length)
+			{
+				rdi = 0;
+				while (++rdr < _length && rdi >= _p[rdr]._length) {}
+			}
+		}
+		_p[wrr]._length = wri;
+		_length = wrr + 1;
+		return cnt;
+	}
+
 private:
 	void grow()
 	{
@@ -657,6 +711,7 @@ private:
 			onOutOfMemoryErrorNoGC();
 
 		p[0 .. _length] = _p[0 .. _length];
+		p[_length .. ncap] = Range.init;
 		os_mem_unmap(_p, _cap * Range.sizeof);
 
 		_p = p;
@@ -1398,7 +1453,7 @@ void dumpGC(GC _gc)
 
 	trace_printf("GC stats: %lld used, %lld free\n", cast(long)stats.usedSize, cast(long)stats.freeSize);
 
-	AddrTracePair[] traceMap = tracer.traceBuffer.createTraceMap();
+	AddrTracePair[] traceMap = tracer.traceBuffer.createTraceMap(false);
 	memset(addrInfoStat.ptr, 0, addrInfoStat.sizeof);
 
 	thread_suspendAll();
@@ -1788,7 +1843,19 @@ private __gshared bool hadNewline = false;
 int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
 {
     if (!gcx_fh)
-        gcx_fh = fopen("tracegc.log", "w");
+	{
+		version(LanguageServer)
+		{
+			import core.sys.windows.winbase;
+			uint pid = GetCurrentProcessId();
+			char[260] tpath;
+			auto len = GetTempPathA(260, tpath.ptr);
+			sprintf(tpath.ptr + len, "dmdserver\\tracegc-%d.log", pid);
+			gcx_fh = fopen(tpath.ptr, "w");
+		}
+		else
+			gcx_fh = fopen("tracegc.log", "w");
+	}
     if (!gcx_fh)
         return 0;
 

@@ -51,7 +51,7 @@ class Setting
         group,
     }
 
-    this(string name, Type type)
+    this(string name, Type type) pure
     {
         _name = name;
         _type = type;
@@ -91,10 +91,11 @@ class ScalarSetting : Setting
 
 class ArraySetting : Setting
 {
-    this(string name, string[] vals)
+    this(string name, string[] vals, bool isAppending)
     {
         super(name, Type.array);
         _vals = vals;
+        _isAppending = isAppending;
     }
 
     @property const(string)[] vals() const
@@ -102,7 +103,13 @@ class ArraySetting : Setting
         return _vals;
     }
 
+    @property bool isAppending() const
+    {
+        return _isAppending;
+    }
+
     private string[] _vals;
+    private bool _isAppending;
 }
 
 class GroupSetting : Setting
@@ -175,7 +182,7 @@ EBNF grammar.
 It is a subset of the libconfig grammar (http://www.hyperrealm.com/libconfig).
 
 config  =   { ows , setting } , ows ;
-setting =   (name | string) , (":" | "=") , value , [";" | ","] ;
+setting =   (name | string) , (":" | "=" | "~=") , value , [";" | ","] ;
 name    =   alpha , { alpha | digit | "_" | "-" } ;
 value   =   string | array | group ;
 array   =   "[" , ows ,
@@ -214,6 +221,7 @@ enum Token
 {
     name,
     assign,         // ':' or '='
+    appendAssign,   // '~='
     str,
     lbrace,         // '{'
     rbrace,         // '}'
@@ -229,17 +237,18 @@ string humanReadableToken(in Token tok)
 {
     final switch(tok)
     {
-    case Token.name:        return `"name"`;
-    case Token.assign:      return `':' or '='`;
-    case Token.str:         return `"string"`;
-    case Token.lbrace:      return `'{'`;
-    case Token.rbrace:      return `'}'`;
-    case Token.lbracket:    return `'['`;
-    case Token.rbracket:    return `']'`;
-    case Token.semicolon:   return `';'`;
-    case Token.comma:       return `','`;
-    case Token.unknown:     return `"unknown token"`;
-    case Token.eof:         return `"end of file"`;
+    case Token.name:           return `"name"`;
+    case Token.assign:         return `':' or '='`;
+    case Token.appendAssign:   return `'~='`;
+    case Token.str:            return `"string"`;
+    case Token.lbrace:         return `'{'`;
+    case Token.rbrace:         return `'}'`;
+    case Token.lbracket:       return `'['`;
+    case Token.rbracket:       return `']'`;
+    case Token.semicolon:      return `';'`;
+    case Token.comma:          return `','`;
+    case Token.unknown:        return `"unknown token"`;
+    case Token.eof:            return `"end of file"`;
     }
 }
 
@@ -268,11 +277,14 @@ struct Parser
 
     void error(in string msg)
     {
-        enum fmt = "Error while reading config file: %.*s\nline %d: %.*s";
-        char[1024] buf;
-        auto len = snprintf(buf.ptr, cast(int)buf.length, fmt, cast(int)filename.length,
-                            filename.ptr, lineNum, cast(int)msg.length, msg.ptr);
-        throw new Exception(buf[0 .. len].idup);
+        error(msg, lineNum);
+    }
+
+    void error(in string msg, int lineNum)
+    {
+        char[20] buf = void;
+        auto len = snprintf(buf.ptr, buf.length, "line %d: ", lineNum);
+        throw new Exception((cast(string) buf[0 .. len]) ~ msg);
     }
 
     char getChar()
@@ -315,6 +327,19 @@ struct Parser
             }
             while (lastChar != '\n' && lastChar != '\0');
             return getTok(outStr);
+        }
+
+        if (lastChar == '~')
+        {
+            lastChar = getChar();
+            if (lastChar != '=')
+            {
+                outStr = "~";
+                return Token.unknown;
+            }
+
+            lastChar = getChar();
+            return Token.appendAssign;
         }
 
         if (isalpha(lastChar))
@@ -452,17 +477,6 @@ struct Parser
               ". Got " ~ humanReadableToken(tok) ~ s ~ " instead.");
     }
 
-    string accept(in Token expected)
-    {
-        string s;
-        immutable tok = getTok(s);
-        if (tok != expected)
-        {
-            unexpectedTokenError(tok, expected, s);
-        }
-        return s;
-    }
-
     Setting[] parseConfig()
     {
         Setting[] res;
@@ -492,11 +506,29 @@ struct Parser
             assert(false);
         }
 
-        accept(Token.assign);
-
-        Setting res = parseValue(name);
-
         string s;
+        t = getTok(s);
+        if (t != Token.assign && t != Token.appendAssign)
+        {
+            auto msg = "Expected either"
+                ~ " token " ~ humanReadableToken(Token.assign)
+                ~ " or token " ~ humanReadableToken(Token.appendAssign)
+                ~ " but got: " ~ humanReadableToken(t)
+                ~ ' ' ~ (s.length ? '(' ~ s ~ ')' : s);
+            error(msg);
+        }
+        // This is off by +1 if `t` is followed by \n
+        const assignLineNum = lineNum;
+
+        Setting res = parseValue(name, t);
+        if (t == Token.appendAssign)
+        {
+            if (res.type == Setting.Type.scalar)
+                error(humanReadableToken(t) ~ " is not supported with scalar values", assignLineNum);
+            if (res.type == Setting.Type.group)
+                error(humanReadableToken(t) ~ " is not supported with groups", assignLineNum);
+        }
+
         t = getTok(s);
         if (t != Token.semicolon && t != Token.comma)
         {
@@ -506,8 +538,10 @@ struct Parser
         return res;
     }
 
-    Setting parseValue(string name)
+    Setting parseValue(string name, Token tAssign = Token.assign)
     {
+        assert(tAssign == Token.assign || tAssign == Token.appendAssign);
+
         string s;
         auto t = getTok(s);
         if (t == Token.str)
@@ -516,6 +550,7 @@ struct Parser
         }
         else if (t == Token.lbracket)
         {
+            const isAppending = tAssign == Token.appendAssign;
             string[] arrVal;
             while (1)
             {
@@ -527,7 +562,7 @@ struct Parser
                     arrVal ~= s;
                     break;
                 case Token.rbracket:
-                    return new ArraySetting(name, arrVal);
+                    return new ArraySetting(name, arrVal, isAppending);
                 default:
                     unexpectedTokenError(t, Token.str, s);
                     assert(false);
@@ -540,7 +575,7 @@ struct Parser
                 case Token.comma:
                     break;
                 case Token.rbracket:
-                    return new ArraySetting(name, arrVal);
+                    return new ArraySetting(name, arrVal, isAppending);
                 default:
                     unexpectedTokenError(t, Token.comma, s);
                     assert(false);
@@ -620,6 +655,8 @@ group-1_2: {};
     scalar = "abc";
     // comment
     Array_1-2 = [ "a" ];
+
+    AppArray ~= [ "x" ]; // appending array
 };
 `;
 
@@ -633,7 +670,7 @@ group-1_2: {};
     assert(settings[1].name == "86(_64)?-.*linux\\.?");
     assert(settings[1].type == Setting.Type.group);
     auto group2 = cast(GroupSetting) settings[1];
-    assert(group2.children.length == 2);
+    assert(group2.children.length == 3);
 
     assert(group2.children[0].name == "scalar");
     assert(group2.children[0].type == Setting.Type.scalar);
@@ -642,4 +679,10 @@ group-1_2: {};
     assert(group2.children[1].name == "Array_1-2");
     assert(group2.children[1].type == Setting.Type.array);
     assert((cast(ArraySetting) group2.children[1]).vals == [ "a" ]);
+    assert((cast(ArraySetting) group2.children[1]).isAppending == false);
+
+    assert(group2.children[2].name == "AppArray");
+    assert(group2.children[2].type == Setting.Type.array);
+    assert((cast(ArraySetting) group2.children[2]).vals == [ "x" ]);
+    assert((cast(ArraySetting) group2.children[2]).isAppending == true);
 }

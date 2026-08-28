@@ -141,7 +141,7 @@ void reinitSemanticModules()
 		GC.collect();
 		version(traceGC)
 		{
-			bool dump = false; // to be modified in the debugger
+			__gshared bool dump = false; // to be modified in the debugger
 			if (dump)
 				dumpGC();
 		}
@@ -2415,11 +2415,11 @@ void do_unittests()
 				T[n] payload;
 			}
 		}
-		version(VisualDServer) Templ!(int, 3) a;
+		version(VisualDServer) private Templ!(int, 3) _example;
 	};
 	m = checkErrors(source, "");
 
-	checkTip(tmpl_m, 6, 10, "(field) `int[3] payload`");
+	checkTip(m, 6, 10, "(field) `int[3] source.Templ!(int, 3).payload`");
 
 	m = null;
 }
