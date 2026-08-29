@@ -78,8 +78,12 @@ enum string[2][] dmdStatics =
 	// ["_D3dmd7dmodule6Module11loadStdMathFZ8std_mathCQBsQBrQBm", "Module"],
 	// ["_D3dmd7dmodule6Module14loadCoreAtomicFZ11core_atomicCQBzQByQBt", "Module"],
 	// 2.112
-	["_D3dmd10dsymbolsem11loadStdMathFZ8std_mathCQBp7dmodule6Module", "Module"],
-	["_D3dmd10dsymbolsem14loadCoreAtomicFZ11core_atomicCQBw7dmodule6Module", "Module"],
+	[sbv("",        "_D3dmd10dsymbolsem11loadStdMathFZ8std_mathCQBp7dmodule6Module",
+		 "2.114",   ""),
+	 "Module"],
+	[sbv("",        "_D3dmd10dsymbolsem14loadCoreAtomicFZ11core_atomicCQBw7dmodule6Module",
+		 "2.114",   ""),
+	 "Module"],
 
 	// up to 2.110
 	[sbv("",        "_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable",
@@ -141,10 +145,11 @@ enum string[2][] dmdStatics =
 	// 2.103
 //	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe8location3LocZ8countersHSQDgQDfQCwQCnFNbQBxKxQBxZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
-	// 2.111
-	// ["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocQuZ8countersHSQDgQDfQCwQCnFNbQBxQBxQCdZ3Keyk", "countersType"],
-	// 2.112
-	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocxPvZ8countersHSQDhQDgQCxQCoFNbQByQByxQBkZ3Keyk", "countersType"],
+
+	[sbv("2.111", "_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocQuZ8countersHSQDgQDfQCwQCnFNbQBxQBxQCdZ3Keyk",
+		 "2.112", "_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocxPvZ8countersHSQDhQDgQCxQCoFNbQByQByxQBkZ3Keyk",
+		 "2.114", "_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaSQCc8location3LocxPvbZ8countersHSQDiQDhQCyQCpFNbQBzQBzxQBlbZ3Keyk"),
+	  "countersType"],
 
 	// 2.106
 	["_D3dmd7arrayop7arrayOpFCQw10expression6BinExpPSQBt6dscope5ScopeZQByCQCo9dtemplate19TemplateDeclaration", "TemplateDeclaration"],
@@ -185,7 +190,8 @@ string genDeclDmdStatics()
 {
 	string s;
 	foreach (decl; dmdStatics)
-		s ~= q{extern extern(C) __gshared } ~ decl[1] ~ " " ~ cmangled(decl[0]) ~ ";\n";
+		if (!decl[0].empty)
+			s ~= q{extern extern(C) __gshared } ~ decl[1] ~ " " ~ cmangled(decl[0]) ~ ";\n";
 		return s;
 }
 
@@ -193,7 +199,8 @@ string genInitDmdStatics()
 {
 	string s;
 	foreach (decl; dmdStatics)
-		s ~= cmangled(decl[0]) ~ " = (" ~ decl[1] ~ ").init;\n";
+		if (!decl[0].empty)
+			s ~= cmangled(decl[0]) ~ " = (" ~ decl[1] ~ ").init;\n";
 	return s;
 }
 
@@ -367,9 +374,16 @@ void dmdSetupParams(const ref Options opts)
 	global.params.useInline = false;
 	global.params.ignoreUnsupportedPragmas = opts.ldcCompiler;
 	global.params.obj = false;
-	global.params.useDeprecated = !opts.noDeprecated ? DiagnosticReporting.off
+	static if (build_for_version >= "2.114")
+	{
+		ref errparams = global.errorSink;
+		global.errorSink.errorLimit = 0;
+	}
+	else
+		ref errparams = global.params;
+	errparams.useDeprecated = !opts.noDeprecated ? DiagnosticReporting.off
 		: opts.deprecatedInfo ? DiagnosticReporting.inform : DiagnosticReporting.error ;
-	global.params.useWarnings = !opts.warnings ? DiagnosticReporting.off
+	errparams.useWarnings = !opts.warnings ? DiagnosticReporting.off
 		: opts.warnAsError ? DiagnosticReporting.error : DiagnosticReporting.inform;
 	global.params.linkswitches = Strings();
 	global.params.libfiles = Strings();

@@ -211,7 +211,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		import vdc.dmdserver.dmdinit;
 		visitArgs(te.args);
-		if (build_for_version >= "2.113")
+		static if (build_for_version >= "2.113")
 			visitArgs(te.parsedArgs);
 
 		super.visit(te);
@@ -846,10 +846,10 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	override void visit(CompoundStatement cs)
 	{
 		// optimize to only visit members in approriate source range
-		size_t scnt = cs.statements ? cs.statements.dim : 0;
+		size_t scnt = cs.cs_statements ? cs.cs_statements.dim : 0;
 		for (size_t i = 0; i < scnt && !stop; i++)
 		{
-			Statement s = (*cs.statements)[i];
+			Statement s = (*cs.cs_statements)[i];
 			if (!s)
 				continue;
 			if (visited.contains(s))
@@ -1511,6 +1511,14 @@ TipData tipDataForObject(RootObject obj)
 	return tip;
 }
 
+Statements* cs_statements(CompoundStatement cs)
+{
+	static if (is(typeof(cs.statements) : Statements*))
+		return cs.statements;
+	else
+		return &cs.statements;
+}
+
 static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 {
 	const(char)* s = qualifyTypes ? sym.toPrettyCharsHelper() : sym.toChars();
@@ -2095,8 +2103,8 @@ ParameterStorageClassPos[] findParameterStorageClass(Module mod)
 					if (auto fd = (cast(FuncExp)expr).fd)
 						if (fd.fbody)
 							if (auto cs = fd.fbody.isCompoundStatement())
-								if (cs.statements && cs.statements.length)
-									if (auto rs = (*cs.statements)[0].isReturnStatement())
+								if (cs.cs_statements && cs.cs_statements.length)
+									if (auto rs = (*cs.cs_statements)[0].isReturnStatement())
 										expr = rs.exp;
 
 			if (expr.loc.filename is filename)
