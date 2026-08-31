@@ -1507,3 +1507,8 @@ Version history
     - define version VisualDServer to allow ensuring template instances
     - removed more stale pointers reducing memory requirements
   * fix reading ldc2.conf for LDC 1.42+ from subdirectories
+
+2026-08-29 version 1.5.0
+  * full installer now bundled with DMD 2.113.o and LDC 1.43.0
+  * dmdserver:
+    - updated to dmd 2.114-beta1

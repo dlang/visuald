@@ -29,13 +29,13 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.112.0"
+!define DMD_VERSION "2.113.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 !define DMD_ZIP dmd.${DMD_VERSION}.windows.7z
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.42.0"
+!define LDC_VERSION "1.43.0"
 !define LDC_BASE ldc2-${LDC_VERSION}-windows-multilib
 !define LDC_SRC c:\d\${LDC_BASE}
 !define LDC_ZIP ${LDC_BASE}.7z
@@ -324,6 +324,7 @@ Section "Visual Studio package" SecPackage
   ${File} "..\..\binaries\" dmdserver-2.110.exe
   ${File} "..\..\binaries\" dmdserver-2.111.exe
   ${File} "..\..\binaries\" dmdserver-2.112.exe
+  ${File} "..\..\binaries\" dmdserver-2.113.exe
 !endif
 
 !ifdef DPARSER
