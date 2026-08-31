@@ -1024,7 +1024,7 @@ class CFolderNode : CHierContainer
 		HRESULT hr;
 		hr = srpAddItemDlg.AddProjectItemDlg(GetCVsHierarchy().GetVsItemID(this),
 						     &g_projectFactoryCLSID,
-						     cast(IVsProject)GetCVsHierarchy(), dwFlags,
+						     qi_cast!IVsProject(GetCVsHierarchy()), dwFlags,
 						     pszExpandDir, pszSelectItem,
 						     &bstrLocation.bstr,
 						     &bstrFilters,

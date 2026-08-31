@@ -1500,3 +1500,15 @@ Version history
     - add "Step Over Foreach" command
   * dbuild: generic support for VS 2026 18.1-18.15
   * added command "Step Over Foreach"
+
+2026-08-28 version 1.5.0-rc3
+  * dmdserver:
+    - improve intellisense in __traits
+    - define version VisualDServer to allow ensuring template instances
+    - removed more stale pointers reducing memory requirements
+  * fix reading ldc2.conf for LDC 1.42+ from subdirectories
+
+2026-08-29 version 1.5.0
+  * full installer now bundled with DMD 2.113.o and LDC 1.43.0
+  * dmdserver:
+    - updated to dmd 2.114-beta1

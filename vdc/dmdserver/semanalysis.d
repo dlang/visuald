@@ -141,7 +141,7 @@ void reinitSemanticModules()
 		GC.collect();
 		version(traceGC)
 		{
-			bool dump = false; // to be modified in the debugger
+			__gshared bool dump = false; // to be modified in the debugger
 			if (dump)
 				dumpGC();
 		}
@@ -661,7 +661,10 @@ void do_unittests()
 		}
 		else
 		{
-			assert_equal(err, expected_err);
+			if (expected_err.endsWith("..."))
+				assert_equal(err[0..min($, expected_err.length-3)], expected_err[0..$-3]);
+			else
+				assert_equal(err, expected_err);
 			assert_equal(other, "");
 		}
 		return m;
@@ -770,7 +773,9 @@ void do_unittests()
 	source = q{
 		__VERSION__
 	};
-	string ver = select_by_version("", "2112L", "2.113", "2113L");
+	string ver = select_by_version("", "2112L",
+								   "2.113", "2113L",
+								   "2.114", "2114L");
 	m = checkErrors(source, "2,2,2,3:Error: declaration expected, not `" ~ver ~ "`\n");
 
 	source = q{
@@ -999,14 +1004,14 @@ void do_unittests()
 	q{                                   // Line 1
 		struct ST(T)
 		{
-			T f;
+			T ST;
 		}
 	};
 	m = checkErrors(source, "");
 
 	checkTip(m,  2, 10, "(struct) `source.ST(T)`");
 	checkTip(m,  4,  4, "(unresolved type) `T`");
-	checkTip(m,  4,  6, "`T f`");
+	checkTip(m,  4,  6, "`T ST`");
 
 	source =
 	q{                                   // Line 1
@@ -1126,8 +1131,7 @@ void do_unittests()
 		}                                // Line 10
 	};
 	m = checkErrors(source, "10,2,10,3:Error: missing closing `)` after `if (c.to`\n" ~
-							"10,2,10,3:Error: found `}` instead of statement\n" ~
-							"9,9,9,10:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
+							"10,2,10,3:Error: found `}` instead of statement\n...");
 	checkExpansions(m,  9,  10, "to", [ "toString", "toHash", "toDebug" ]);
 	checkExpansions(m,  9,  8, "c", [ "c", "capacity", "clear" ]);
 
@@ -1751,6 +1755,15 @@ void do_unittests()
 	checkTip(m,  2, 44, "(local variable) `object.Object o`");
 	checkTip(m,  3, 47, "(class) `object.Object`\n...");
 
+	source = q{
+		enum sz = __traits(classInstanceSize, Object);
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2, 41, "(class) `object.Object`\n...");
+	version(D_LP64)
+		checkTip(m,  2, 8, "(constant) `ulong source.sz = 16LU`");
+
 	// check for semantics in unittest
 	source = q{
 		unittest
@@ -1802,11 +1815,13 @@ void do_unittests()
 	};
 	m = checkErrors(source, "");
 
+	string nanF = select_by_version("", "nanF", "2.114", "float.nan");
+	string infF = select_by_version("", "infF", "2.114", "float.infinity");
 	checkTip(m,  3, 17, "(constant) `ulong float.sizeof = 4LU`");
-	checkTip(m,  3, 29, "(constant) `float float.init = nanF`");
+	checkTip(m,  3, 29, "(constant) `float float.init = " ~ nanF ~ "`");
 	checkTip(m,  3, 39, "(constant) `float float.epsilon = 1.19209e-07F`");
 	checkTip(m,  3, 52, "(constant) `int float.mant_dig = 24`");
-	checkTip(m,  4, 11, "(constant) `float float.infinity = infF`");
+	checkTip(m,  4, 11, "(constant) `float float.infinity = " ~ infF ~ "`");
 	checkTip(m,  4, 25, "(constant) `float float.min_normal = 1.17549e-38F`");
 	checkTip(m,  4, 41, "(constant) `int float.min_10_exp = -37`");
 	checkTip(m,  4, 57, "(constant) `int float.min_exp = -125`");
@@ -2397,6 +2412,22 @@ void do_unittests()
 		checkTip(tmpl_m, 4, 11, "(parameter) `int x`");
 		//checkTip(tmpl_m, 8, 11, "(parameter) `T x`");
 	}
+
+	source = q{
+		template Templ(T, int n)
+		{
+			struct Templ
+			{
+				T[n] payload;
+			}
+		}
+		version(VisualDServer) private Templ!(int, 3) _example;
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m, 6, 10, "(field) `int[3] source.Templ!(int, 3).payload`");
+
+	m = null;
 }
 
 unittest
@@ -2672,6 +2703,7 @@ unittest
 	test_ana_dmd();
 }
 
+//version = test;
 version(test):
 
 // https://issues.dlang.org/show_bug.cgi?id=20253
@@ -2692,7 +2724,7 @@ void dummy()
 	enum z3 = size_t.stringof;
 	enum z4 = size_t.mangleof;
 	cfloat flt = cfloat.nan;
-	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity,
+	auto q = [cast(cfloat)flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity,
 			  flt.re, flt.im, flt.min_normal, flt.min_10_exp];
 	//auto ti = Object.classinfo;
 }
@@ -2718,6 +2750,9 @@ template Templ(T, int n)
 	{
 		T payload;
 	}
+}
+version(VisualDServer) { struct T {}
+		Templ!(T, 3) a;
 }
 
 import vdc.dmdserver.dmdinit;

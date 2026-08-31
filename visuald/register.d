@@ -153,10 +153,7 @@ class RegKey
 		HRESULT hr;
 		if(write && chkDump && registryRoot.length && keyname.startsWith(registryRoot))
 		{
-			if (keyname.startsWith(registryRoot))
-				registryDump ~= "\n[$RootKey$"w ~ keyname[registryRoot.length..$] ~ "]\n"w;
-			else
-				registryDump ~= "\n[\\"w ~ keyname ~ "]\n"w;
+			registryDump ~= "\n[$RootKey$"w ~ keyname[registryRoot.length..$] ~ "]\n"w;
 		}
 		else if(write)
 		{
@@ -799,16 +796,16 @@ version(none){
 		keyToolOptsLdc.Set("Sort"w, 20);
 
 		scope RegKey keyToolOptsCmd = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsCmd);
-		keyToolOptsLdc.Set(null, "Compile/Run/Debug/Dustmite");
-		keyToolOptsLdc.Set("Package"w, packageGuid);
-		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_CmdLinePropertyPage));
-		keyToolOptsLdc.Set("Sort"w, 40);
+		keyToolOptsCmd.Set(null, "Compile/Run/Debug/Dustmite");
+		keyToolOptsCmd.Set("Package"w, packageGuid);
+		keyToolOptsCmd.Set("Page"w, GUID2wstring(g_CmdLinePropertyPage));
+		keyToolOptsCmd.Set("Sort"w, 40);
 
 		scope RegKey keyToolOptsUpdate = new RegKey(keyRoot, registrationRoot ~ regPathToolsUpdate);
-		keyToolOptsLdc.Set(null, "Updates");
-		keyToolOptsLdc.Set("Package"w, packageGuid);
-		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_UpdatePropertyPage));
-		keyToolOptsLdc.Set("Sort"w, 50);
+		keyToolOptsUpdate.Set(null, "Updates");
+		keyToolOptsUpdate.Set("Package"w, packageGuid);
+		keyToolOptsUpdate.Set("Page"w, GUID2wstring(g_UpdatePropertyPage));
+		keyToolOptsUpdate.Set("Sort"w, 50);
 
 static if(hasDubSupport)
 {

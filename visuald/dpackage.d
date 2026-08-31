@@ -2622,33 +2622,45 @@ class GlobalOptions
 		if(std.file.exists(conffile))
 		{
 			string bindir = buildPath(LDC.InstallDir, "bin");
-			try
+			void parse(string file)
 			{
-				import stdext.libconfig;
-				Setting[] settings = parseConfigFile(conffile);
-				foreach(set; settings)
+				try
 				{
-					if(set.name == "default" && set.type == Setting.Type.group)
+					import stdext.libconfig;
+					Setting[] settings = parseConfigFile(file);
+					foreach(set; settings)
 					{
-						auto group = cast(GroupSetting)set;
-						foreach(sw; group.children)
+						if(set.name == "default" && set.type == Setting.Type.group)
 						{
-							if ((sw.name == "switches" || sw.name == "post-switches") && sw.type == Setting.Type.array)
+							auto group = cast(GroupSetting)set;
+							foreach(sw; group.children)
 							{
-								auto arr = cast(ArraySetting)sw;
-								foreach(a; arr.vals())
+								if ((sw.name == "switches" || sw.name == "post-switches") && sw.type == Setting.Type.array)
 								{
-									string opts = replace(a, "%%ldcbinarypath%%", bindir);
-									imports ~= getOptionImportPaths([opts], bindir); // assume single argument that might contain spaces
+									auto arr = cast(ArraySetting)sw;
+									foreach(a; arr.vals())
+									{
+										string opts = replace(a, "%%ldcbinarypath%%", bindir);
+										imports ~= getOptionImportPaths([opts], bindir); // assume single argument that might contain spaces
+									}
 								}
 							}
 						}
 					}
 				}
+				catch(Exception e)
+				{
+					string msg = e.msg;
+					file = file;
+				}
 			}
-			catch(Exception)
+			if (std.file.isDir(conffile))
 			{
+				foreach (string file; dirEntries(conffile, SpanMode.shallow))
+					parse(file);
 			}
+			else
+				parse(conffile);
 		}
 		return imports;
 	}
@@ -2672,6 +2684,15 @@ class GlobalOptions
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));
 
 		return imports;
+	}
+
+	unittest
+	{
+		auto opts = new GlobalOptions;
+		opts.LDC.InstallDir = r"c:\D\ldc2-1.43.0-beta1-windows-multilib";
+		string[] imports;
+		imports = opts.getLDCImportPaths();
+		imports = opts.getIniImportPaths();
 	}
 
 	string[] getJSONPaths()

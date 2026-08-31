@@ -27,6 +27,11 @@ static import std.file;
 import stdext.string : decodeDmdString;
 
 pragma(lib, "user32");
+pragma(lib, "kernel32");
+pragma(lib, "ole32");
+pragma(lib, "oleaut32");
+
+extern(Windows) BOOL QueryProcessCycleTime(HANDLE ProcessHandle, PULONG64 CycleTime);
 
 // version = pipeLink; // define to forward arguments to link.exe and demangle its output
 version = MSLinkFormat;
@@ -100,7 +105,7 @@ int main(string[] argv)
 		printf("decompresses and demangles names in OPTLINK and ld messages\n");
 		printf("\n");
 		printf("usage: %.*s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n",
-			   argv[0].length, argv[0].ptr);
+			   cast(int)argv[0].length, argv[0].ptr);
 		return -1;
 	}
 	int skipargs = 0;
@@ -171,9 +176,9 @@ int main(string[] argv)
 		if (verbose)
 		{
 			if (fullexe.empty)
-				printf ("%.*s not found in PATH, assuming %d-bit application\n", exe.length, exe.ptr, isX64 ? 64 : 32);
+				printf ("%.*s not found in PATH, assuming %d-bit application\n", cast(int)exe.length, exe.ptr, isX64 ? 64 : 32);
 			else
-				printf ("%.*s is a %d-bit application\n", fullexe.length, fullexe.ptr, isX64 ? 64 : 32);
+				printf ("%.*s is a %d-bit application\n", cast(int)fullexe.length, fullexe.ptr, isX64 ? 64 : 32);
 		}
 		string trackerArgs;
 		string tracker = findTracker(isX64, trackerArgs);
@@ -195,7 +200,7 @@ int main(string[] argv)
 		}
 		else if (isX64 || !canInjectDLL)
 		{
-			printf("cannot monitor %d-bit executable %.*s, no suitable tracker.exe found\n", isX64 ? 64 : 32, exe.length, exe.ptr);
+			printf("cannot monitor %d-bit executable %.*s, no suitable tracker.exe found\n", isX64 ? 64 : 32, cast(int)exe.length, exe.ptr);
 			return -1;
 		}
 		else
@@ -209,7 +214,7 @@ int main(string[] argv)
 		command ~= quoteArg(argv[i]);
 	}
 	if(verbose)
-		printf("Command: %.*s\n", command.length, command.ptr);
+		printf("Command: %.*s\n", cast(int)command.length, command.ptr);
 
 	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode, memStats);
 
@@ -381,15 +386,17 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	}
 
 	if (memStats)
+	{
+		PROCESS_MEMORY_COUNTERS memCounters;
+		string procName = getProcessName(piProcInfo.hProcess);
 		if (auto fun = getProcessMemoryInfoFunc())
-		{
-			string procName = getProcessName(piProcInfo.hProcess);
-			PROCESS_MEMORY_COUNTERS memCounters;
-			bSuccess = fun(piProcInfo.hProcess, &memCounters, memCounters.sizeof);
-			if (bSuccess)
-				printf("%s used %lld MB of private memory\n", procName.ptr,
-					   cast(long)memCounters.PeakPagefileUsage >> 20);
-		}
+			fun(piProcInfo.hProcess, &memCounters, memCounters.sizeof);
+		ulong cycleTime;
+		QueryProcessCycleTime(piProcInfo.hProcess, &cycleTime);
+
+		printf("%s used %lld MB of private memory, %llu Mcycles\n", procName.ptr,
+			   cast(long)memCounters.PeakPagefileUsage >> 20, cycleTime >> 20);
+	}
 
 	//close the handles to the process
 	CloseHandle(hStdInWrite);

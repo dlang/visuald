@@ -193,18 +193,26 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		super.visit(expr);
 	}
 
-	override void visit(TraitsExp te)
+	void visitArgs(Objects* args)
 	{
-		if (te.args)
+		if (args)
 		{
-			foreach(a; (*te.args))
+			foreach(a; (*args))
 				if (auto t = a.isType())
 					visitType(t);
 				else if (auto e = a.isExpression())
 					visitExpression(e);
-				//else if (auto s = a.isSymbol())
-				//	visitSymbol(s);
+			//else if (auto s = a.isSymbol())
+			//	visitSymbol(s);
 		}
+	}
+
+	override void visit(TraitsExp te)
+	{
+		import vdc.dmdserver.dmdinit;
+		visitArgs(te.args);
+		static if (build_for_version >= "2.113")
+			visitArgs(te.parsedArgs);
 
 		super.visit(te);
 	}
@@ -213,10 +221,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		if (ti.tiargs && ti.parsedArgs)
 		{
-			size_t args = min(ti.tiargs.dim, ti.parsedArgs.dim);
-			for (size_t a = 0; a < args; a++)
-				if (Type tip = (*ti.parsedArgs)[a].isType())
-					visitType(tip);
+			//size_t args = min(ti.tiargs.dim, ti.parsedArgs.dim);
+			visitArgs(ti.tiargs);
+			visitArgs(ti.parsedArgs);
 		}
 	}
 
@@ -839,10 +846,10 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	override void visit(CompoundStatement cs)
 	{
 		// optimize to only visit members in approriate source range
-		size_t scnt = cs.statements ? cs.statements.dim : 0;
+		size_t scnt = cs.cs_statements ? cs.cs_statements.dim : 0;
 		for (size_t i = 0; i < scnt && !stop; i++)
 		{
-			Statement s = (*cs.statements)[i];
+			Statement s = (*cs.cs_statements)[i];
 			if (!s)
 				continue;
 			if (visited.contains(s))
@@ -1504,6 +1511,14 @@ TipData tipDataForObject(RootObject obj)
 	return tip;
 }
 
+Statements* cs_statements(CompoundStatement cs)
+{
+	static if (is(typeof(cs.statements) : Statements*))
+		return cs.statements;
+	else
+		return &cs.statements;
+}
+
 static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 {
 	const(char)* s = qualifyTypes ? sym.toPrettyCharsHelper() : sym.toChars();
@@ -2088,8 +2103,8 @@ ParameterStorageClassPos[] findParameterStorageClass(Module mod)
 					if (auto fd = (cast(FuncExp)expr).fd)
 						if (fd.fbody)
 							if (auto cs = fd.fbody.isCompoundStatement())
-								if (cs.statements && cs.statements.length)
-									if (auto rs = (*cs.statements)[0].isReturnStatement())
+								if (cs.cs_statements && cs.cs_statements.length)
+									if (auto rs = (*cs.cs_statements)[0].isReturnStatement())
 										expr = rs.exp;
 
 			if (expr.loc.filename is filename)

@@ -1138,9 +1138,9 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
-  <subsystem>0</subsystem>
+  <subsystem>1</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>1</mscoff>
   <trace>0</trace>
@@ -2375,6 +2375,7 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; /I &quot;$(IntDir)&quot; $(InputPath)" d
   <File path="trackprojectdocument.d" />
   <File path="updates.d" />
   <File perConfig="true" path="visuald.def">
+   <Config tool="None" name="TestDebug|x64" />
    <Config tool="None" name="TestDebug|Win32" />
   </File>
   <File path="vscommands.d" />

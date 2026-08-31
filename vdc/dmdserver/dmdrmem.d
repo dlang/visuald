@@ -3,6 +3,10 @@ module dmd.root.rmem;
 import core.memory : GC;
 import core.stdc.string : strlen;
 
+enum CHUNK_SIZE = (256 * 4096 - 64);
+enum DEFAULT_ALIGNMENT = 16;
+
+__gshared size_t heappos = CHUNK_SIZE;
 __gshared size_t heapleft = 0;
 __gshared void* heapp;
 __gshared size_t heapTotal = 0; // Total amount of memory allocated using malloc

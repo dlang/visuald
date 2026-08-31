@@ -282,6 +282,7 @@ struct BaseLoc
 
 	uint startLine;
 	uint startOffset;
+	uint startColumn = 1;
 	uint lastLineOffset;
 	BaseLoc[] substitutions; /// Substitutions from #line / #file directives
 
